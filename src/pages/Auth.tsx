@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import EmailConfirmationPending from '@/components/EmailConfirmationPending';
 
 const Auth: React.FC = () => {
   const navigate = useNavigate();
@@ -31,6 +31,8 @@ const Auth: React.FC = () => {
   });
 
   const [isLoading, setIsLoading] = useState(false);
+  const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState('');
 
   useEffect(() => {
     if (user && !loading) {
@@ -49,11 +51,20 @@ const Auth: React.FC = () => {
         description: t('loginSuccess'),
       });
     } catch (error: any) {
-      toast({
-        title: t('error'),
-        description: error.message || t('loginError'),
-        variant: 'destructive',
-      });
+      // Check if it's an email not confirmed error
+      if (error.message?.includes('Email not confirmed')) {
+        toast({
+          title: t('error'),
+          description: t('emailNotConfirmed'),
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: t('error'),
+          description: error.message || t('loginError'),
+          variant: 'destructive',
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -75,6 +86,11 @@ const Auth: React.FC = () => {
 
     try {
       await signUp(signupData.email, signupData.password, signupData.fullName, signupData.phone);
+      
+      // Show email confirmation screen
+      setPendingEmail(signupData.email);
+      setShowEmailConfirmation(true);
+      
       toast({
         title: t('success'),
         description: t('signupSuccess'),
@@ -88,6 +104,19 @@ const Auth: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleBackFromConfirmation = () => {
+    setShowEmailConfirmation(false);
+    setPendingEmail('');
+    // Reset signup form
+    setSignupData({
+      email: '',
+      password: '',
+      confirmPassword: '',
+      fullName: '',
+      phone: '',
+    });
   };
 
   if (loading) {
@@ -108,116 +137,123 @@ const Auth: React.FC = () => {
           <LanguageSwitcher />
         </div>
 
-        <Card>
-          <CardHeader className="text-center">
-            <div className="w-16 h-16 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-white font-bold text-2xl">م</span>
-            </div>
-            <CardTitle className="text-2xl">{t('storeName')}</CardTitle>
-            <CardDescription>{t('storeDescription')}</CardDescription>
-          </CardHeader>
+        {showEmailConfirmation ? (
+          <EmailConfirmationPending 
+            email={pendingEmail}
+            onBack={handleBackFromConfirmation}
+          />
+        ) : (
+          <Card>
+            <CardHeader className="text-center">
+              <div className="w-16 h-16 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-white font-bold text-2xl">م</span>
+              </div>
+              <CardTitle className="text-2xl">{t('storeName')}</CardTitle>
+              <CardDescription>{t('storeDescription')}</CardDescription>
+            </CardHeader>
 
-          <CardContent>
-            <Tabs defaultValue="login" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="login">{t('login')}</TabsTrigger>
-                <TabsTrigger value="signup">{t('signup')}</TabsTrigger>
-              </TabsList>
+            <CardContent>
+              <Tabs defaultValue="login" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="login">{t('login')}</TabsTrigger>
+                  <TabsTrigger value="signup">{t('signup')}</TabsTrigger>
+                </TabsList>
 
-              <TabsContent value="login">
-                <form onSubmit={handleLogin} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="login-email">{t('email')}</Label>
-                    <Input
-                      id="login-email"
-                      type="email"
-                      value={loginData.email}
-                      onChange={(e) => setLoginData(prev => ({ ...prev, email: e.target.value }))}
-                      required
-                    />
-                  </div>
+                <TabsContent value="login">
+                  <form onSubmit={handleLogin} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="login-email">{t('email')}</Label>
+                      <Input
+                        id="login-email"
+                        type="email"
+                        value={loginData.email}
+                        onChange={(e) => setLoginData(prev => ({ ...prev, email: e.target.value }))}
+                        required
+                      />
+                    </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="login-password">{t('password')}</Label>
-                    <Input
-                      id="login-password"
-                      type="password"
-                      value={loginData.password}
-                      onChange={(e) => setLoginData(prev => ({ ...prev, password: e.target.value }))}
-                      required
-                    />
-                  </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="login-password">{t('password')}</Label>
+                      <Input
+                        id="login-password"
+                        type="password"
+                        value={loginData.password}
+                        onChange={(e) => setLoginData(prev => ({ ...prev, password: e.target.value }))}
+                        required
+                      />
+                    </div>
 
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? t('loading') : t('login')}
-                  </Button>
-                </form>
-              </TabsContent>
+                    <Button type="submit" className="w-full" disabled={isLoading}>
+                      {isLoading ? t('loading') : t('login')}
+                    </Button>
+                  </form>
+                </TabsContent>
 
-              <TabsContent value="signup">
-                <form onSubmit={handleSignup} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-name">{t('fullName')}</Label>
-                    <Input
-                      id="signup-name"
-                      type="text"
-                      value={signupData.fullName}
-                      onChange={(e) => setSignupData(prev => ({ ...prev, fullName: e.target.value }))}
-                      required
-                    />
-                  </div>
+                <TabsContent value="signup">
+                  <form onSubmit={handleSignup} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-name">{t('fullName')}</Label>
+                      <Input
+                        id="signup-name"
+                        type="text"
+                        value={signupData.fullName}
+                        onChange={(e) => setSignupData(prev => ({ ...prev, fullName: e.target.value }))}
+                        required
+                      />
+                    </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-phone">{t('phone')}</Label>
-                    <Input
-                      id="signup-phone"
-                      type="tel"
-                      value={signupData.phone}
-                      onChange={(e) => setSignupData(prev => ({ ...prev, phone: e.target.value }))}
-                    />
-                  </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-phone">{t('phone')}</Label>
+                      <Input
+                        id="signup-phone"
+                        type="tel"
+                        value={signupData.phone}
+                        onChange={(e) => setSignupData(prev => ({ ...prev, phone: e.target.value }))}
+                      />
+                    </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-email">{t('email')}</Label>
-                    <Input
-                      id="signup-email"
-                      type="email"
-                      value={signupData.email}
-                      onChange={(e) => setSignupData(prev => ({ ...prev, email: e.target.value }))}
-                      required
-                    />
-                  </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-email">{t('email')}</Label>
+                      <Input
+                        id="signup-email"
+                        type="email"
+                        value={signupData.email}
+                        onChange={(e) => setSignupData(prev => ({ ...prev, email: e.target.value }))}
+                        required
+                      />
+                    </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-password">{t('password')}</Label>
-                    <Input
-                      id="signup-password"
-                      type="password"
-                      value={signupData.password}
-                      onChange={(e) => setSignupData(prev => ({ ...prev, password: e.target.value }))}
-                      required
-                    />
-                  </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-password">{t('password')}</Label>
+                      <Input
+                        id="signup-password"
+                        type="password"
+                        value={signupData.password}
+                        onChange={(e) => setSignupData(prev => ({ ...prev, password: e.target.value }))}
+                        required
+                      />
+                    </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-confirm">{t('confirmPassword')}</Label>
-                    <Input
-                      id="signup-confirm"
-                      type="password"
-                      value={signupData.confirmPassword}
-                      onChange={(e) => setSignupData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                      required
-                    />
-                  </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-confirm">{t('confirmPassword')}</Label>
+                      <Input
+                        id="signup-confirm"
+                        type="password"
+                        value={signupData.confirmPassword}
+                        onChange={(e) => setSignupData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                        required
+                      />
+                    </div>
 
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? t('loading') : t('signup')}
-                  </Button>
-                </form>
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
+                    <Button type="submit" className="w-full" disabled={isLoading}>
+                      {isLoading ? t('loading') : t('signup')}
+                    </Button>
+                  </form>
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
