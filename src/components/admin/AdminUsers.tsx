@@ -1,10 +1,8 @@
 
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Users } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 import UserStatsCards from './users/UserStatsCards';
 import UserFilters from './users/UserFilters';
 import UsersTable from './users/UsersTable';
@@ -18,134 +16,99 @@ interface UserProfile {
   email?: string;
   email_confirmed_at?: string;
   last_sign_in_at?: string;
-  raw_app_meta_data?: any;
-  raw_user_meta_data?: any;
 }
 
 const AdminUsers: React.FC = () => {
-  const { t, isRTL } = useLanguage();
-  const { profile } = useAuth();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [userTypeFilter, setUserTypeFilter] = useState<string>('all');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  
-  const { data: users = [], isLoading } = useQuery({
+  const { isRTL } = useLanguage();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterType, setFilterType] = useState<'all' | 'admin' | 'wholesale' | 'retail' | 'confirmed' | 'unconfirmed'>('all');
+
+  const { data: users = [], isLoading, error } = useQuery({
     queryKey: ['admin-users-extended'],
-    queryFn: async (): Promise<UserProfile[]> => {
-      // First get profiles
+    queryFn: async () => {
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (profilesError) throw profilesError;
-
-      // Then get auth users (only admins can access this)
-      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
-
-      if (authError) {
-        console.warn('Could not fetch auth users:', authError);
-        // Return profiles with basic info if auth admin access fails
-        return profiles.map(profile => ({
-          ...profile,
-          email: 'غير متوفر',
-          email_confirmed_at: null,
-          last_sign_in_at: null,
-        }));
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+        throw profilesError;
       }
 
-      // Merge profiles with auth data
-      const mergedUsers = profiles.map(profile => {
-        const authUser = authUsers.users.find(user => user.id === profile.id);
+      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+      
+      if (authError) {
+        console.error('Error fetching auth users:', authError);
+        throw authError;
+      }
+
+      const combinedUsers: UserProfile[] = authUsers.users.map(authUser => {
+        const profile = profiles.find(p => p.id === authUser.id);
         return {
-          ...profile,
-          email: authUser?.email || 'غير متوفر',
-          email_confirmed_at: authUser?.email_confirmed_at || null,
-          last_sign_in_at: authUser?.last_sign_in_at || null,
-          raw_app_meta_data: authUser?.app_metadata || {},
-          raw_user_meta_data: authUser?.user_metadata || {},
+          id: authUser.id,
+          full_name: profile?.full_name || authUser.user_metadata?.full_name || 'Unknown',
+          phone: profile?.phone || authUser.user_metadata?.phone || null,
+          user_type: profile?.user_type || 'retail',
+          created_at: profile?.created_at || authUser.created_at,
+          email: authUser.email,
+          email_confirmed_at: authUser.email_confirmed_at,
+          last_sign_in_at: authUser.last_sign_in_at,
         };
       });
 
-      // Also add any auth users that don't have profiles
-      const profileIds = profiles.map(p => p.id);
-      const usersWithoutProfiles = authUsers.users
-        .filter(user => !profileIds.includes(user.id))
-        .map(user => ({
-          id: user.id,
-          full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'مستخدم غير مسمى',
-          phone: user.user_metadata?.phone || null,
-          user_type: 'retail' as const,
-          created_at: user.created_at,
-          email: user.email || '',
-          email_confirmed_at: user.email_confirmed_at,
-          last_sign_in_at: user.last_sign_in_at,
-          raw_app_meta_data: user.app_metadata || {},
-          raw_user_meta_data: user.user_metadata || {},
-        }));
-
-      return [...mergedUsers, ...usersWithoutProfiles];
+      return combinedUsers;
     },
-    enabled: profile?.user_type === 'admin',
   });
 
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         user.phone?.includes(searchQuery);
+  const filteredUsers = users.filter((user: UserProfile) => {
+    const matchesSearch = user.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase()));
     
-    const matchesType = userTypeFilter === 'all' || user.user_type === userTypeFilter;
-    
-    const matchesStatus = statusFilter === 'all' || 
-                         (statusFilter === 'confirmed' && user.email_confirmed_at) ||
-                         (statusFilter === 'unconfirmed' && !user.email_confirmed_at);
-    
-    return matchesSearch && matchesType && matchesStatus;
+    const matchesFilter = (() => {
+      switch (filterType) {
+        case 'confirmed':
+          return !!user.email_confirmed_at;
+        case 'unconfirmed':
+          return !user.email_confirmed_at;
+        case 'all':
+          return true;
+        default:
+          return user.user_type === filterType;
+      }
+    })();
+
+    return matchesSearch && matchesFilter;
   });
 
-  if (profile?.user_type !== 'admin') {
+  if (error) {
     return (
-      <div className="text-center py-12">
-        <div className="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <span className="text-4xl">🚫</span>
-        </div>
-        <p className="text-red-500 text-lg font-medium">{t('accessDenied')}</p>
+      <div className="text-center py-8">
+        <p className="text-red-600">خطأ في تحميل بيانات المستخدمين</p>
       </div>
     );
   }
 
   return (
-    <div className={`space-y-4 lg:space-y-8 ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl lg:text-4xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
-            {t('manageUsers')}
-          </h1>
-          <p className="text-gray-500 mt-2 text-sm lg:text-base">إدارة وتحكم كامل في المستخدمين المسجلين</p>
-        </div>
-        <div className="flex items-center gap-3 bg-white rounded-xl px-3 lg:px-4 py-2 shadow-lg border">
-          <Users className="h-4 w-4 lg:h-6 lg:w-6 text-blue-600" />
-          <span className="text-sm lg:text-lg font-semibold text-gray-700">
-            {filteredUsers.length} {t('totalUsers')}
-          </span>
-        </div>
+    <div className={`p-4 lg:p-6 ${isRTL ? 'text-right' : 'text-left'}`} dir={isRTL ? 'rtl' : 'ltr'}>
+      <div className="mb-6">
+        <h1 className="text-2xl lg:text-3xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          إدارة المستخدمين
+        </h1>
+        <p className="text-gray-600 text-sm lg:text-base">
+          إدارة ومراقبة جميع المستخدمين المسجلين في النظام
+        </p>
       </div>
 
-      {/* Stats Cards */}
-      <UserStatsCards users={users} />
-
-      {/* Filters */}
-      <UserFilters
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        userTypeFilter={userTypeFilter}
-        setUserTypeFilter={setUserTypeFilter}
-        statusFilter={statusFilter}
-        setStatusFilter={setStatusFilter}
-      />
+      <UserStatsCards users={users} isLoading={isLoading} />
       
-      {/* Users Table */}
+      <UserFilters 
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        filterType={filterType}
+        setFilterType={setFilterType}
+      />
+
       <UsersTable users={filteredUsers} isLoading={isLoading} />
     </div>
   );
