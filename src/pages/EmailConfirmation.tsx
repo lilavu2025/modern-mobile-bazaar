@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
@@ -11,7 +11,7 @@ import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 const EmailConfirmation: React.FC = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const location = useLocation();
   const { user } = useAuth();
   const { t } = useLanguage();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
@@ -20,34 +20,78 @@ const EmailConfirmation: React.FC = () => {
   useEffect(() => {
     const handleEmailConfirmation = async () => {
       try {
-        // Get the tokens from URL parameters
-        const token_hash = searchParams.get('token_hash');
-        const type = searchParams.get('type');
+        console.log('Current location hash:', location.hash);
+        console.log('Current location search:', location.search);
 
-        if (token_hash && type === 'signup') {
-          // Verify the email confirmation
-          const { data, error } = await supabase.auth.verifyOtp({
-            token_hash,
-            type: 'signup'
-          });
+        // Parse hash parameters (Supabase sends confirmation data in hash)
+        const hashParams = new URLSearchParams(location.hash.substring(1));
+        const token_hash = hashParams.get('access_token') || hashParams.get('token_hash');
+        const type = hashParams.get('type');
+        const error = hashParams.get('error');
+        const error_description = hashParams.get('error_description');
 
-          if (error) {
-            console.error('Email confirmation error:', error);
+        console.log('Hash params:', { token_hash, type, error, error_description });
+
+        // Check for errors first
+        if (error) {
+          console.error('Email confirmation error from URL:', error, error_description);
+          setStatus('error');
+          if (error === 'access_denied' && error_description?.includes('expired')) {
+            setMessage(t('invalidConfirmationLink'));
+          } else {
+            setMessage(error_description || t('emailConfirmationError'));
+          }
+          return;
+        }
+
+        // If we have a token, try to verify it
+        if (token_hash) {
+          console.log('Attempting to verify token...');
+          
+          // For email confirmation, we use the session from the URL
+          const { data, error: sessionError } = await supabase.auth.getSession();
+          
+          if (sessionError) {
+            console.error('Session error:', sessionError);
             setStatus('error');
             setMessage(t('emailConfirmationError'));
-          } else {
-            console.log('Email confirmed successfully:', data);
+          } else if (data.session) {
+            console.log('Session found, user confirmed successfully:', data.session.user);
             setStatus('success');
             setMessage(t('emailConfirmedSuccess'));
             
-            // Auto redirect to main page after 2 seconds if user is authenticated
+            // Auto redirect to main page after 2 seconds
             setTimeout(() => {
-              if (data.user) {
-                navigate('/');
-              }
+              navigate('/');
             }, 2000);
+          } else {
+            console.log('No session found, checking for refresh token in hash...');
+            // Try to set session from hash
+            const refresh_token = hashParams.get('refresh_token');
+            if (refresh_token) {
+              const { error: refreshError } = await supabase.auth.setSession({
+                access_token: token_hash,
+                refresh_token: refresh_token
+              });
+              
+              if (refreshError) {
+                console.error('Refresh error:', refreshError);
+                setStatus('error');
+                setMessage(t('emailConfirmationError'));
+              } else {
+                setStatus('success');
+                setMessage(t('emailConfirmedSuccess'));
+                setTimeout(() => {
+                  navigate('/');
+                }, 2000);
+              }
+            } else {
+              setStatus('error');
+              setMessage(t('invalidConfirmationLink'));
+            }
           }
         } else {
+          // No token found, show error
           setStatus('error');
           setMessage(t('invalidConfirmationLink'));
         }
@@ -59,7 +103,7 @@ const EmailConfirmation: React.FC = () => {
     };
 
     handleEmailConfirmation();
-  }, [searchParams, navigate, t]);
+  }, [location.hash, location.search, navigate, t]);
 
   // If user is already logged in, redirect to home
   useEffect(() => {
