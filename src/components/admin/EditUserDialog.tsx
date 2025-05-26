@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Edit } from 'lucide-react';
+import { Edit, User, Phone, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface UserProfile {
@@ -68,67 +68,160 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({ user }) => {
     }
   };
 
+  const getUserTypeIcon = (userType: string) => {
+    switch (userType) {
+      case 'admin':
+        return '👑';
+      case 'wholesale':
+        return '🏢';
+      case 'retail':
+        return '🛒';
+      default:
+        return '👤';
+    }
+  };
+
+  const getUserTypeColor = (userType: string) => {
+    switch (userType) {
+      case 'admin':
+        return 'from-red-500 to-pink-500';
+      case 'wholesale':
+        return 'from-blue-500 to-purple-500';
+      case 'retail':
+        return 'from-green-500 to-teal-500';
+      default:
+        return 'from-gray-500 to-gray-600';
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" variant="outline">
-          <Edit className="h-4 w-4" />
+        <Button size="sm" className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5">
+          <Edit className="h-4 w-4 mr-1" />
+          تعديل
         </Button>
       </DialogTrigger>
-      <DialogContent className={`max-w-md ${isRTL ? 'text-right' : 'text-left'}`} dir={isRTL ? 'rtl' : 'ltr'}>
-        <DialogHeader>
-          <DialogTitle>{t('editUser')}</DialogTitle>
-          <DialogDescription>
+      <DialogContent className={`max-w-md ${isRTL ? 'text-right' : 'text-left'} border-0 shadow-2xl`} dir={isRTL ? 'rtl' : 'ltr'}>
+        <DialogHeader className="text-center pb-6">
+          <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+            <Edit className="h-8 w-8 text-white" />
+          </div>
+          <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+            {t('editUser')}
+          </DialogTitle>
+          <DialogDescription className="text-gray-500 mt-2">
             {t('editUserInformation')}
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="full_name">{t('fullName')}</Label>
+            <Label htmlFor="full_name" className="flex items-center gap-2 font-medium text-gray-700">
+              <User className="h-4 w-4" />
+              {t('fullName')}
+            </Label>
             <Input
               id="full_name"
               value={formData.full_name}
               onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+              className="h-11 border-2 border-gray-200 focus:border-blue-500 transition-colors rounded-lg"
+              placeholder="أدخل الاسم الكامل"
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="phone">{t('phone')}</Label>
+            <Label htmlFor="phone" className="flex items-center gap-2 font-medium text-gray-700">
+              <Phone className="h-4 w-4" />
+              {t('phone')}
+            </Label>
             <Input
               id="phone"
               type="tel"
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              className="h-11 border-2 border-gray-200 focus:border-blue-500 transition-colors rounded-lg"
+              placeholder="أدخل رقم الهاتف"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="user_type">{t('userType')}</Label>
+            <Label htmlFor="user_type" className="flex items-center gap-2 font-medium text-gray-700">
+              <Shield className="h-4 w-4" />
+              {t('userType')}
+            </Label>
             <Select
               value={formData.user_type}
               onValueChange={(value: 'admin' | 'wholesale' | 'retail') => 
                 setFormData({ ...formData, user_type: value })
               }
             >
-              <SelectTrigger>
-                <SelectValue />
+              <SelectTrigger className="h-11 border-2 border-gray-200 focus:border-blue-500 transition-colors rounded-lg">
+                <SelectValue>
+                  <div className="flex items-center gap-2">
+                    <span>{getUserTypeIcon(formData.user_type)}</span>
+                    <span>{t(formData.user_type)}</span>
+                  </div>
+                </SelectValue>
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="retail">{t('retail')}</SelectItem>
-                <SelectItem value="wholesale">{t('wholesale')}</SelectItem>
-                <SelectItem value="admin">{t('admin')}</SelectItem>
+              <SelectContent className="border-0 shadow-xl">
+                <SelectItem value="retail" className="py-3 hover:bg-green-50 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg">🛒</span>
+                    <div>
+                      <div className="font-medium">{t('retail')}</div>
+                      <div className="text-sm text-gray-500">عميل تجزئة عادي</div>
+                    </div>
+                  </div>
+                </SelectItem>
+                <SelectItem value="wholesale" className="py-3 hover:bg-blue-50 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg">🏢</span>
+                    <div>
+                      <div className="font-medium">{t('wholesale')}</div>
+                      <div className="text-sm text-gray-500">عميل جملة</div>
+                    </div>
+                  </div>
+                </SelectItem>
+                <SelectItem value="admin" className="py-3 hover:bg-red-50 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg">👑</span>
+                    <div>
+                      <div className="font-medium">{t('admin')}</div>
+                      <div className="text-sm text-gray-500">مدير النظام</div>
+                    </div>
+                  </div>
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          <DialogFooter className={isRTL ? 'flex-row-reverse' : ''}>
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+          <DialogFooter className={`gap-3 pt-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => setOpen(false)}
+              className="h-11 px-6 border-2 hover:bg-gray-50 transition-all duration-200"
+            >
               {t('cancel')}
             </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? t('updating') : t('update')}
+            <Button 
+              type="submit" 
+              disabled={loading}
+              className={`h-11 px-6 bg-gradient-to-r ${getUserTypeColor(formData.user_type)} hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 border-0 text-white`}
+            >
+              {loading ? (
+                <div className="flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  {t('updating')}
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <span>{getUserTypeIcon(formData.user_type)}</span>
+                  {t('update')}
+                </div>
+              )}
             </Button>
           </DialogFooter>
         </form>
