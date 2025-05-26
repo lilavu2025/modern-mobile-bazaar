@@ -27,15 +27,15 @@ export interface ProductFormData {
   description_en: string;
   description_he: string;
   price: number;
-  original_price?: number;
-  wholesale_price?: number;
+  original_price: number;
+  wholesale_price: number;
   category_id: string;
   image: string;
   images: string[];
   in_stock: boolean;
   featured: boolean;
   active: boolean;
-  discount?: number;
+  discount: number;
   tags: string[];
 }
 

@@ -1,18 +1,15 @@
 
 import React, { useState } from 'react';
-import { Star, ShoppingCart, Heart, Eye, Share2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Card } from '@/components/ui/card';
 import { Product } from '@/types';
 import { useCart } from '@/hooks/useCart';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
-import QuantitySelector from './QuantitySelector';
+import ProductCardImage from './ProductCard/ProductCardImage';
+import ProductCardContent from './ProductCard/ProductCardContent';
+import ProductCardQuickView from './ProductCard/ProductCardQuickView';
 
 interface ProductCardProps {
   product: Product;
@@ -22,8 +19,8 @@ interface ProductCardProps {
 const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }) => {
   const { addToCart, getItemQuantity, buyNow } = useCart();
   const { toggleFavorite, isFavorite } = useFavorites();
-  const { user, profile } = useAuth();
-  const { t, isRTL } = useLanguage();
+  const { user } = useAuth();
+  const { t } = useLanguage();
   const [quantity, setQuantity] = useState(1);
   const [showQuickView, setShowQuickView] = useState(false);
   const cartQuantity = getItemQuantity(product.id);
@@ -77,250 +74,42 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }) => {
     }
   };
 
-  const isWholesale = profile?.user_type === 'wholesale';
-  const displayPrice = product.price;
-  const showWholesaleLabel = isWholesale && product.wholesalePrice;
   const isFav = isFavorite(product.id);
 
   return (
     <>
       <Card className="product-card group relative overflow-hidden hover:shadow-lg transition-shadow">
-        <div className="relative overflow-hidden">
-          <Link to={`/product/${product.id}`}>
-            <img
-              src={product.image}
-              alt={product.name}
-              className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-110"
-            />
-          </Link>
-          
-          {/* Badges */}
-          <div className={`absolute top-2 ${isRTL ? 'left-2' : 'right-2'} flex flex-col gap-1`}>
-            {showWholesaleLabel && (
-              <Badge className="bg-blue-500 hover:bg-blue-600">
-                {t('wholesale')}
-              </Badge>
-            )}
-            {product.discount && (
-              <Badge variant="destructive" className="animate-bounce-in">
-                {t('discount')} {product.discount}%
-              </Badge>
-            )}
-            {product.featured && (
-              <Badge className="bg-green-500 hover:bg-green-600">
-                {t('featured')}
-              </Badge>
-            )}
-            {!product.inStock && (
-              <Badge variant="secondary">
-                {t('outOfStock')}
-              </Badge>
-            )}
-          </div>
-
-          {/* Action buttons */}
-          <div className={`absolute top-2 ${isRTL ? 'right-2' : 'left-2'} flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300`}>
-            <Button
-              size="icon"
-              variant="secondary"
-              className="h-8 w-8 bg-white/90 hover:bg-white shadow-md"
-              onClick={handleQuickView}
-            >
-              <Eye className="h-4 w-4" />
-            </Button>
-            <Button
-              size="icon"
-              variant="secondary"
-              className={`h-8 w-8 bg-white/90 hover:bg-white shadow-md ${isFav ? 'text-red-500' : ''}`}
-              onClick={handleFavorite}
-            >
-              <Heart className={`h-4 w-4 ${isFav ? 'fill-current' : ''}`} />
-            </Button>
-            <Button
-              size="icon"
-              variant="secondary"
-              className="h-8 w-8 bg-white/90 hover:bg-white shadow-md"
-              onClick={handleShare}
-            >
-              <Share2 className="h-4 w-4" />
-            </Button>
-          </div>
-
-          {/* Overlay */}
-          <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-        </div>
-
-        <CardContent className={`p-4 ${isRTL ? 'text-right' : 'text-left'}`}>
-          <Link to={`/product/${product.id}`}>
-            <h3 className={`font-semibold text-lg mb-2 line-clamp-2 group-hover:text-primary transition-colors ${isRTL ? 'text-right' : 'text-left'}`}>
-              {product.name}
-            </h3>
-          </Link>
-
-          {/* Rating */}
-          <div className={`flex items-center gap-1 mb-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
-            <div className="flex items-center gap-1">
-              {[...Array(5)].map((_, i) => (
-                <Star
-                  key={i}
-                  className={`h-4 w-4 ${
-                    i < Math.floor(product.rating)
-                      ? 'text-yellow-400 fill-current'
-                      : 'text-gray-300'
-                  }`}
-                />
-              ))}
-            </div>
-            <span className="text-sm text-gray-600">
-              ({product.reviews})
-            </span>
-          </div>
-
-          {/* Price */}
-          <div className={`flex items-center gap-2 mb-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-            <span className="text-xl font-bold text-primary">
-              {displayPrice} {t('currency')}
-            </span>
-            {product.originalPrice && (
-              <span className="text-sm text-gray-500 line-through">
-                {product.originalPrice} {t('currency')}
-              </span>
-            )}
-          </div>
-
-          {/* Quantity Selector */}
-          <div className={`mb-3 flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
-            <span className="text-sm text-gray-600">{t('quantity')}:</span>
-            <QuantitySelector
-              quantity={quantity}
-              onQuantityChange={setQuantity}
-              max={99}
-              min={1}
-            />
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex gap-2">
-            <Button
-              onClick={handleAddToCart}
-              disabled={!product.inStock}
-              className="flex-1 gap-2 font-semibold"
-              variant={cartQuantity > 0 ? "secondary" : "default"}
-            >
-              <ShoppingCart className="h-4 w-4" />
-              {cartQuantity > 0 ? `${t('inCart')} (${cartQuantity})` : t('addToCart')}
-            </Button>
-            <Button
-              onClick={handleBuyNow}
-              disabled={!product.inStock}
-              variant="outline"
-              className="px-4"
-            >
-              {t('buyNow')}
-            </Button>
-          </div>
-        </CardContent>
+        <ProductCardImage
+          product={product}
+          isFavorite={isFav}
+          onQuickView={handleQuickView}
+          onFavorite={handleFavorite}
+          onShare={handleShare}
+        />
+        
+        <ProductCardContent
+          product={product}
+          quantity={quantity}
+          cartQuantity={cartQuantity}
+          onQuantityChange={setQuantity}
+          onAddToCart={handleAddToCart}
+          onBuyNow={handleBuyNow}
+        />
       </Card>
 
-      {/* Quick View Dialog */}
-      <Dialog open={showQuickView} onOpenChange={setShowQuickView}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{product.name}</DialogTitle>
-          </DialogHeader>
-          <div className="grid md:grid-cols-2 gap-6">
-            <div>
-              <img
-                src={product.image}
-                alt={product.name}
-                className="w-full h-96 object-cover rounded-lg"
-              />
-            </div>
-            <div className="space-y-4">
-              <div className={`flex items-center gap-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                <div className="flex items-center gap-1">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`h-4 w-4 ${
-                        i < Math.floor(product.rating)
-                          ? 'text-yellow-400 fill-current'
-                          : 'text-gray-300'
-                      }`}
-                    />
-                  ))}
-                </div>
-                <span className="text-sm text-gray-600">
-                  ({product.reviews} {t('reviews')})
-                </span>
-              </div>
-
-              <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                <span className="text-2xl font-bold text-primary">
-                  {displayPrice} {t('currency')}
-                </span>
-                {product.originalPrice && (
-                  <span className="text-lg text-gray-500 line-through">
-                    {product.originalPrice} {t('currency')}
-                  </span>
-                )}
-              </div>
-
-              <p className="text-gray-600">{product.description}</p>
-
-              <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                <span className="text-sm text-gray-600">{t('quantity')}:</span>
-                <QuantitySelector
-                  quantity={quantity}
-                  onQuantityChange={setQuantity}
-                  max={99}
-                  min={1}
-                />
-              </div>
-
-              <div className="flex gap-2">
-                <Button
-                  onClick={handleAddToCart}
-                  disabled={!product.inStock}
-                  className="flex-1 gap-2"
-                  variant={cartQuantity > 0 ? "secondary" : "default"}
-                >
-                  <ShoppingCart className="h-4 w-4" />
-                  {cartQuantity > 0 ? `${t('inCart')} (${cartQuantity})` : t('addToCart')}
-                </Button>
-                <Button
-                  onClick={handleBuyNow}
-                  disabled={!product.inStock}
-                  variant="outline"
-                >
-                  {t('buyNow')}
-                </Button>
-              </div>
-
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className={`gap-2 ${isFav ? 'text-red-500' : ''}`}
-                  onClick={handleFavorite}
-                >
-                  <Heart className={`h-4 w-4 ${isFav ? 'fill-current' : ''}`} />
-                  {isFav ? t('removeFromFavorites') : t('addToFavorites')}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="gap-2"
-                  onClick={handleShare}
-                >
-                  <Share2 className="h-4 w-4" />
-                  {t('share')}
-                </Button>
-              </div>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <ProductCardQuickView
+        product={product}
+        isOpen={showQuickView}
+        onClose={() => setShowQuickView(false)}
+        quantity={quantity}
+        cartQuantity={cartQuantity}
+        isFavorite={isFav}
+        onQuantityChange={setQuantity}
+        onAddToCart={handleAddToCart}
+        onBuyNow={handleBuyNow}
+        onFavorite={handleFavorite}
+        onShare={handleShare}
+      />
     </>
   );
 };

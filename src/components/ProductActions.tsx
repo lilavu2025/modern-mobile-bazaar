@@ -7,16 +7,11 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useCart } from '@/hooks/useCart';
 import { useFavorites } from '@/hooks/useFavorites';
 import { toast } from 'sonner';
+import { Product } from '@/types';
 import QuantitySelector from '@/components/QuantitySelector';
 
 interface ProductActionsProps {
-  product: {
-    id: string;
-    name: string;
-    description: string;
-    price: number;
-    inStock: boolean;
-  };
+  product: Product;
   onBuyNow: () => void;
 }
 
