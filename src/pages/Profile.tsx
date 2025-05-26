@@ -20,10 +20,11 @@ const Profile: React.FC = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Add safety check for profile data
   const [profileData, setProfileData] = useState({
     full_name: profile?.full_name || '',
     phone: profile?.phone || '',
-    user_type: profile?.user_type || 'retail',
+    user_type: (profile?.user_type as 'admin' | 'wholesale' | 'retail') || 'retail',
   });
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
@@ -60,6 +61,15 @@ const Profile: React.FC = () => {
     }
   };
 
+  // Show loading if user or profile is not available yet
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header 
@@ -88,7 +98,7 @@ const Profile: React.FC = () => {
             <CardContent className="space-y-4">
               <div>
                 <p className="text-sm text-gray-600">{t('fullName')}</p>
-                <p className="font-medium">{profile?.full_name}</p>
+                <p className="font-medium">{profile?.full_name || t('notProvided')}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-600">{t('email')}</p>
