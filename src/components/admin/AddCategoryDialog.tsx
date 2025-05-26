@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,10 +10,9 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from '@/components/ui/dialog';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import { useQueryClient } from '@tanstack/react-query';
+import { toast } from '@/hooks/use-toast';
 import ImageUpload from '@/components/ImageUpload';
 
 interface AddCategoryDialogProps {
@@ -21,65 +21,64 @@ interface AddCategoryDialogProps {
   onSuccess: () => void;
 }
 
-const AddCategoryDialog: React.FC<AddCategoryDialogProps> = ({ open, onOpenChange, onSuccess }) => {
+const AddCategoryDialog: React.FC<AddCategoryDialogProps> = ({
+  open,
+  onOpenChange,
+  onSuccess,
+}) => {
   const { t } = useLanguage();
-  const queryClient = useQueryClient();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    nameAr: '',
-    nameEn: '',
-    nameHe: '',
+    name_ar: '',
+    name_en: '',
+    name_he: '',
+    image: '',
     icon: '',
-    image: ''
   });
-  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formData.image) {
-      toast.error('يرجى إضافة صورة للفئة');
-      return;
-    }
-    
-    setIsLoading(true);
+    setIsSubmitting(true);
 
     try {
       const { error } = await supabase
         .from('categories')
         .insert([
           {
-            name_ar: formData.nameAr,
-            name_en: formData.nameEn,
-            name_he: formData.nameHe,
-            icon: formData.icon || '📦',
+            name_ar: formData.name_ar,
+            name_en: formData.name_en,
+            name_he: formData.name_he,
             image: formData.image,
-            active: true
-          }
+            icon: formData.icon,
+          },
         ]);
 
       if (error) throw error;
 
-      toast.success(t('categoryAddedSuccessfully'));
-      
-      // Reset form
-      setFormData({
-        nameAr: '',
-        nameEn: '',
-        nameHe: '',
-        icon: '',
-        image: ''
+      toast({
+        title: t('categoryAdded'),
+        description: t('categoryAddedSuccessfully'),
       });
-      
-      // Refresh categories data
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
-      onSuccess();
-      
+
+      setFormData({
+        name_ar: '',
+        name_en: '',
+        name_he: '',
+        image: '',
+        icon: '',
+      });
+
       onOpenChange(false);
+      onSuccess();
     } catch (error) {
       console.error('Error adding category:', error);
-      toast.error(t('errorAddingCategory'));
+      toast({
+        title: t('error'),
+        description: t('errorAddingCategory'),
+        variant: 'destructive',
+      });
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -98,46 +97,35 @@ const AddCategoryDialog: React.FC<AddCategoryDialogProps> = ({ open, onOpenChang
         <DialogHeader>
           <DialogTitle>{t('addCategory')}</DialogTitle>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 gap-4">
-            <div>
-              <Label htmlFor="nameAr">{t('categoryName')} (العربية)</Label>
-              <Input
-                id="nameAr"
-                value={formData.nameAr}
-                onChange={(e) => handleInputChange('nameAr', e.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="nameEn">{t('categoryName')} (English)</Label>
-              <Input
-                id="nameEn"
-                value={formData.nameEn}
-                onChange={(e) => handleInputChange('nameEn', e.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="nameHe">{t('categoryName')} (עברית)</Label>
-              <Input
-                id="nameHe"
-                value={formData.nameHe}
-                onChange={(e) => handleInputChange('nameHe', e.target.value)}
-                required
-              />
-            </div>
+          <div>
+            <Label htmlFor="name_ar">{t('categoryNameArabic')}</Label>
+            <Input
+              id="name_ar"
+              value={formData.name_ar}
+              onChange={(e) => handleInputChange('name_ar', e.target.value)}
+              required
+            />
           </div>
 
           <div>
-            <Label htmlFor="icon">{t('categoryIcon')} (Emoji)</Label>
+            <Label htmlFor="name_en">{t('categoryNameEnglish')}</Label>
             <Input
-              id="icon"
-              value={formData.icon}
-              onChange={(e) => handleInputChange('icon', e.target.value)}
-              placeholder="🛍️"
-              maxLength={2}
+              id="name_en"
+              value={formData.name_en}
+              onChange={(e) => handleInputChange('name_en', e.target.value)}
+              required
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="name_he">{t('categoryNameHebrew')}</Label>
+            <Input
+              id="name_he"
+              value={formData.name_he}
+              onChange={(e) => handleInputChange('name_he', e.target.value)}
+              required
             />
           </div>
 
@@ -149,14 +137,24 @@ const AddCategoryDialog: React.FC<AddCategoryDialogProps> = ({ open, onOpenChang
             placeholder="https://example.com/category-image.jpg"
           />
 
-          <div className="flex justify-end gap-3">
+          <div>
+            <Label htmlFor="icon">{t('categoryIcon')}</Label>
+            <Input
+              id="icon"
+              value={formData.icon}
+              onChange={(e) => handleInputChange('icon', e.target.value)}
+              placeholder="📱"
+            />
+          </div>
+
+          <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               {t('cancel')}
             </Button>
-            <Button type="submit" disabled={isLoading || !formData.image}>
-              {isLoading ? t('saving') : t('save')}
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? t('adding') : t('addCategory')}
             </Button>
-          </div>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
