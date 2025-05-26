@@ -93,10 +93,10 @@ const AdminDashboardStats: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 max-w-7xl mx-auto">
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+        <Card className="hover:shadow-lg transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{t('totalUsers')}</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
@@ -111,7 +111,7 @@ const AdminDashboardStats: React.FC = () => {
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="hover:shadow-lg transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{t('totalProducts')}</CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
@@ -126,7 +126,7 @@ const AdminDashboardStats: React.FC = () => {
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="hover:shadow-lg transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{t('totalOrders')}</CardTitle>
             <ShoppingCart className="h-4 w-4 text-muted-foreground" />
@@ -141,7 +141,7 @@ const AdminDashboardStats: React.FC = () => {
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="hover:shadow-lg transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{t('totalRevenue')}</CardTitle>
             <BarChart3 className="h-4 w-4 text-muted-foreground" />
@@ -157,117 +157,135 @@ const AdminDashboardStats: React.FC = () => {
         </Card>
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Charts Grid */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 lg:gap-8">
         {/* Users Distribution Chart */}
-        <Card>
+        <Card className="hover:shadow-lg transition-shadow">
           <CardHeader>
-            <CardTitle>{t('usersDistribution')}</CardTitle>
+            <CardTitle className="text-lg font-semibold">{t('usersDistribution')}</CardTitle>
           </CardHeader>
-          <CardContent>
-            <ChartContainer config={chartConfig} className="h-[300px]">
-              <PieChart>
-                <Pie
-                  data={usersStats}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={120}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {usersStats.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <ChartTooltip content={<ChartTooltipContent />} />
-              </PieChart>
-            </ChartContainer>
+          <CardContent className="p-4">
+            <div className="w-full h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={usersStats}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={100}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {usersStats.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
 
         {/* Products by Category Chart */}
-        <Card>
+        <Card className="hover:shadow-lg transition-shadow">
           <CardHeader>
-            <CardTitle>{t('productsByCategory')}</CardTitle>
+            <CardTitle className="text-lg font-semibold">{t('productsByCategory')}</CardTitle>
           </CardHeader>
-          <CardContent>
-            <ChartContainer config={chartConfig} className="h-[300px]">
-              <BarChart data={productsStats}>
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Bar dataKey="inStock" fill="#10b981" name={t('inStock')} />
-                <Bar dataKey="outOfStock" fill="#ef4444" name={t('outOfStock')} />
-                <ChartTooltip content={<ChartTooltipContent />} />
-              </BarChart>
-            </ChartContainer>
+          <CardContent className="p-4">
+            <div className="w-full h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={productsStats} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <XAxis 
+                    dataKey="name" 
+                    tick={{ fontSize: 12 }}
+                    interval={0}
+                    angle={-45}
+                    textAnchor="end"
+                    height={80}
+                  />
+                  <YAxis tick={{ fontSize: 12 }} />
+                  <Bar dataKey="inStock" fill="#10b981" name={t('inStock')} />
+                  <Bar dataKey="outOfStock" fill="#ef4444" name={t('outOfStock')} />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
+      </div>
 
+      {/* Bottom Row Charts */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 lg:gap-8">
         {/* Orders Trend Chart */}
-        <Card>
+        <Card className="xl:col-span-2 hover:shadow-lg transition-shadow">
           <CardHeader>
-            <CardTitle>{t('ordersAndRevenueTrend')}</CardTitle>
+            <CardTitle className="text-lg font-semibold">{t('ordersAndRevenueTrend')}</CardTitle>
           </CardHeader>
-          <CardContent>
-            <ChartContainer config={chartConfig} className="h-[300px]">
-              <LineChart data={ordersData}>
-                <XAxis dataKey="month" />
-                <YAxis yAxisId="left" />
-                <YAxis yAxisId="right" orientation="right" />
-                <Line 
-                  yAxisId="left" 
-                  type="monotone" 
-                  dataKey="orders" 
-                  stroke="#3b82f6" 
-                  strokeWidth={2}
-                  name={t('orders')}
-                />
-                <Line 
-                  yAxisId="right" 
-                  type="monotone" 
-                  dataKey="revenue" 
-                  stroke="#ef4444" 
-                  strokeWidth={2}
-                  name={t('revenue')}
-                />
-                <ChartTooltip content={<ChartTooltipContent />} />
-              </LineChart>
-            </ChartContainer>
+          <CardContent className="p-4">
+            <div className="w-full h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={ordersData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                  <YAxis yAxisId="left" tick={{ fontSize: 12 }} />
+                  <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12 }} />
+                  <Line 
+                    yAxisId="left" 
+                    type="monotone" 
+                    dataKey="orders" 
+                    stroke="#3b82f6" 
+                    strokeWidth={3}
+                    name={t('orders')}
+                    dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
+                  />
+                  <Line 
+                    yAxisId="right" 
+                    type="monotone" 
+                    dataKey="revenue" 
+                    stroke="#ef4444" 
+                    strokeWidth={3}
+                    name={t('revenue')}
+                    dot={{ fill: '#ef4444', strokeWidth: 2, r: 4 }}
+                  />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
 
         {/* Recent Activity */}
-        <Card>
+        <Card className="hover:shadow-lg transition-shadow">
           <CardHeader>
-            <CardTitle>{t('recentActivity')}</CardTitle>
+            <CardTitle className="text-lg font-semibold">{t('recentActivity')}</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center space-x-4">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <div className="flex-1">
-                <p className="text-sm font-medium">{t('newUserRegistered')}</p>
+          <CardContent className="space-y-6 p-4">
+            <div className="flex items-start space-x-4 rtl:space-x-reverse">
+              <div className="w-3 h-3 bg-green-500 rounded-full mt-1 flex-shrink-0"></div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{t('newUserRegistered')}</p>
                 <p className="text-xs text-muted-foreground">منذ 5 دقائق</p>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
-              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-              <div className="flex-1">
-                <p className="text-sm font-medium">{t('newOrderReceived')}</p>
+            <div className="flex items-start space-x-4 rtl:space-x-reverse">
+              <div className="w-3 h-3 bg-blue-500 rounded-full mt-1 flex-shrink-0"></div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{t('newOrderReceived')}</p>
                 <p className="text-xs text-muted-foreground">منذ 15 دقيقة</p>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
-              <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-              <div className="flex-1">
-                <p className="text-sm font-medium">{t('productOutOfStock')}</p>
+            <div className="flex items-start space-x-4 rtl:space-x-reverse">
+              <div className="w-3 h-3 bg-yellow-500 rounded-full mt-1 flex-shrink-0"></div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{t('productOutOfStock')}</p>
                 <p className="text-xs text-muted-foreground">منذ ساعة</p>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
-              <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-              <div className="flex-1">
-                <p className="text-sm font-medium">{t('orderCancelled')}</p>
+            <div className="flex items-start space-x-4 rtl:space-x-reverse">
+              <div className="w-3 h-3 bg-red-500 rounded-full mt-1 flex-shrink-0"></div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{t('orderCancelled')}</p>
                 <p className="text-xs text-muted-foreground">منذ ساعتين</p>
               </div>
             </div>

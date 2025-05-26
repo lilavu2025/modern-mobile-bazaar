@@ -27,39 +27,65 @@ const AdminUsers: React.FC = () => {
   const { data: users = [], isLoading, error } = useQuery({
     queryKey: ['admin-users-extended'],
     queryFn: async () => {
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
+      try {
+        console.log('Fetching users data...');
+        
+        // First fetch profiles
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('*')
+          .order('created_at', { ascending: false });
 
-      if (profilesError) {
-        console.error('Error fetching profiles:', profilesError);
-        throw profilesError;
+        if (profilesError) {
+          console.error('Error fetching profiles:', profilesError);
+          throw new Error(`خطأ في تحميل بيانات المستخدمين: ${profilesError.message}`);
+        }
+
+        console.log('Profiles fetched:', profiles?.length);
+
+        // Try to fetch auth users (this might fail if user doesn't have admin privileges)
+        let authUsers = [];
+        try {
+          const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
+          
+          if (authError) {
+            console.warn('Cannot fetch auth users (admin privileges required):', authError);
+            // If we can't fetch auth users, just use profiles data
+            authUsers = [];
+          } else {
+            authUsers = authData.users || [];
+          }
+        } catch (authError) {
+          console.warn('Auth users fetch failed:', authError);
+          authUsers = [];
+        }
+
+        console.log('Auth users fetched:', authUsers.length);
+
+        // Combine data - prioritize profiles, supplement with auth data if available
+        const combinedUsers: UserProfile[] = profiles.map(profile => {
+          const authUser = authUsers.find(au => au.id === profile.id);
+          return {
+            id: profile.id,
+            full_name: profile.full_name || 'غير محدد',
+            phone: profile.phone,
+            user_type: profile.user_type || 'retail',
+            created_at: profile.created_at,
+            email: authUser?.email || 'غير متاح',
+            email_confirmed_at: authUser?.email_confirmed_at,
+            last_sign_in_at: authUser?.last_sign_in_at,
+          };
+        });
+
+        console.log('Combined users:', combinedUsers.length);
+        return combinedUsers;
+      } catch (error) {
+        console.error('Error in users query:', error);
+        throw error;
       }
-
-      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
-      
-      if (authError) {
-        console.error('Error fetching auth users:', authError);
-        throw authError;
-      }
-
-      const combinedUsers: UserProfile[] = authUsers.users.map(authUser => {
-        const profile = profiles.find(p => p.id === authUser.id);
-        return {
-          id: authUser.id,
-          full_name: profile?.full_name || authUser.user_metadata?.full_name || 'Unknown',
-          phone: profile?.phone || authUser.user_metadata?.phone || null,
-          user_type: profile?.user_type || 'retail',
-          created_at: profile?.created_at || authUser.created_at,
-          email: authUser.email,
-          email_confirmed_at: authUser.email_confirmed_at,
-          last_sign_in_at: authUser.last_sign_in_at,
-        };
-      });
-
-      return combinedUsers;
     },
+    retry: 1,
+    retryDelay: 1000,
   });
 
   const filteredUsers = users.filter((user: UserProfile) => {
@@ -87,7 +113,18 @@ const AdminUsers: React.FC = () => {
   if (error) {
     return (
       <div className="text-center py-8">
-        <p className="text-red-600">خطأ في تحميل بيانات المستخدمين</p>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md mx-auto">
+          <h3 className="text-red-800 font-semibold mb-2">خطأ في تحميل البيانات</h3>
+          <p className="text-red-600 text-sm mb-4">
+            {error instanceof Error ? error.message : 'حدث خطأ غير متوقع'}
+          </p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-700 transition-colors"
+          >
+            إعادة المحاولة
+          </button>
+        </div>
       </div>
     );
   }
