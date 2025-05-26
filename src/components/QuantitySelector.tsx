@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Minus, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +20,11 @@ const QuantitySelector: React.FC<QuantitySelectorProps> = ({
 }) => {
   const { isRTL } = useLanguage();
   const [inputValue, setInputValue] = useState(quantity.toString());
+
+  // Sync input value when quantity prop changes
+  useEffect(() => {
+    setInputValue(quantity.toString());
+  }, [quantity]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;

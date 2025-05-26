@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { CartItem, Product } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -14,19 +13,24 @@ export const useCart = () => {
     const savedCart = localStorage.getItem('cart');
     if (savedCart) {
       try {
-        setCartItems(JSON.parse(savedCart));
+        const parsedCart = JSON.parse(savedCart);
+        console.log('Loading cart from localStorage:', parsedCart);
+        setCartItems(parsedCart);
       } catch (error) {
         console.error('Error loading cart:', error);
+        localStorage.removeItem('cart');
       }
     }
   }, []);
 
   // Save cart to localStorage whenever it changes
   useEffect(() => {
+    console.log('Saving cart to localStorage:', cartItems);
     localStorage.setItem('cart', JSON.stringify(cartItems));
   }, [cartItems]);
 
   const addToCart = (product: Product, quantity: number = 1) => {
+    console.log('Adding to cart:', product, 'quantity:', quantity);
     setIsLoading(true);
     
     setTimeout(() => {
@@ -39,6 +43,7 @@ export const useCart = () => {
               ? { ...item, quantity: item.quantity + quantity }
               : item
           );
+          console.log('Updated existing item in cart:', updatedItems);
           toast.success(`${product.name} ${t('addedToCart')}`);
           return updatedItems;
         } else {
@@ -47,8 +52,10 @@ export const useCart = () => {
             product,
             quantity
           };
+          const newItems = [...prevItems, newItem];
+          console.log('Added new item to cart:', newItems);
           toast.success(`${product.name} ${t('addedToCart')}`);
-          return [...prevItems, newItem];
+          return newItems;
         }
       });
       setIsLoading(false);
@@ -56,6 +63,7 @@ export const useCart = () => {
   };
 
   const buyNow = (product: Product, quantity: number = 1) => {
+    console.log('Buy now called with:', product, 'quantity:', quantity);
     // Clear cart and add this product
     const newItem: CartItem = {
       id: product.id,
@@ -65,10 +73,11 @@ export const useCart = () => {
     setCartItems([newItem]);
     toast.success(`${product.name} ${t('addedToCart')}`);
     
-    // Navigate to checkout
+    // Navigate to checkout immediately
     setTimeout(() => {
+      console.log('Navigating to checkout...');
       window.location.href = '/checkout';
-    }, 500);
+    }, 100);
   };
 
   const removeFromCart = (productId: string) => {
@@ -100,7 +109,9 @@ export const useCart = () => {
   };
 
   const getTotalItems = () => {
-    return cartItems.reduce((total, item) => total + item.quantity, 0);
+    const total = cartItems.reduce((total, item) => total + item.quantity, 0);
+    console.log('Total items in cart:', total);
+    return total;
   };
 
   const getTotalPrice = () => {
@@ -109,7 +120,9 @@ export const useCart = () => {
 
   const getItemQuantity = (productId: string) => {
     const item = cartItems.find(item => item.id === productId);
-    return item ? item.quantity : 0;
+    const quantity = item ? item.quantity : 0;
+    console.log('Getting quantity for product', productId, ':', quantity);
+    return quantity;
   };
 
   return {

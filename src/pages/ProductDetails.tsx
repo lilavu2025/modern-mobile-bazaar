@@ -1,29 +1,32 @@
 
 import React, { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { Star, Heart, Share2, ShoppingCart, Minus, Plus, ArrowRight, Shield, Truck, RotateCcw } from 'lucide-react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { Star, Heart, Share2, ShoppingCart, Minus, Plus, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useProducts } from '@/hooks/useSupabaseData';
 import { useCart } from '@/hooks/useCart';
+import { useFavorites } from '@/hooks/useFavorites';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import Header from '@/components/Header';
 import ProductCard from '@/components/ProductCard';
 import CartSidebar from '@/components/CartSidebar';
+import QuantitySelector from '@/components/QuantitySelector';
 
 const ProductDetails = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { t } = useLanguage();
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   
-  const { addToCart, getItemQuantity } = useCart();
+  const { addToCart, buyNow, getItemQuantity } = useCart();
+  const { toggleFavorite, isFavorite } = useFavorites();
   const { data: products = [], isLoading } = useProducts();
 
   const product = products.find(p => p.id === id);
@@ -60,14 +63,36 @@ const ProductDetails = () => {
   const images = product.images || [product.image];
 
   const handleAddToCart = () => {
+    console.log('Add to cart clicked with quantity:', quantity);
     addToCart(product, quantity);
     setQuantity(1);
   };
 
   const handleBuyNow = () => {
-    addToCart(product, quantity);
-    setIsCartOpen(true);
+    console.log('Buy now clicked with quantity:', quantity);
+    buyNow(product, quantity);
   };
+
+  const handleFavorite = () => {
+    toggleFavorite(product.id);
+  };
+
+  const handleShare = () => {
+    const productUrl = `${window.location.origin}/product/${product.id}`;
+    
+    if (navigator.share) {
+      navigator.share({
+        title: product.name,
+        text: product.description,
+        url: productUrl
+      });
+    } else {
+      navigator.clipboard.writeText(productUrl);
+      toast.success(t('linkCopied'));
+    }
+  };
+
+  const isFav = isFavorite(product.id);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -185,25 +210,12 @@ const ProductDetails = () => {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-semibold mb-2">{t('quantity')}</label>
-                  <div className="flex items-center gap-3">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    >
-                      <Minus className="h-4 w-4" />
-                    </Button>
-                    <span className="w-12 text-center font-semibold text-lg">
-                      {quantity}
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => setQuantity(quantity + 1)}
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <QuantitySelector
+                    quantity={quantity}
+                    onQuantityChange={setQuantity}
+                    max={99}
+                    min={1}
+                  />
                 </div>
 
                 <div className="flex gap-3">
@@ -235,10 +247,20 @@ const ProductDetails = () => {
 
             {/* Action Buttons */}
             <div className="flex gap-3">
-              <Button variant="outline" size="icon" className="flex-1">
-                <Heart className="h-5 w-5" />
+              <Button 
+                variant="outline" 
+                size="icon" 
+                className={`flex-1 ${isFav ? 'text-red-500' : ''}`}
+                onClick={handleFavorite}
+              >
+                <Heart className={`h-5 w-5 ${isFav ? 'fill-current' : ''}`} />
               </Button>
-              <Button variant="outline" size="icon" className="flex-1">
+              <Button 
+                variant="outline" 
+                size="icon" 
+                className="flex-1"
+                onClick={handleShare}
+              >
                 <Share2 className="h-5 w-5" />
               </Button>
             </div>
