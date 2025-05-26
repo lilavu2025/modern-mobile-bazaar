@@ -39,7 +39,7 @@ export const useCart = () => {
               ? { ...item, quantity: item.quantity + quantity }
               : item
           );
-          toast.success(t('productAddedToCart'));
+          toast.success(`${product.name} ${t('addedToCart')}`);
           return updatedItems;
         } else {
           const newItem: CartItem = {
@@ -47,12 +47,28 @@ export const useCart = () => {
             product,
             quantity
           };
-          toast.success(t('productAddedToCart'));
+          toast.success(`${product.name} ${t('addedToCart')}`);
           return [...prevItems, newItem];
         }
       });
       setIsLoading(false);
-    }, 300);
+    }, 100);
+  };
+
+  const buyNow = (product: Product, quantity: number = 1) => {
+    // Clear cart and add this product
+    const newItem: CartItem = {
+      id: product.id,
+      product,
+      quantity
+    };
+    setCartItems([newItem]);
+    toast.success(`${product.name} ${t('addedToCart')}`);
+    
+    // Navigate to checkout
+    setTimeout(() => {
+      window.location.href = '/checkout';
+    }, 500);
   };
 
   const removeFromCart = (productId: string) => {
@@ -100,6 +116,7 @@ export const useCart = () => {
     cartItems,
     isLoading,
     addToCart,
+    buyNow,
     removeFromCart,
     updateQuantity,
     clearCart,
