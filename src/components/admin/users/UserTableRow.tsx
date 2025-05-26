@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -9,6 +8,8 @@ import { format } from 'date-fns';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from 'sonner';
 import EditUserDialog from '../EditUserDialog';
+import UserDetailsDialog from './UserDetailsDialog';
+import UserOrdersDialog from './UserOrdersDialog';
 
 interface UserProfile {
   id: string;
@@ -19,6 +20,8 @@ interface UserProfile {
   email?: string;
   email_confirmed_at?: string;
   last_sign_in_at?: string;
+  last_order_date?: string;
+  highest_order_value?: number;
 }
 
 interface UserTableRowProps {
@@ -28,6 +31,8 @@ interface UserTableRowProps {
 
 const UserTableRow: React.FC<UserTableRowProps> = ({ user, index }) => {
   const { t } = useLanguage();
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  const [showOrdersDialog, setShowOrdersDialog] = useState(false);
 
   const getUserTypeColor = (userType: string) => {
     switch (userType) {
@@ -52,104 +57,116 @@ const UserTableRow: React.FC<UserTableRowProps> = ({ user, index }) => {
   };
 
   const handleViewDetails = () => {
-    toast.info(`عرض تفاصيل المستخدم: ${user.full_name}`);
-    console.log('View user details:', user);
+    setShowDetailsDialog(true);
   };
 
   const handleViewOrders = () => {
-    toast.info(`عرض طلبيات المستخدم: ${user.full_name}`);
-    console.log('View user orders:', user);
+    setShowOrdersDialog(true);
   };
 
   return (
-    <TableRow className="hover:bg-gray-50 transition-colors duration-200">
-      <TableCell className="font-medium p-2 lg:p-4">
-        <div className="flex items-center gap-2 lg:gap-3">
-          <div className="w-8 h-8 lg:w-10 lg:h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold text-xs lg:text-sm flex-shrink-0">
-            {user.full_name?.charAt(0) || 'U'}
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="font-medium text-gray-900 text-xs lg:text-sm truncate">
-              {user.full_name || t('notProvided')}
+    <>
+      <TableRow className="hover:bg-gray-50 transition-colors duration-200">
+        <TableCell className="font-medium p-2 lg:p-4">
+          <div className="flex items-center gap-2 lg:gap-3">
+            <div className="w-8 h-8 lg:w-10 lg:h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold text-xs lg:text-sm flex-shrink-0">
+              {user.full_name?.charAt(0) || 'U'}
             </div>
-            <div className="text-xs text-gray-500">#{index + 1}</div>
+            <div className="min-w-0 flex-1">
+              <div className="font-medium text-gray-900 text-xs lg:text-sm truncate">
+                {user.full_name || t('notProvided')}
+              </div>
+              <div className="text-xs text-gray-500">#{index + 1}</div>
+            </div>
           </div>
-        </div>
-      </TableCell>
-      
-      <TableCell className="p-2 lg:p-4">
-        <div className="space-y-1">
+        </TableCell>
+        
+        <TableCell className="p-2 lg:p-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-1 lg:gap-2">
+              <Mail className="h-3 w-3 text-gray-400 flex-shrink-0" />
+              <span className="text-xs lg:text-sm text-gray-600 truncate">
+                {user.email}
+              </span>
+            </div>
+            {user.phone && (
+              <div className="flex items-center gap-1 lg:gap-2">
+                <Phone className="h-3 w-3 text-gray-400 flex-shrink-0" />
+                <span className="text-xs lg:text-sm text-gray-600">{user.phone}</span>
+              </div>
+            )}
+          </div>
+        </TableCell>
+        
+        <TableCell className="p-2 lg:p-4">
+          <Badge className={`${getUserTypeColor(user.user_type)} px-2 lg:px-3 py-1 text-xs font-medium border-0`}>
+            <span className="ml-1">{getUserTypeIcon(user.user_type)}</span>
+            {t(user.user_type)}
+          </Badge>
+        </TableCell>
+        
+        <TableCell className="p-2 lg:p-4">
           <div className="flex items-center gap-1 lg:gap-2">
-            <Mail className="h-3 w-3 text-gray-400 flex-shrink-0" />
-            <span className="text-xs lg:text-sm text-gray-600 truncate">
-              {user.email}
+            {user.email_confirmed_at ? (
+              <>
+                <CheckCircle className="h-3 w-3 lg:h-4 lg:w-4 text-green-500 flex-shrink-0" />
+                <span className="text-xs lg:text-sm text-green-600 font-medium">مؤكد</span>
+              </>
+            ) : (
+              <>
+                <XCircle className="h-3 w-3 lg:h-4 lg:w-4 text-orange-500 flex-shrink-0" />
+                <span className="text-xs lg:text-sm text-orange-600 font-medium">غير مؤكد</span>
+              </>
+            )}
+          </div>
+        </TableCell>
+        
+        <TableCell className="hidden lg:table-cell p-2 lg:p-4">
+          <div className="flex items-center gap-2 text-gray-600">
+            <Calendar className="h-4 w-4 flex-shrink-0" />
+            <span className="text-sm">
+              {format(new Date(user.created_at), 'PPP')}
             </span>
           </div>
-          {user.phone && (
-            <div className="flex items-center gap-1 lg:gap-2">
-              <Phone className="h-3 w-3 text-gray-400 flex-shrink-0" />
-              <span className="text-xs lg:text-sm text-gray-600">{user.phone}</span>
-            </div>
-          )}
-        </div>
-      </TableCell>
-      
-      <TableCell className="p-2 lg:p-4">
-        <Badge className={`${getUserTypeColor(user.user_type)} px-2 lg:px-3 py-1 text-xs font-medium border-0`}>
-          <span className="ml-1">{getUserTypeIcon(user.user_type)}</span>
-          {t(user.user_type)}
-        </Badge>
-      </TableCell>
-      
-      <TableCell className="p-2 lg:p-4">
-        <div className="flex items-center gap-1 lg:gap-2">
-          {user.email_confirmed_at ? (
-            <>
-              <CheckCircle className="h-3 w-3 lg:h-4 lg:w-4 text-green-500 flex-shrink-0" />
-              <span className="text-xs lg:text-sm text-green-600 font-medium">مؤكد</span>
-            </>
-          ) : (
-            <>
-              <XCircle className="h-3 w-3 lg:h-4 lg:w-4 text-orange-500 flex-shrink-0" />
-              <span className="text-xs lg:text-sm text-orange-600 font-medium">غير مؤكد</span>
-            </>
-          )}
-        </div>
-      </TableCell>
-      
-      <TableCell className="hidden lg:table-cell p-2 lg:p-4">
-        <div className="flex items-center gap-2 text-gray-600">
-          <Calendar className="h-4 w-4 flex-shrink-0" />
-          <span className="text-sm">
-            {format(new Date(user.created_at), 'PPP')}
-          </span>
-        </div>
-      </TableCell>
-      
-      <TableCell className="p-2 lg:p-4">
-        <div className="flex items-center gap-1 lg:gap-2">
-          <EditUserDialog user={user} />
-          
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-6 w-6 lg:h-8 lg:w-8 p-0">
-                <MoreVertical className="h-3 w-3 lg:h-4 lg:w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={handleViewDetails} className="text-xs lg:text-sm cursor-pointer">
-                <Eye className="h-3 w-3 lg:h-4 lg:w-4 mr-2" />
-                عرض التفاصيل
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleViewOrders} className="text-xs lg:text-sm cursor-pointer">
-                <ShoppingBag className="h-3 w-3 lg:h-4 lg:w-4 mr-2" />
-                عرض الطلبيات
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </TableCell>
-    </TableRow>
+        </TableCell>
+        
+        <TableCell className="p-2 lg:p-4">
+          <div className="flex items-center gap-1 lg:gap-2">
+            <EditUserDialog user={user} />
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-6 w-6 lg:h-8 lg:w-8 p-0">
+                  <MoreVertical className="h-3 w-3 lg:h-4 lg:w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={handleViewDetails} className="text-xs lg:text-sm cursor-pointer">
+                  <Eye className="h-3 w-3 lg:h-4 lg:w-4 mr-2" />
+                  عرض التفاصيل
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleViewOrders} className="text-xs lg:text-sm cursor-pointer">
+                  <ShoppingBag className="h-3 w-3 lg:h-4 lg:w-4 mr-2" />
+                  عرض الطلبيات
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </TableCell>
+      </TableRow>
+
+      {/* Dialogs */}
+      <UserDetailsDialog 
+        user={user} 
+        open={showDetailsDialog} 
+        onOpenChange={setShowDetailsDialog} 
+      />
+      <UserOrdersDialog 
+        user={user} 
+        open={showOrdersDialog} 
+        onOpenChange={setShowOrdersDialog} 
+      />
+    </>
   );
 };
 
