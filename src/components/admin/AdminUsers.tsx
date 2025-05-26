@@ -20,8 +20,9 @@ interface UserProfile {
 
 const AdminUsers: React.FC = () => {
   const { isRTL } = useLanguage();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState<'all' | 'admin' | 'wholesale' | 'retail' | 'confirmed' | 'unconfirmed'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [userTypeFilter, setUserTypeFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
 
   const { data: users = [], isLoading, error } = useQuery({
     queryKey: ['admin-users-extended'],
@@ -62,23 +63,25 @@ const AdminUsers: React.FC = () => {
   });
 
   const filteredUsers = users.filter((user: UserProfile) => {
-    const matchesSearch = user.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesSearch = user.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         (user.email && user.email.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                         (user.phone && user.phone.includes(searchQuery));
     
-    const matchesFilter = (() => {
-      switch (filterType) {
+    const matchesUserType = userTypeFilter === 'all' || user.user_type === userTypeFilter;
+    
+    const matchesStatus = (() => {
+      switch (statusFilter) {
         case 'confirmed':
           return !!user.email_confirmed_at;
         case 'unconfirmed':
           return !user.email_confirmed_at;
         case 'all':
-          return true;
         default:
-          return user.user_type === filterType;
+          return true;
       }
     })();
 
-    return matchesSearch && matchesFilter;
+    return matchesSearch && matchesUserType && matchesStatus;
   });
 
   if (error) {
@@ -100,16 +103,20 @@ const AdminUsers: React.FC = () => {
         </p>
       </div>
 
-      <UserStatsCards users={users} isLoading={isLoading} />
-      
-      <UserFilters 
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        filterType={filterType}
-        setFilterType={setFilterType}
-      />
+      <div className="space-y-6">
+        <UserStatsCards users={users} />
+        
+        <UserFilters 
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          userTypeFilter={userTypeFilter}
+          setUserTypeFilter={setUserTypeFilter}
+          statusFilter={statusFilter}
+          setStatusFilter={setStatusFilter}
+        />
 
-      <UsersTable users={filteredUsers} isLoading={isLoading} />
+        <UsersTable users={filteredUsers} isLoading={isLoading} />
+      </div>
     </div>
   );
 };
