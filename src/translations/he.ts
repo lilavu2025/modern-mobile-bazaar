@@ -141,7 +141,7 @@ export const heTranslations = {
   lastOrder: 'הזמנה אחרונה',
   highestOrder: 'הזמנה הגבוהה ביותר',
   name: 'שם',
-  contact: 'יצירת קשר',
+  contactInfo: 'פרטי התקשרות',
   type: 'סוג',
   status: 'סטטוס',
   actions: 'פעולות',

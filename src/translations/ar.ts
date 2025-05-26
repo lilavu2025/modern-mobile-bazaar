@@ -141,7 +141,7 @@ export const arTranslations = {
   lastOrder: 'آخر طلبية',
   highestOrder: 'أكبر طلبية',
   name: 'الاسم',
-  contact: 'الاتصال',
+  contactInfo: 'معلومات الاتصال',
   type: 'النوع',
   status: 'الحالة',
   actions: 'الإجراءات',

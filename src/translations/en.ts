@@ -141,7 +141,7 @@ export const enTranslations = {
   lastOrder: 'Last Order',
   highestOrder: 'Highest Order',
   name: 'Name',
-  contact: 'Contact',
+  contactInfo: 'Contact Info',
   type: 'Type',
   status: 'Status',
   actions: 'Actions',
