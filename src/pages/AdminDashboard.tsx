@@ -24,71 +24,7 @@ import AdminProducts from '@/components/admin/AdminProducts';
 import AdminCategories from '@/components/admin/AdminCategories';
 import AdminOrders from '@/components/admin/AdminOrders';
 import AdminUsers from '@/components/admin/AdminUsers';
-
-// Sub-component for admin overview
-const AdminOverview: React.FC = () => {
-  const { t } = useLanguage();
-  
-  return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold">{t('dashboard')}</h1>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('totalProducts')}</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">0</div>
-            <p className="text-xs text-muted-foreground">
-              {t('activeProducts')}
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('totalOrders')}</CardTitle>
-            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">0</div>
-            <p className="text-xs text-muted-foreground">
-              {t('pendingOrders')}
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('totalUsers')}</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">0</div>
-            <p className="text-xs text-muted-foreground">
-              {t('registeredUsers')}
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('totalRevenue')}</CardTitle>
-            <BarChart3 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">0 {t('currency')}</div>
-            <p className="text-xs text-muted-foreground">
-              {t('thisMonth')}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
-};
+import AdminDashboardStats from '@/components/admin/AdminDashboardStats';
 
 const AdminDashboard: React.FC = () => {
   const { profile, signOut } = useAuth();
@@ -167,7 +103,7 @@ const AdminDashboard: React.FC = () => {
       {/* Main Content */}
       <div className="flex-1 p-8">
         <Routes>
-          <Route path="/" element={<AdminOverview />} />
+          <Route path="/" element={<AdminDashboardStats />} />
           <Route path="/products" element={<AdminProducts />} />
           <Route path="/categories" element={<AdminCategories />} />
           <Route path="/orders" element={<AdminOrders />} />

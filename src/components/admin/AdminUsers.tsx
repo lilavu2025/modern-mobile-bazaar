@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/table';
 import { Users, UserCheck, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
+import EditUserDialog from './EditUserDialog';
 
 interface UserProfile {
   id: string;
@@ -77,7 +78,7 @@ const AdminUsers: React.FC = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{t('totalUsers')}</CardTitle>
@@ -111,6 +112,18 @@ const AdminUsers: React.FC = () => {
             </div>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">{t('adminUsers')}</CardTitle>
+            <UserCheck className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {users.filter(user => user.user_type === 'admin').length}
+            </div>
+          </CardContent>
+        </Card>
       </div>
       
       <Card>
@@ -136,6 +149,7 @@ const AdminUsers: React.FC = () => {
                   <TableHead>{t('phone')}</TableHead>
                   <TableHead>{t('userType')}</TableHead>
                   <TableHead>{t('registrationDate')}</TableHead>
+                  <TableHead>{t('actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -157,6 +171,9 @@ const AdminUsers: React.FC = () => {
                         <Calendar className="h-4 w-4 text-gray-400" />
                         {format(new Date(user.created_at), 'PPP')}
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      <EditUserDialog user={user} />
                     </TableCell>
                   </TableRow>
                 ))}
