@@ -38,9 +38,11 @@ interface Product {
 
 interface Category {
   id: string;
-  name_ar: string;
-  name_en: string;
-  name_he: string;
+  name: string;
+  nameEn: string;
+  image: string;
+  icon: string;
+  count: number;
 }
 
 interface EditProductDialogProps {
@@ -226,7 +228,7 @@ const EditProductDialog: React.FC<EditProductDialogProps> = ({
               <SelectContent>
                 {categories.map((category) => (
                   <SelectItem key={category.id} value={category.id}>
-                    {category.name_ar} - {category.name_en}
+                    {category.name} - {category.nameEn}
                   </SelectItem>
                 ))}
               </SelectContent>
