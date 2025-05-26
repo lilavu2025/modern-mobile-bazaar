@@ -8,9 +8,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { User, Settings, MapPin } from 'lucide-react';
+import { User, Settings, MapPin, Shield } from 'lucide-react';
 
 const Profile: React.FC = () => {
   const { user, profile, updateProfile } = useAuth();
@@ -22,6 +23,7 @@ const Profile: React.FC = () => {
   const [profileData, setProfileData] = useState({
     full_name: profile?.full_name || '',
     phone: profile?.phone || '',
+    user_type: profile?.user_type || 'retail',
   });
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
@@ -42,6 +44,19 @@ const Profile: React.FC = () => {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const getUserTypeLabel = (userType: string) => {
+    switch (userType) {
+      case 'admin':
+        return t('admin');
+      case 'wholesale':
+        return t('wholesale');
+      case 'retail':
+        return t('retail');
+      default:
+        return userType;
     }
   };
 
@@ -83,12 +98,13 @@ const Profile: React.FC = () => {
                 <p className="text-sm text-gray-600">{t('phone')}</p>
                 <p className="font-medium">{profile?.phone || t('notProvided')}</p>
               </div>
-              {profile?.is_admin && (
-                <div>
-                  <p className="text-sm text-gray-600">{t('accountType')}</p>
-                  <p className="font-medium text-primary">{t('admin')}</p>
+              <div>
+                <p className="text-sm text-gray-600">{t('accountType')}</p>
+                <div className="flex items-center gap-2">
+                  {profile?.user_type === 'admin' && <Shield className="h-4 w-4 text-red-500" />}
+                  <p className="font-medium text-primary">{getUserTypeLabel(profile?.user_type || 'retail')}</p>
                 </div>
-              )}
+              </div>
             </CardContent>
           </Card>
 
@@ -128,6 +144,26 @@ const Profile: React.FC = () => {
                         onChange={(e) => setProfileData(prev => ({ ...prev, phone: e.target.value }))}
                       />
                     </div>
+
+                    {profile?.user_type === 'admin' && (
+                      <div className="space-y-2">
+                        <Label htmlFor="user_type">{t('userType')}</Label>
+                        <Select
+                          value={profileData.user_type}
+                          onValueChange={(value: 'admin' | 'wholesale' | 'retail') => 
+                            setProfileData(prev => ({ ...prev, user_type: value }))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="admin">{t('admin')}</SelectItem>
+                            <SelectItem value="wholesale">{t('wholesale')}</SelectItem>
+                            <SelectItem value="retail">{t('retail')}</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
 
                     <div className="space-y-2">
                       <Label htmlFor="email">{t('email')}</Label>

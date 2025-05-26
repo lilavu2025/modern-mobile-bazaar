@@ -250,6 +250,7 @@ export type Database = {
           stock_quantity: number | null
           tags: string[] | null
           updated_at: string
+          wholesale_price: number | null
         }
         Insert: {
           active?: boolean | null
@@ -274,6 +275,7 @@ export type Database = {
           stock_quantity?: number | null
           tags?: string[] | null
           updated_at?: string
+          wholesale_price?: number | null
         }
         Update: {
           active?: boolean | null
@@ -298,6 +300,7 @@ export type Database = {
           stock_quantity?: number | null
           tags?: string[] | null
           updated_at?: string
+          wholesale_price?: number | null
         }
         Relationships: [
           {
@@ -314,25 +317,25 @@ export type Database = {
           created_at: string
           full_name: string
           id: string
-          is_admin: boolean | null
           phone: string | null
           updated_at: string
+          user_type: Database["public"]["Enums"]["user_type"] | null
         }
         Insert: {
           created_at?: string
           full_name: string
           id: string
-          is_admin?: boolean | null
           phone?: string | null
           updated_at?: string
+          user_type?: Database["public"]["Enums"]["user_type"] | null
         }
         Update: {
           created_at?: string
           full_name?: string
           id?: string
-          is_admin?: boolean | null
           phone?: string | null
           updated_at?: string
+          user_type?: Database["public"]["Enums"]["user_type"] | null
         }
         Relationships: []
       }
@@ -344,7 +347,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      user_type: "admin" | "wholesale" | "retail"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -459,6 +462,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      user_type: ["admin", "wholesale", "retail"],
+    },
   },
 } as const

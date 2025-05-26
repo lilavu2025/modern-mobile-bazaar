@@ -7,7 +7,7 @@ interface Profile {
   id: string;
   full_name: string;
   phone: string | null;
-  is_admin: boolean;
+  user_type: 'admin' | 'wholesale' | 'retail';
 }
 
 interface AuthContextType {

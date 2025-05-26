@@ -7,6 +7,7 @@ export interface Product {
   descriptionEn: string;
   price: number;
   originalPrice?: number;
+  wholesalePrice?: number;
   image: string;
   images?: string[];
   category: string;
@@ -63,7 +64,7 @@ export interface User {
   phone: string;
   addresses: Address[];
   orders: Order[];
-  isAdmin?: boolean;
+  userType?: 'admin' | 'wholesale' | 'retail';
 }
 
 export interface Banner {
@@ -85,6 +86,7 @@ export interface DatabaseProduct {
   description_he: string;
   price: number;
   original_price?: number;
+  wholesale_price?: number;
   image: string;
   images?: string[];
   category_id: string;

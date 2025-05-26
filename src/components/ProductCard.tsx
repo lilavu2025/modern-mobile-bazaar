@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Product } from '@/types';
 import { useCart } from '@/hooks/useCart';
+import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
 
 interface ProductCardProps {
@@ -15,6 +16,7 @@ interface ProductCardProps {
 
 const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }) => {
   const { addToCart, getItemQuantity } = useCart();
+  const { profile } = useAuth();
   const quantity = getItemQuantity(product.id);
 
   const handleAddToCart = (e: React.MouseEvent) => {
@@ -29,6 +31,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }) => {
     onQuickView?.(product);
   };
 
+  // عرض السعر المناسب حسب نوع المستخدم
+  const isWholesale = profile?.user_type === 'wholesale';
+  const displayPrice = product.price;
+  const showWholesaleLabel = isWholesale && product.wholesalePrice;
+
   return (
     <Card className="product-card group relative overflow-hidden">
       <div className="relative overflow-hidden">
@@ -42,6 +49,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }) => {
         
         {/* Badges */}
         <div className="absolute top-2 right-2 flex flex-col gap-1">
+          {showWholesaleLabel && (
+            <Badge className="bg-blue-500 hover:bg-blue-600">
+              سعر الجملة
+            </Badge>
+          )}
           {product.discount && (
             <Badge variant="destructive" className="animate-bounce-in">
               خصم {product.discount}%
@@ -111,7 +123,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }) => {
         {/* Price */}
         <div className="flex items-center gap-2 mb-3">
           <span className="text-xl font-bold text-primary">
-            {product.price} ر.س
+            {displayPrice} ر.س
           </span>
           {product.originalPrice && (
             <span className="text-sm text-gray-500 line-through">

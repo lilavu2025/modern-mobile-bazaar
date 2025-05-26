@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const useCategories = () => {
   const { language } = useLanguage();
@@ -32,9 +33,10 @@ export const useCategories = () => {
 
 export const useProducts = (categoryId?: string) => {
   const { language } = useLanguage();
+  const { profile } = useAuth();
   
   return useQuery({
-    queryKey: ['products', categoryId, language],
+    queryKey: ['products', categoryId, language, profile?.user_type],
     queryFn: async () => {
       let query = supabase
         .from('products')
@@ -49,24 +51,33 @@ export const useProducts = (categoryId?: string) => {
 
       if (error) throw error;
 
-      return data.map(product => ({
-        id: product.id,
-        name: product[`name_${language}` as keyof typeof product] as string,
-        nameEn: product.name_en,
-        description: product[`description_${language}` as keyof typeof product] as string,
-        descriptionEn: product.description_en,
-        price: Number(product.price),
-        originalPrice: product.original_price ? Number(product.original_price) : undefined,
-        image: product.image,
-        images: product.images || [],
-        category: product.categories[`name_${language}` as keyof typeof product.categories] as string,
-        inStock: product.in_stock || false,
-        rating: Number(product.rating) || 0,
-        reviews: product.reviews_count || 0,
-        discount: product.discount ? Number(product.discount) : undefined,
-        featured: product.featured || false,
-        tags: product.tags || [],
-      }));
+      return data.map(product => {
+        // تحديد السعر حسب نوع المستخدم
+        const isWholesale = profile?.user_type === 'wholesale';
+        const displayPrice = isWholesale && product.wholesale_price 
+          ? Number(product.wholesale_price) 
+          : Number(product.price);
+
+        return {
+          id: product.id,
+          name: product[`name_${language}` as keyof typeof product] as string,
+          nameEn: product.name_en,
+          description: product[`description_${language}` as keyof typeof product] as string,
+          descriptionEn: product.description_en,
+          price: displayPrice,
+          originalPrice: product.original_price ? Number(product.original_price) : undefined,
+          wholesalePrice: product.wholesale_price ? Number(product.wholesale_price) : undefined,
+          image: product.image,
+          images: product.images || [],
+          category: product.categories[`name_${language}` as keyof typeof product.categories] as string,
+          inStock: product.in_stock || false,
+          rating: Number(product.rating) || 0,
+          reviews: product.reviews_count || 0,
+          discount: product.discount ? Number(product.discount) : undefined,
+          featured: product.featured || false,
+          tags: product.tags || [],
+        };
+      });
     },
   });
 };
