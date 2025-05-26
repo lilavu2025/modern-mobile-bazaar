@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -6,6 +5,8 @@ import { useAddresses } from '@/hooks/useAddresses';
 import Header from '@/components/Header';
 import CartSidebar from '@/components/CartSidebar';
 import AddAddressDialog from '@/components/AddAddressDialog';
+import EditAddressDialog from '@/components/EditAddressDialog';
+import DeleteAddressDialog from '@/components/DeleteAddressDialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,12 +14,12 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { User, Settings, MapPin, Edit, Trash2 } from 'lucide-react';
+import { User, Settings, MapPin } from 'lucide-react';
 
 const Profile: React.FC = () => {
   const { user, profile, updateProfile } = useAuth();
   const { t, isRTL } = useLanguage();
-  const { addresses, deleteAddress } = useAddresses();
+  const { addresses } = useAddresses();
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -189,16 +190,11 @@ const Profile: React.FC = () => {
                                 </p>
                               </div>
                               <div className={`flex gap-2 ${isRTL ? 'flex-row-reverse' : 'flex-row'}`}>
-                                <Button size="sm" variant="outline">
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                                <Button 
-                                  size="sm" 
-                                  variant="outline"
-                                  onClick={() => address.id && deleteAddress(address.id)}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
+                                <EditAddressDialog address={address} />
+                                <DeleteAddressDialog 
+                                  addressId={address.id!}
+                                  addressName={address.full_name}
+                                />
                               </div>
                             </div>
                           </Card>
