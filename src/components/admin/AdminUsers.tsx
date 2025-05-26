@@ -32,6 +32,10 @@ const AdminUsers: React.FC = () => {
     return <UserErrorDisplay error={error} />;
   }
 
+  const handleSortOrderChange = (order: string) => {
+    setSortOrder(order as 'asc' | 'desc');
+  };
+
   return (
     <div className={`p-4 lg:p-6 ${isRTL ? 'text-right' : 'text-left'}`} dir={isRTL ? 'rtl' : 'ltr'}>
       <AdminUsersHeader />
@@ -49,7 +53,7 @@ const AdminUsers: React.FC = () => {
           sortBy={sortBy}
           setSortBy={setSortBy}
           sortOrder={sortOrder}
-          setSortOrder={setSortOrder}
+          setSortOrder={handleSortOrderChange}
         />
 
         <UsersTable users={filteredAndSortedUsers} isLoading={isLoading} />
