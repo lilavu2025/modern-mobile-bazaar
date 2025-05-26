@@ -62,6 +62,8 @@ interface ProductFormData {
   in_stock: boolean;
   discount: number;
   featured: boolean;
+  active: boolean;
+  tags: string[];
 }
 
 interface EditProductDialogProps {
@@ -97,6 +99,8 @@ const EditProductDialog: React.FC<EditProductDialogProps> = ({
     in_stock: true,
     discount: 0,
     featured: false,
+    active: true,
+    tags: [],
   });
 
   useEffect(() => {
@@ -121,6 +125,8 @@ const EditProductDialog: React.FC<EditProductDialogProps> = ({
         in_stock: product.in_stock || false,
         discount: Number(product.discount) || 0,
         featured: product.featured || false,
+        active: true,
+        tags: [],
       });
     }
   }, [product]);

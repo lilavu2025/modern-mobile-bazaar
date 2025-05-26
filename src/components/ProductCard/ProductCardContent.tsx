@@ -29,7 +29,6 @@ const ProductCardContent = ({
   const { t, isRTL } = useLanguage();
   const { profile } = useAuth();
 
-  const isWholesale = profile?.user_type === 'wholesale';
   const displayPrice = product.price;
 
   return (

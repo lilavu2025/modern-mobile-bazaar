@@ -87,6 +87,11 @@ const AddCategoryDialog: React.FC<AddCategoryDialogProps> = ({ open, onOpenChang
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleImageChange = (url: string | string[]) => {
+    const imageUrl = Array.isArray(url) ? url[0] || '' : url;
+    handleInputChange('image', imageUrl);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
@@ -138,7 +143,7 @@ const AddCategoryDialog: React.FC<AddCategoryDialogProps> = ({ open, onOpenChang
 
           <ImageUpload
             value={formData.image}
-            onChange={(url) => handleInputChange('image', url)}
+            onChange={handleImageChange}
             bucket="category-images"
             label={t('categoryImage')}
             placeholder="https://example.com/category-image.jpg"

@@ -25,15 +25,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }) => {
   const [showQuickView, setShowQuickView] = useState(false);
   const cartQuantity = getItemQuantity(product.id);
 
-  const handleAddToCart = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleAddToCart = () => {
     addToCart(product, quantity);
   };
 
-  const handleBuyNow = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleBuyNow = () => {
     buyNow(product, quantity);
   };
 

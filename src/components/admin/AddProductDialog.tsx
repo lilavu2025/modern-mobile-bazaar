@@ -114,6 +114,11 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({ open, onOpenChange,
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleImageChange = (url: string | string[]) => {
+    const imageUrl = Array.isArray(url) ? url[0] || '' : url;
+    handleInputChange('image', imageUrl);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -242,7 +247,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({ open, onOpenChange,
 
           <ImageUpload
             value={formData.image}
-            onChange={(url) => handleInputChange('image', url)}
+            onChange={handleImageChange}
             bucket="product-images"
             label={t('productImage')}
             placeholder="https://example.com/product-image.jpg"

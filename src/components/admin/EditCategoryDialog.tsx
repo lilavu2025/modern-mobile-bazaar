@@ -96,6 +96,11 @@ const EditCategoryDialog: React.FC<EditCategoryDialogProps> = ({
     }
   };
 
+  const handleImageChange = (url: string | string[]) => {
+    const imageUrl = Array.isArray(url) ? url[0] || '' : url;
+    setFormData({ ...formData, image: imageUrl });
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
@@ -136,7 +141,7 @@ const EditCategoryDialog: React.FC<EditCategoryDialogProps> = ({
 
           <ImageUpload
             value={formData.image}
-            onChange={(url) => setFormData({ ...formData, image: url })}
+            onChange={handleImageChange}
             bucket="category-images"
             label={t('categoryImage')}
           />

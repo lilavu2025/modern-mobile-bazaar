@@ -14,6 +14,7 @@ interface ImageUploadProps {
   placeholder?: string;
   multiple?: boolean;
   maxImages?: number;
+  bucket?: string;
 }
 
 const ImageUpload = ({ 
@@ -22,7 +23,8 @@ const ImageUpload = ({
   label = "Image", 
   placeholder = "Upload image", 
   multiple = false,
-  maxImages = 5 
+  maxImages = 5,
+  bucket = "product-images"
 }: ImageUploadProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -33,7 +35,7 @@ const ImageUpload = ({
     const filePath = `${fileName}`;
 
     const { error: uploadError } = await supabase.storage
-      .from('product-images')
+      .from(bucket)
       .upload(filePath, file);
 
     if (uploadError) {
@@ -41,7 +43,7 @@ const ImageUpload = ({
     }
 
     const { data } = supabase.storage
-      .from('product-images')
+      .from(bucket)
       .getPublicUrl(filePath);
 
     return data.publicUrl;
