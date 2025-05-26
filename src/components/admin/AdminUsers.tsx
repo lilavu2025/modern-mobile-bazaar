@@ -31,7 +31,7 @@ const AdminUsers: React.FC = () => {
   
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['admin-users-extended'],
-    queryFn: async () => {
+    queryFn: async (): Promise<UserProfile[]> => {
       // First get profiles
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
@@ -51,7 +51,7 @@ const AdminUsers: React.FC = () => {
           email: 'غير متوفر',
           email_confirmed_at: null,
           last_sign_in_at: null,
-        })) as UserProfile[];
+        }));
       }
 
       // Merge profiles with auth data
@@ -65,7 +65,7 @@ const AdminUsers: React.FC = () => {
           raw_app_meta_data: authUser?.app_metadata || {},
           raw_user_meta_data: authUser?.user_metadata || {},
         };
-      }) as UserProfile[];
+      });
 
       // Also add any auth users that don't have profiles
       const profileIds = profiles.map(p => p.id);
