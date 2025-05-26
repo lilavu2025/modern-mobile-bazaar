@@ -17,9 +17,10 @@ import { useQueryClient } from '@tanstack/react-query';
 interface AddCategoryDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSuccess: () => void;
 }
 
-const AddCategoryDialog: React.FC<AddCategoryDialogProps> = ({ open, onOpenChange }) => {
+const AddCategoryDialog: React.FC<AddCategoryDialogProps> = ({ open, onOpenChange, onSuccess }) => {
   const { t } = useLanguage();
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
@@ -64,6 +65,7 @@ const AddCategoryDialog: React.FC<AddCategoryDialogProps> = ({ open, onOpenChang
       
       // Refresh categories data
       queryClient.invalidateQueries({ queryKey: ['categories'] });
+      onSuccess();
       
       onOpenChange(false);
     } catch (error) {

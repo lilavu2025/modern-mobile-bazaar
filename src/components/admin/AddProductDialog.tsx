@@ -20,9 +20,10 @@ interface AddProductDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   categories: any[];
+  onSuccess: () => void;
 }
 
-const AddProductDialog: React.FC<AddProductDialogProps> = ({ open, onOpenChange, categories }) => {
+const AddProductDialog: React.FC<AddProductDialogProps> = ({ open, onOpenChange, categories, onSuccess }) => {
   const { t } = useLanguage();
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
@@ -91,6 +92,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({ open, onOpenChange,
       
       // Refresh products data
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      onSuccess();
       
       onOpenChange(false);
     } catch (error) {
