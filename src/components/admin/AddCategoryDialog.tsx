@@ -10,6 +10,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface AddCategoryDialogProps {
   open: boolean;
@@ -18,6 +21,7 @@ interface AddCategoryDialogProps {
 
 const AddCategoryDialog: React.FC<AddCategoryDialogProps> = ({ open, onOpenChange }) => {
   const { t } = useLanguage();
+  const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
     nameAr: '',
     nameEn: '',
@@ -25,12 +29,49 @@ const AddCategoryDialog: React.FC<AddCategoryDialogProps> = ({ open, onOpenChang
     icon: '',
     image: ''
   });
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement category creation
-    console.log('Category data:', formData);
-    onOpenChange(false);
+    setIsLoading(true);
+
+    try {
+      const { error } = await supabase
+        .from('categories')
+        .insert([
+          {
+            name_ar: formData.nameAr,
+            name_en: formData.nameEn,
+            name_he: formData.nameHe,
+            icon: formData.icon || '📦',
+            image: formData.image,
+            active: true
+          }
+        ]);
+
+      if (error) throw error;
+
+      toast.success(t('categoryAddedSuccessfully'));
+      
+      // Reset form
+      setFormData({
+        nameAr: '',
+        nameEn: '',
+        nameHe: '',
+        icon: '',
+        image: ''
+      });
+      
+      // Refresh categories data
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error adding category:', error);
+      toast.error(t('errorAddingCategory'));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -101,8 +142,8 @@ const AddCategoryDialog: React.FC<AddCategoryDialogProps> = ({ open, onOpenChang
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               {t('cancel')}
             </Button>
-            <Button type="submit">
-              {t('save')}
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? t('saving') : t('save')}
             </Button>
           </div>
         </form>

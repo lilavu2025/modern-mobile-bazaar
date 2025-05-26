@@ -12,6 +12,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface AddProductDialogProps {
   open: boolean;
@@ -21,6 +24,7 @@ interface AddProductDialogProps {
 
 const AddProductDialog: React.FC<AddProductDialogProps> = ({ open, onOpenChange, categories }) => {
   const { t } = useLanguage();
+  const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
     nameAr: '',
     nameEn: '',
@@ -36,12 +40,65 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({ open, onOpenChange,
     stockQuantity: '',
     inStock: true
   });
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement product creation
-    console.log('Product data:', formData);
-    onOpenChange(false);
+    setIsLoading(true);
+
+    try {
+      const { error } = await supabase
+        .from('products')
+        .insert([
+          {
+            name_ar: formData.nameAr,
+            name_en: formData.nameEn,
+            name_he: formData.nameHe,
+            description_ar: formData.descriptionAr,
+            description_en: formData.descriptionEn,
+            description_he: formData.descriptionHe,
+            price: Number(formData.price),
+            wholesale_price: formData.wholesalePrice ? Number(formData.wholesalePrice) : null,
+            original_price: formData.originalPrice ? Number(formData.originalPrice) : null,
+            category_id: formData.categoryId,
+            image: formData.image,
+            stock_quantity: formData.stockQuantity ? Number(formData.stockQuantity) : 0,
+            in_stock: formData.inStock,
+            active: true
+          }
+        ]);
+
+      if (error) throw error;
+
+      toast.success(t('productAddedSuccessfully'));
+      
+      // Reset form
+      setFormData({
+        nameAr: '',
+        nameEn: '',
+        nameHe: '',
+        descriptionAr: '',
+        descriptionEn: '',
+        descriptionHe: '',
+        price: '',
+        wholesalePrice: '',
+        originalPrice: '',
+        categoryId: '',
+        image: '',
+        stockQuantity: '',
+        inStock: true
+      });
+      
+      // Refresh products data
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error adding product:', error);
+      toast.error(t('errorAddingProduct'));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleInputChange = (field: string, value: string | boolean) => {
@@ -152,7 +209,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({ open, onOpenChange,
               <Label htmlFor="category">{t('category')}</Label>
               <Select value={formData.categoryId} onValueChange={(value) => handleInputChange('categoryId', value)}>
                 <SelectTrigger>
-                  <SelectValue placeholder={t('category')} />
+                  <SelectValue placeholder={t('selectCategory')} />
                 </SelectTrigger>
                 <SelectContent className="bg-white z-50">
                   {categories.map(category => (
@@ -181,6 +238,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({ open, onOpenChange,
               value={formData.image}
               onChange={(e) => handleInputChange('image', e.target.value)}
               placeholder="https://example.com/image.jpg"
+              required
             />
           </div>
 
@@ -188,8 +246,8 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({ open, onOpenChange,
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               {t('cancel')}
             </Button>
-            <Button type="submit">
-              {t('save')}
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? t('saving') : t('save')}
             </Button>
           </div>
         </form>
