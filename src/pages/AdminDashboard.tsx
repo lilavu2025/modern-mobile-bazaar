@@ -16,11 +16,16 @@ import {
   Plus,
   Edit,
   Trash,
-  Eye
+  Eye,
+  FolderOpen
 } from 'lucide-react';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import AdminProducts from '@/components/admin/AdminProducts';
+import AdminCategories from '@/components/admin/AdminCategories';
+import AdminOrders from '@/components/admin/AdminOrders';
+import AdminUsers from '@/components/admin/AdminUsers';
 
-// Sub-components for admin sections
+// Sub-component for admin overview
 const AdminOverview: React.FC = () => {
   const { t } = useLanguage();
   
@@ -85,75 +90,6 @@ const AdminOverview: React.FC = () => {
   );
 };
 
-const AdminProducts: React.FC = () => {
-  const { t } = useLanguage();
-  
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">{t('manageProducts')}</h1>
-        <Button className="gap-2">
-          <Plus className="h-4 w-4" />
-          {t('addProduct')}
-        </Button>
-      </div>
-      
-      <Card>
-        <CardContent className="p-6">
-          <div className="text-center py-12">
-            <Package className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">{t('noProducts')}</h3>
-            <p className="text-gray-500 mb-6">{t('addYourFirstProduct')}</p>
-            <Button>
-              {t('addProduct')}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-};
-
-const AdminOrders: React.FC = () => {
-  const { t } = useLanguage();
-  
-  return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold">{t('manageOrders')}</h1>
-      
-      <Card>
-        <CardContent className="p-6">
-          <div className="text-center py-12">
-            <ShoppingCart className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">{t('noOrders')}</h3>
-            <p className="text-gray-500">{t('ordersWillAppearHere')}</p>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-};
-
-const AdminUsers: React.FC = () => {
-  const { t } = useLanguage();
-  
-  return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold">{t('manageUsers')}</h1>
-      
-      <Card>
-        <CardContent className="p-6">
-          <div className="text-center py-12">
-            <Users className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">{t('noUsers')}</h3>
-            <p className="text-gray-500">{t('usersWillAppearHere')}</p>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-};
-
 const AdminDashboard: React.FC = () => {
   const { profile, signOut } = useAuth();
   const { t } = useLanguage();
@@ -162,6 +98,7 @@ const AdminDashboard: React.FC = () => {
   const sidebarItems = [
     { path: '/admin', label: t('dashboard'), icon: LayoutDashboard },
     { path: '/admin/products', label: t('manageProducts'), icon: Package },
+    { path: '/admin/categories', label: t('manageCategories'), icon: FolderOpen },
     { path: '/admin/orders', label: t('manageOrders'), icon: ShoppingCart },
     { path: '/admin/users', label: t('manageUsers'), icon: Users },
   ];
@@ -175,8 +112,8 @@ const AdminDashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
-      <div className="w-64 bg-white shadow-lg">
-        <div className="p-6">
+      <div className="w-64 bg-white shadow-lg flex flex-col">
+        <div className="p-6 flex-1">
           <div className="flex items-center gap-3 mb-8">
             <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-xl">م</span>
@@ -194,7 +131,7 @@ const AdminDashboard: React.FC = () => {
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                  className={`flex items-center gap-3 px-3 py-3 rounded-lg transition-colors ${
                     isActive(item.path)
                       ? 'bg-primary text-primary-foreground'
                       : 'text-gray-600 hover:bg-gray-100'
@@ -208,23 +145,21 @@ const AdminDashboard: React.FC = () => {
           </nav>
         </div>
 
-        <div className="absolute bottom-6 left-6 right-6">
-          <div className="border-t pt-6">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <p className="font-medium">{profile?.full_name}</p>
-                <p className="text-sm text-gray-500">{t('admin')}</p>
-              </div>
-              <LanguageSwitcher />
+        <div className="p-6 border-t">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <p className="font-medium">{profile?.full_name}</p>
+              <p className="text-sm text-gray-500">{t('admin')}</p>
             </div>
-            <div className="space-y-2">
-              <Button asChild variant="outline" className="w-full">
-                <Link to="/">{t('backToStore')}</Link>
-              </Button>
-              <Button onClick={signOut} variant="ghost" className="w-full">
-                {t('logout')}
-              </Button>
-            </div>
+            <LanguageSwitcher />
+          </div>
+          <div className="space-y-2">
+            <Button asChild variant="outline" className="w-full">
+              <Link to="/">{t('backToStore')}</Link>
+            </Button>
+            <Button onClick={signOut} variant="ghost" className="w-full">
+              {t('logout')}
+            </Button>
           </div>
         </div>
       </div>
@@ -234,6 +169,7 @@ const AdminDashboard: React.FC = () => {
         <Routes>
           <Route path="/" element={<AdminOverview />} />
           <Route path="/products" element={<AdminProducts />} />
+          <Route path="/categories" element={<AdminCategories />} />
           <Route path="/orders" element={<AdminOrders />} />
           <Route path="/users" element={<AdminUsers />} />
         </Routes>
