@@ -17,11 +17,11 @@ import ImageUpload from '@/components/ImageUpload';
 
 interface Category {
   id: string;
-  name_ar: string;
-  name_en: string;
-  name_he: string;
+  name: string;
+  nameEn: string;
   image: string;
   icon: string;
+  count: number;
 }
 
 interface EditCategoryDialogProps {
@@ -50,9 +50,9 @@ const EditCategoryDialog: React.FC<EditCategoryDialogProps> = ({
   useEffect(() => {
     if (category) {
       setFormData({
-        name_ar: category.name_ar || '',
-        name_en: category.name_en || '',
-        name_he: category.name_he || '',
+        name_ar: category.name || '',
+        name_en: category.nameEn || '',
+        name_he: category.name || '', // fallback to name for Hebrew
         image: category.image || '',
         icon: category.icon || '',
       });
