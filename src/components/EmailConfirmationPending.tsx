@@ -1,5 +1,5 @@
-
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Mail, RefreshCw } from 'lucide-react';
@@ -17,6 +17,7 @@ const EmailConfirmationPending: React.FC<EmailConfirmationPendingProps> = ({ ema
   const { t } = useLanguage();
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [isResending, setIsResending] = useState(false);
   const [countdown, setCountdown] = useState(60);
   const [canResend, setCanResend] = useState(false);
@@ -31,7 +32,7 @@ const EmailConfirmationPending: React.FC<EmailConfirmationPendingProps> = ({ ema
     }
   }, [countdown, canResend]);
 
-  // Check if user gets confirmed automatically
+  // Check if user gets confirmed automatically and redirect
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
@@ -41,12 +42,23 @@ const EmailConfirmationPending: React.FC<EmailConfirmationPendingProps> = ({ ema
             title: t('success'),
             description: t('emailConfirmedSuccess'),
           });
+          // Redirect to home page after successful confirmation
+          setTimeout(() => {
+            navigate('/');
+          }, 1500);
         }
       }
     );
 
     return () => subscription.unsubscribe();
-  }, [t, toast]);
+  }, [t, toast, navigate]);
+
+  // If user is already confirmed, redirect to home
+  useEffect(() => {
+    if (user && user.email_confirmed_at) {
+      navigate('/');
+    }
+  }, [user, navigate]);
 
   const handleResendEmail = async () => {
     console.log('Resending email for:', email);

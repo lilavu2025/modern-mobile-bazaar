@@ -1,20 +1,15 @@
 
 import React, { useState } from 'react';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Switch } from '@/components/ui/switch';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { useQueryClient } from '@tanstack/react-query';
 import ImageUpload from '@/components/ImageUpload';
 
 interface AddProductDialogProps {
@@ -24,241 +19,293 @@ interface AddProductDialogProps {
   onSuccess: () => void;
 }
 
-const AddProductDialog: React.FC<AddProductDialogProps> = ({ open, onOpenChange, categories, onSuccess }) => {
-  const { t } = useLanguage();
-  const queryClient = useQueryClient();
+const AddProductDialog: React.FC<AddProductDialogProps> = ({
+  open,
+  onOpenChange,
+  categories,
+  onSuccess,
+}) => {
+  const { t, isRTL } = useLanguage();
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    nameAr: '',
-    nameEn: '',
-    nameHe: '',
-    descriptionAr: '',
-    descriptionEn: '',
-    descriptionHe: '',
+    name_ar: '',
+    name_en: '',
+    name_he: '',
+    description_ar: '',
+    description_en: '',
+    description_he: '',
     price: '',
-    wholesalePrice: '',
-    originalPrice: '',
-    categoryId: '',
+    original_price: '',
+    wholesale_price: '',
+    category_id: '',
     image: '',
-    stockQuantity: '',
-    inStock: true
+    images: [] as string[],
+    in_stock: true,
+    stock_quantity: '',
+    featured: false,
+    active: true,
+    discount: '',
   });
-  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formData.image) {
-      toast.error('يرجى إضافة صورة للمنتج');
-      return;
-    }
-    
-    setIsLoading(true);
+    setLoading(true);
 
     try {
+      const productData = {
+        name_ar: formData.name_ar,
+        name_en: formData.name_en,
+        name_he: formData.name_he,
+        description_ar: formData.description_ar,
+        description_en: formData.description_en,
+        description_he: formData.description_he,
+        price: parseFloat(formData.price),
+        original_price: formData.original_price ? parseFloat(formData.original_price) : null,
+        wholesale_price: formData.wholesale_price ? parseFloat(formData.wholesale_price) : null,
+        category_id: formData.category_id,
+        image: formData.image || (formData.images.length > 0 ? formData.images[0] : ''),
+        images: formData.images,
+        in_stock: formData.in_stock,
+        stock_quantity: formData.stock_quantity ? parseInt(formData.stock_quantity) : 0,
+        featured: formData.featured,
+        active: formData.active,
+        discount: formData.discount ? parseFloat(formData.discount) : null,
+      };
+
       const { error } = await supabase
         .from('products')
-        .insert([
-          {
-            name_ar: formData.nameAr,
-            name_en: formData.nameEn,
-            name_he: formData.nameHe,
-            description_ar: formData.descriptionAr,
-            description_en: formData.descriptionEn,
-            description_he: formData.descriptionHe,
-            price: Number(formData.price),
-            wholesale_price: formData.wholesalePrice ? Number(formData.wholesalePrice) : null,
-            original_price: formData.originalPrice ? Number(formData.originalPrice) : null,
-            category_id: formData.categoryId,
-            image: formData.image,
-            stock_quantity: formData.stockQuantity ? Number(formData.stockQuantity) : 0,
-            in_stock: formData.inStock,
-            active: true
-          }
-        ]);
+        .insert([productData]);
 
       if (error) throw error;
 
-      toast.success(t('productAddedSuccessfully'));
-      
-      // Reset form
-      setFormData({
-        nameAr: '',
-        nameEn: '',
-        nameHe: '',
-        descriptionAr: '',
-        descriptionEn: '',
-        descriptionHe: '',
-        price: '',
-        wholesalePrice: '',
-        originalPrice: '',
-        categoryId: '',
-        image: '',
-        stockQuantity: '',
-        inStock: true
-      });
-      
-      // Refresh products data
-      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast.success(t('productAdded'));
       onSuccess();
-      
       onOpenChange(false);
-    } catch (error) {
+      setFormData({
+        name_ar: '',
+        name_en: '',
+        name_he: '',
+        description_ar: '',
+        description_en: '',
+        description_he: '',
+        price: '',
+        original_price: '',
+        wholesale_price: '',
+        category_id: '',
+        image: '',
+        images: [],
+        in_stock: true,
+        stock_quantity: '',
+        featured: false,
+        active: true,
+        discount: '',
+      });
+    } catch (error: any) {
       console.error('Error adding product:', error);
-      toast.error(t('errorAddingProduct'));
+      toast.error(error.message || t('error'));
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  };
-
-  const handleInputChange = (field: string, value: string | boolean) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleImageChange = (url: string | string[]) => {
-    const imageUrl = Array.isArray(url) ? url[0] || '' : url;
-    handleInputChange('image', imageUrl);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className={`max-w-2xl max-h-[90vh] overflow-y-auto ${isRTL ? 'text-right' : 'text-left'}`} dir={isRTL ? 'rtl' : 'ltr'}>
         <DialogHeader>
           <DialogTitle>{t('addProduct')}</DialogTitle>
         </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="space-y-6">
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Product Names */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <Label htmlFor="nameAr">{t('productName')} (العربية)</Label>
+              <Label htmlFor="name_ar">اسم المنتج (عربي)</Label>
               <Input
-                id="nameAr"
-                value={formData.nameAr}
-                onChange={(e) => handleInputChange('nameAr', e.target.value)}
+                id="name_ar"
+                value={formData.name_ar}
+                onChange={(e) => setFormData(prev => ({ ...prev, name_ar: e.target.value }))}
                 required
               />
             </div>
             <div>
-              <Label htmlFor="nameEn">{t('productName')} (English)</Label>
+              <Label htmlFor="name_en">Product Name (English)</Label>
               <Input
-                id="nameEn"
-                value={formData.nameEn}
-                onChange={(e) => handleInputChange('nameEn', e.target.value)}
+                id="name_en"
+                value={formData.name_en}
+                onChange={(e) => setFormData(prev => ({ ...prev, name_en: e.target.value }))}
                 required
               />
             </div>
             <div>
-              <Label htmlFor="nameHe">{t('productName')} (עברית)</Label>
+              <Label htmlFor="name_he">שם המוצר (עברית)</Label>
               <Input
-                id="nameHe"
-                value={formData.nameHe}
-                onChange={(e) => handleInputChange('nameHe', e.target.value)}
+                id="name_he"
+                value={formData.name_he}
+                onChange={(e) => setFormData(prev => ({ ...prev, name_he: e.target.value }))}
                 required
               />
             </div>
           </div>
 
+          {/* Product Descriptions */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <Label htmlFor="descriptionAr">{t('productDescription')} (العربية)</Label>
+              <Label htmlFor="description_ar">الوصف (عربي)</Label>
               <Textarea
-                id="descriptionAr"
-                value={formData.descriptionAr}
-                onChange={(e) => handleInputChange('descriptionAr', e.target.value)}
+                id="description_ar"
+                value={formData.description_ar}
+                onChange={(e) => setFormData(prev => ({ ...prev, description_ar: e.target.value }))}
                 rows={3}
               />
             </div>
             <div>
-              <Label htmlFor="descriptionEn">{t('productDescription')} (English)</Label>
+              <Label htmlFor="description_en">Description (English)</Label>
               <Textarea
-                id="descriptionEn"
-                value={formData.descriptionEn}
-                onChange={(e) => handleInputChange('descriptionEn', e.target.value)}
+                id="description_en"
+                value={formData.description_en}
+                onChange={(e) => setFormData(prev => ({ ...prev, description_en: e.target.value }))}
                 rows={3}
               />
             </div>
             <div>
-              <Label htmlFor="descriptionHe">{t('productDescription')} (עברית)</Label>
+              <Label htmlFor="description_he">תיאור (עברית)</Label>
               <Textarea
-                id="descriptionHe"
-                value={formData.descriptionHe}
-                onChange={(e) => handleInputChange('descriptionHe', e.target.value)}
+                id="description_he"
+                value={formData.description_he}
+                onChange={(e) => setFormData(prev => ({ ...prev, description_he: e.target.value }))}
                 rows={3}
               />
             </div>
           </div>
 
+          {/* Prices */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <Label htmlFor="price">{t('retailPrice')}</Label>
+              <Label htmlFor="price">{t('price')} *</Label>
               <Input
                 id="price"
                 type="number"
+                step="0.01"
                 value={formData.price}
-                onChange={(e) => handleInputChange('price', e.target.value)}
+                onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
                 required
               />
             </div>
             <div>
-              <Label htmlFor="wholesalePrice">{t('wholesalePrice')}</Label>
+              <Label htmlFor="original_price">السعر الأصلي</Label>
               <Input
-                id="wholesalePrice"
+                id="original_price"
                 type="number"
-                value={formData.wholesalePrice}
-                onChange={(e) => handleInputChange('wholesalePrice', e.target.value)}
+                step="0.01"
+                value={formData.original_price}
+                onChange={(e) => setFormData(prev => ({ ...prev, original_price: e.target.value }))}
               />
             </div>
             <div>
-              <Label htmlFor="originalPrice">{t('originalPrice')}</Label>
+              <Label htmlFor="wholesale_price">سعر الجملة</Label>
               <Input
-                id="originalPrice"
+                id="wholesale_price"
                 type="number"
-                value={formData.originalPrice}
-                onChange={(e) => handleInputChange('originalPrice', e.target.value)}
+                step="0.01"
+                value={formData.wholesale_price}
+                onChange={(e) => setFormData(prev => ({ ...prev, wholesale_price: e.target.value }))}
               />
             </div>
           </div>
 
+          {/* Category and Stock */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="category">{t('category')}</Label>
-              <Select value={formData.categoryId} onValueChange={(value) => handleInputChange('categoryId', value)}>
+              <Label htmlFor="category">{t('productCategory')} *</Label>
+              <Select value={formData.category_id} onValueChange={(value) => setFormData(prev => ({ ...prev, category_id: value }))}>
                 <SelectTrigger>
-                  <SelectValue placeholder={t('selectCategory')} />
+                  <SelectValue placeholder="اختر الفئة" />
                 </SelectTrigger>
-                <SelectContent className="bg-white z-50">
-                  {categories.map(category => (
+                <SelectContent>
+                  {categories.map((category) => (
                     <SelectItem key={category.id} value={category.id}>
-                      {category.name}
+                      {category.name_ar}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label htmlFor="stockQuantity">{t('stockQuantity')}</Label>
+              <Label htmlFor="stock_quantity">كمية المخزون</Label>
               <Input
-                id="stockQuantity"
+                id="stock_quantity"
                 type="number"
-                value={formData.stockQuantity}
-                onChange={(e) => handleInputChange('stockQuantity', e.target.value)}
+                value={formData.stock_quantity}
+                onChange={(e) => setFormData(prev => ({ ...prev, stock_quantity: e.target.value }))}
               />
             </div>
           </div>
 
-          <ImageUpload
-            value={formData.image}
-            onChange={handleImageChange}
-            bucket="product-images"
-            label={t('productImage')}
-            placeholder="https://example.com/product-image.jpg"
-          />
+          {/* Discount */}
+          <div>
+            <Label htmlFor="discount">نسبة الخصم (%)</Label>
+            <Input
+              id="discount"
+              type="number"
+              step="0.01"
+              min="0"
+              max="100"
+              value={formData.discount}
+              onChange={(e) => setFormData(prev => ({ ...prev, discount: e.target.value }))}
+            />
+          </div>
 
-          <div className="flex justify-end gap-3">
+          {/* Product Images */}
+          <div>
+            <ImageUpload
+              value={formData.images}
+              onChange={(urls) => setFormData(prev => ({ 
+                ...prev, 
+                images: Array.isArray(urls) ? urls : [urls].filter(Boolean),
+                image: Array.isArray(urls) && urls.length > 0 ? urls[0] : (typeof urls === 'string' ? urls : prev.image)
+              }))}
+              label={t('productImages')}
+              placeholder={t('uploadImages')}
+              multiple={true}
+              maxImages={5}
+              bucket="product-images"
+            />
+          </div>
+
+          {/* Toggles */}
+          <div className="flex flex-wrap gap-6">
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="in_stock"
+                checked={formData.in_stock}
+                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, in_stock: checked }))}
+              />
+              <Label htmlFor="in_stock">{t('inStock')}</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="featured"
+                checked={formData.featured}
+                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, featured: checked }))}
+              />
+              <Label htmlFor="featured">منتج مميز</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="active"
+                checked={formData.active}
+                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, active: checked }))}
+              />
+              <Label htmlFor="active">{t('active')}</Label>
+            </div>
+          </div>
+
+          <div className="flex justify-end space-x-2 pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               {t('cancel')}
             </Button>
-            <Button type="submit" disabled={isLoading || !formData.image}>
-              {isLoading ? t('saving') : t('save')}
+            <Button type="submit" disabled={loading}>
+              {loading ? t('loading') : t('add')}
             </Button>
           </div>
         </form>
