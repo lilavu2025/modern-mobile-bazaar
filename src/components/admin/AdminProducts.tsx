@@ -34,10 +34,15 @@ import {
 } from '@/components/ui/alert-dialog';
 import { toast } from '@/hooks/use-toast';
 import AddProductDialog from './AddProductDialog';
+import EditProductDialog from './EditProductDialog';
+import ViewProductDialog from './ViewProductDialog';
 
 const AdminProducts: React.FC = () => {
   const { t } = useLanguage();
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showViewDialog, setShowViewDialog] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const { data: products = [], isLoading: productsLoading, refetch } = useProducts();
   const { data: categories = [] } = useCategories();
 
@@ -64,6 +69,16 @@ const AdminProducts: React.FC = () => {
         variant: 'destructive',
       });
     }
+  };
+
+  const handleViewProduct = (product: any) => {
+    setSelectedProduct(product);
+    setShowViewDialog(true);
+  };
+
+  const handleEditProduct = (product: any) => {
+    setSelectedProduct(product);
+    setShowEditDialog(true);
   };
 
   if (productsLoading) {
@@ -142,10 +157,20 @@ const AdminProducts: React.FC = () => {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center gap-2 justify-end">
-                        <Button variant="ghost" size="sm" title={t('view')}>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          title={t('view')}
+                          onClick={() => handleViewProduct(product)}
+                        >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" title={t('edit')}>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          title={t('edit')}
+                          onClick={() => handleEditProduct(product)}
+                        >
                           <Edit className="h-4 w-4" />
                         </Button>
                         <AlertDialog>
@@ -188,6 +213,23 @@ const AdminProducts: React.FC = () => {
         categories={categories}
         onSuccess={() => refetch()}
       />
+
+      {selectedProduct && (
+        <>
+          <EditProductDialog
+            open={showEditDialog}
+            onOpenChange={setShowEditDialog}
+            product={selectedProduct}
+            categories={categories}
+            onSuccess={() => refetch()}
+          />
+          <ViewProductDialog
+            open={showViewDialog}
+            onOpenChange={setShowViewDialog}
+            product={selectedProduct}
+          />
+        </>
+      )}
     </div>
   );
 };

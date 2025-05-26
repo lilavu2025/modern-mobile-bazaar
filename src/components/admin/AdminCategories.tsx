@@ -34,10 +34,15 @@ import {
 } from '@/components/ui/alert-dialog';
 import { toast } from '@/hooks/use-toast';
 import AddCategoryDialog from './AddCategoryDialog';
+import EditCategoryDialog from './EditCategoryDialog';
+import ViewCategoryDialog from './ViewCategoryDialog';
 
 const AdminCategories: React.FC = () => {
   const { t } = useLanguage();
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showViewDialog, setShowViewDialog] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<any>(null);
   const { data: categories = [], isLoading, refetch } = useCategories();
 
   const handleDeleteCategory = async (categoryId: string, categoryName: string) => {
@@ -63,6 +68,16 @@ const AdminCategories: React.FC = () => {
         variant: 'destructive',
       });
     }
+  };
+
+  const handleViewCategory = (category: any) => {
+    setSelectedCategory(category);
+    setShowViewDialog(true);
+  };
+
+  const handleEditCategory = (category: any) => {
+    setSelectedCategory(category);
+    setShowEditDialog(true);
   };
 
   if (isLoading) {
@@ -137,10 +152,20 @@ const AdminCategories: React.FC = () => {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center gap-2 justify-end">
-                        <Button variant="ghost" size="sm" title={t('view')}>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          title={t('view')}
+                          onClick={() => handleViewCategory(category)}
+                        >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" title={t('edit')}>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          title={t('edit')}
+                          onClick={() => handleEditCategory(category)}
+                        >
                           <Edit className="h-4 w-4" />
                         </Button>
                         <AlertDialog>
@@ -182,6 +207,22 @@ const AdminCategories: React.FC = () => {
         onOpenChange={setShowAddDialog}
         onSuccess={() => refetch()}
       />
+
+      {selectedCategory && (
+        <>
+          <EditCategoryDialog
+            open={showEditDialog}
+            onOpenChange={setShowEditDialog}
+            category={selectedCategory}
+            onSuccess={() => refetch()}
+          />
+          <ViewCategoryDialog
+            open={showViewDialog}
+            onOpenChange={setShowViewDialog}
+            category={selectedCategory}
+          />
+        </>
+      )}
     </div>
   );
 };
