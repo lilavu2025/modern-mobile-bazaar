@@ -1,9 +1,12 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
+export type Language = 'ar' | 'en' | 'he';
+
 interface LanguageContextType {
-  language: string;
+  language: Language;
   isRTL: boolean;
-  setLanguage: (lang: string) => void;
+  setLanguage: (lang: Language) => void;
   t: (key: string) => string;
 }
 
@@ -21,7 +24,7 @@ const translations = {
     contact: 'اتصل بنا',
     profile: 'الملف الشخصي',
     orders: 'الطلبات',
-    admin: 'لوحة التحكم',
+    dashboard: 'لوحة التحكم',
     checkout: 'الدفع',
     
     // Authentication
@@ -74,6 +77,12 @@ const translations = {
     add: 'إضافة',
     search: 'بحث',
     searchProducts: 'البحث عن المنتجات...',
+    searchResults: 'نتائج البحث',
+    noProductsFound: 'لم يتم العثور على منتجات',
+    viewAll: 'عرض الكل',
+    featuredProducts: 'منتجات مميزة',
+    noFeaturedProducts: 'لا توجد منتجات مميزة',
+    browseAllProducts: 'تصفح جميع المنتجات',
     
     // Cart & Shopping
     addToCart: 'إضافة للسلة',
@@ -85,7 +94,6 @@ const translations = {
     
     // Product
     newProduct: 'منتج جديد',
-    featuredProducts: 'منتجات مميزة',
     relatedProducts: 'منتجات ذات صلة',
     productDetails: 'تفاصيل المنتج',
     inStock: 'متوفر',
@@ -126,7 +134,7 @@ const translations = {
     contact: 'Contact',
     profile: 'Profile',
     orders: 'Orders',
-    admin: 'Admin Dashboard',
+    dashboard: 'Admin Dashboard',
     checkout: 'Checkout',
     
     // Authentication
@@ -179,6 +187,12 @@ const translations = {
     add: 'Add',
     search: 'Search',
     searchProducts: 'Search products...',
+    searchResults: 'Search Results',
+    noProductsFound: 'No products found',
+    viewAll: 'View All',
+    featuredProducts: 'Featured Products',
+    noFeaturedProducts: 'No featured products',
+    browseAllProducts: 'Browse All Products',
     
     // Cart & Shopping
     addToCart: 'Add to Cart',
@@ -190,7 +204,6 @@ const translations = {
     
     // Product
     newProduct: 'New Product',
-    featuredProducts: 'Featured Products',
     relatedProducts: 'Related Products',
     productDetails: 'Product Details',
     inStock: 'In Stock',
@@ -231,7 +244,7 @@ const translations = {
     contact: 'צור קשר',
     profile: 'פרופיל',
     orders: 'הזמנות',
-    admin: 'לוח בקרה',
+    dashboard: 'לוח בקרה',
     checkout: 'תשלום',
     
     // Authentication
@@ -284,6 +297,12 @@ const translations = {
     add: 'הוסף',
     search: 'חיפוש',
     searchProducts: 'חפש מוצרים...',
+    searchResults: 'תוצאות חיפוש',
+    noProductsFound: 'לא נמצאו מוצרים',
+    viewAll: 'צפה בהכל',
+    featuredProducts: 'מוצרים מומלצים',
+    noFeaturedProducts: 'אין מוצרים מומלצים',
+    browseAllProducts: 'עיין בכל המוצרים',
     
     // Cart & Shopping
     addToCart: 'הוסף לעגלה',
@@ -295,7 +314,6 @@ const translations = {
     
     // Product
     newProduct: 'מוצר חדש',
-    featuredProducts: 'מוצרים מומלצים',
     relatedProducts: 'מוצרים קשורים',
     productDetails: 'פרטי המוצר',
     inStock: 'במלאי',
@@ -328,7 +346,7 @@ const translations = {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [language, setLanguage] = useState('ar');
+  const [language, setLanguage] = useState<Language>('ar');
 
   const isRTL = language === 'ar' || language === 'he';
 
@@ -338,7 +356,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [isRTL, language]);
 
   const t = (key: string): string => {
-    return translations[language as keyof typeof translations]?.[key as keyof typeof translations.ar] || key;
+    return translations[language]?.[key as keyof typeof translations.ar] || key;
   };
 
   return (
