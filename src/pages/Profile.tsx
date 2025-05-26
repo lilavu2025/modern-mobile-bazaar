@@ -70,109 +70,111 @@ const Profile: React.FC = () => {
 
       <div className="container mx-auto px-4 py-6">
         <div className={`mb-8 ${isRTL ? 'text-right' : 'text-left'}`}>
-          <h1 className="text-3xl font-bold mb-2">{t('profile')}</h1>
-          <p className="text-gray-600">
+          <h1 className={`text-3xl font-bold mb-2 ${isRTL ? 'text-right' : 'text-left'}`}>{t('profile')}</h1>
+          <p className={`text-gray-600 ${isRTL ? 'text-right' : 'text-left'}`}>
             {t('manageYourAccount')}
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className={`grid grid-cols-1 lg:grid-cols-3 gap-6 ${isRTL ? 'direction-rtl' : 'direction-ltr'}`}>
           {/* Profile Summary */}
-          <Card>
+          <Card className={isRTL ? 'text-right' : 'text-left'}>
             <CardHeader>
               <CardTitle className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : 'flex-row'}`}>
                 <User className="h-5 w-5" />
-                {t('accountInfo')}
+                <span className={isRTL ? 'text-right' : 'text-left'}>{t('accountInfo')}</span>
               </CardTitle>
             </CardHeader>
             <CardContent className={`space-y-4 ${isRTL ? 'text-right' : 'text-left'}`}>
-              <div>
-                <p className="text-sm text-gray-600">{t('fullName')}</p>
-                <p className="font-medium">{profile?.full_name || t('notProvided')}</p>
+              <div className={isRTL ? 'text-right' : 'text-left'}>
+                <p className={`text-sm text-gray-600 ${isRTL ? 'text-right' : 'text-left'}`}>{t('fullName')}</p>
+                <p className={`font-medium ${isRTL ? 'text-right' : 'text-left'}`}>{profile?.full_name || t('notProvided')}</p>
               </div>
-              <div>
-                <p className="text-sm text-gray-600">{t('email')}</p>
-                <p className="font-medium">{user?.email}</p>
+              <div className={isRTL ? 'text-right' : 'text-left'}>
+                <p className={`text-sm text-gray-600 ${isRTL ? 'text-right' : 'text-left'}`}>{t('email')}</p>
+                <p className={`font-medium ${isRTL ? 'text-right' : 'text-left'}`}>{user?.email}</p>
               </div>
-              <div>
-                <p className="text-sm text-gray-600">{t('phone')}</p>
-                <p className="font-medium">{profile?.phone || t('notProvided')}</p>
+              <div className={isRTL ? 'text-right' : 'text-left'}>
+                <p className={`text-sm text-gray-600 ${isRTL ? 'text-right' : 'text-left'}`}>{t('phone')}</p>
+                <p className={`font-medium ${isRTL ? 'text-right' : 'text-left'}`}>{profile?.phone || t('notProvided')}</p>
               </div>
             </CardContent>
           </Card>
 
           {/* Settings */}
-          <Card className="lg:col-span-2">
+          <Card className={`lg:col-span-2 ${isRTL ? 'text-right' : 'text-left'}`}>
             <CardHeader>
               <CardTitle className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : 'flex-row'}`}>
                 <Settings className="h-5 w-5" />
-                {t('settings')}
+                <span className={isRTL ? 'text-right' : 'text-left'}>{t('settings')}</span>
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <Tabs defaultValue="profile" className="w-full">
-                <TabsList className={`grid w-full grid-cols-2 ${isRTL ? 'direction-rtl' : ''}`}>
-                  <TabsTrigger value="profile">{t('profileInfo')}</TabsTrigger>
-                  <TabsTrigger value="addresses">{t('addresses')}</TabsTrigger>
+            <CardContent className={isRTL ? 'text-right' : 'text-left'}>
+              <Tabs defaultValue="profile" className="w-full" dir={isRTL ? 'rtl' : 'ltr'}>
+                <TabsList className={`grid w-full grid-cols-2 ${isRTL ? 'direction-rtl' : 'direction-ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
+                  <TabsTrigger value="profile" className={isRTL ? 'text-right' : 'text-left'}>{t('profileInfo')}</TabsTrigger>
+                  <TabsTrigger value="addresses" className={isRTL ? 'text-right' : 'text-left'}>{t('addresses')}</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="profile">
-                  <form onSubmit={handleUpdateProfile} className={`space-y-4 ${isRTL ? 'text-right' : 'text-left'}`}>
-                    <div className="space-y-2">
-                      <Label htmlFor="full_name" className={isRTL ? 'text-right block' : 'text-left block'}>{t('fullName')}</Label>
+                <TabsContent value="profile" className={isRTL ? 'text-right' : 'text-left'}>
+                  <form onSubmit={handleUpdateProfile} className={`space-y-4 ${isRTL ? 'text-right' : 'text-left'}`} dir={isRTL ? 'rtl' : 'ltr'}>
+                    <div className={`space-y-2 ${isRTL ? 'text-right' : 'text-left'}`}>
+                      <Label htmlFor="full_name" className={`${isRTL ? 'text-right block' : 'text-left block'}`}>{t('fullName')}</Label>
                       <Input
                         id="full_name"
                         value={profileData.full_name}
                         onChange={(e) => setProfileData(prev => ({ ...prev, full_name: e.target.value }))}
                         required
-                        className={isRTL ? 'text-right' : 'text-left'}
+                        className={`${isRTL ? 'text-right' : 'text-left'} w-full`}
                         dir={isRTL ? 'rtl' : 'ltr'}
                       />
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="phone" className={isRTL ? 'text-right block' : 'text-left block'}>{t('phone')}</Label>
+                    <div className={`space-y-2 ${isRTL ? 'text-right' : 'text-left'}`}>
+                      <Label htmlFor="phone" className={`${isRTL ? 'text-right block' : 'text-left block'}`}>{t('phone')}</Label>
                       <Input
                         id="phone"
                         type="tel"
                         value={profileData.phone}
                         onChange={(e) => setProfileData(prev => ({ ...prev, phone: e.target.value }))}
-                        className={isRTL ? 'text-right' : 'text-left'}
+                        className={`${isRTL ? 'text-right' : 'text-left'} w-full`}
                         dir={isRTL ? 'rtl' : 'ltr'}
                       />
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="email" className={isRTL ? 'text-right block' : 'text-left block'}>{t('email')}</Label>
+                    <div className={`space-y-2 ${isRTL ? 'text-right' : 'text-left'}`}>
+                      <Label htmlFor="email" className={`${isRTL ? 'text-right block' : 'text-left block'}`}>{t('email')}</Label>
                       <Input
                         id="email"
                         type="email"
                         value={user?.email || ''}
                         disabled
-                        className={`bg-gray-100 ${isRTL ? 'text-right' : 'text-left'}`}
+                        className={`bg-gray-100 ${isRTL ? 'text-right' : 'text-left'} w-full`}
                         dir={isRTL ? 'rtl' : 'ltr'}
                       />
                       <p className={`text-sm text-gray-500 ${isRTL ? 'text-right' : 'text-left'}`}>{t('emailCannotBeChanged')}</p>
                     </div>
 
-                    <Button type="submit" disabled={isLoading}>
-                      {isLoading ? t('loading') : t('updateProfile')}
-                    </Button>
+                    <div className={`flex ${isRTL ? 'justify-start' : 'justify-start'}`}>
+                      <Button type="submit" disabled={isLoading} className={isRTL ? 'text-right' : 'text-left'}>
+                        {isLoading ? t('loading') : t('updateProfile')}
+                      </Button>
+                    </div>
                   </form>
                 </TabsContent>
 
-                <TabsContent value="addresses">
+                <TabsContent value="addresses" className={isRTL ? 'text-right' : 'text-left'}>
                   <div className={`space-y-4 ${isRTL ? 'text-right' : 'text-left'}`}>
                     <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : 'flex-row'}`}>
-                      <h3 className="text-lg font-medium">{t('savedAddresses')}</h3>
-                      <Button size="sm">
+                      <h3 className={`text-lg font-medium ${isRTL ? 'text-right' : 'text-left'}`}>{t('savedAddresses')}</h3>
+                      <Button size="sm" className={isRTL ? 'text-right' : 'text-left'}>
                         {t('addAddress')}
                       </Button>
                     </div>
                     
-                    <div className="text-center py-8">
+                    <div className={`text-center py-8 ${isRTL ? 'text-right' : 'text-left'}`}>
                       <MapPin className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                      <p className="text-gray-500">{t('noAddressesSaved')}</p>
+                      <p className={`text-gray-500 ${isRTL ? 'text-right' : 'text-left'} text-center`}>{t('noAddressesSaved')}</p>
                     </div>
                   </div>
                 </TabsContent>
