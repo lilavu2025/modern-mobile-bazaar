@@ -15,6 +15,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
+import ImageUpload from '@/components/ImageUpload';
 
 interface AddProductDialogProps {
   open: boolean;
@@ -45,6 +46,12 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({ open, onOpenChange,
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!formData.image) {
+      toast.error('يرجى إضافة صورة للمنتج');
+      return;
+    }
+    
     setIsLoading(true);
 
     try {
@@ -233,22 +240,19 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({ open, onOpenChange,
             </div>
           </div>
 
-          <div>
-            <Label htmlFor="image">{t('productImage')} URL</Label>
-            <Input
-              id="image"
-              value={formData.image}
-              onChange={(e) => handleInputChange('image', e.target.value)}
-              placeholder="https://example.com/image.jpg"
-              required
-            />
-          </div>
+          <ImageUpload
+            value={formData.image}
+            onChange={(url) => handleInputChange('image', url)}
+            bucket="product-images"
+            label={t('productImage')}
+            placeholder="https://example.com/product-image.jpg"
+          />
 
           <div className="flex justify-end gap-3">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               {t('cancel')}
             </Button>
-            <Button type="submit" disabled={isLoading}>
+            <Button type="submit" disabled={isLoading || !formData.image}>
               {isLoading ? t('saving') : t('save')}
             </Button>
           </div>

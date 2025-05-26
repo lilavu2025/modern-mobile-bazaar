@@ -13,6 +13,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
+import ImageUpload from '@/components/ImageUpload';
 
 interface AddCategoryDialogProps {
   open: boolean;
@@ -34,6 +35,12 @@ const AddCategoryDialog: React.FC<AddCategoryDialogProps> = ({ open, onOpenChang
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!formData.image) {
+      toast.error('يرجى إضافة صورة للفئة');
+      return;
+    }
+    
     setIsLoading(true);
 
     try {
@@ -82,7 +89,7 @@ const AddCategoryDialog: React.FC<AddCategoryDialogProps> = ({ open, onOpenChang
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t('addCategory')}</DialogTitle>
         </DialogHeader>
@@ -129,22 +136,19 @@ const AddCategoryDialog: React.FC<AddCategoryDialogProps> = ({ open, onOpenChang
             />
           </div>
 
-          <div>
-            <Label htmlFor="image">{t('categoryImage')} URL</Label>
-            <Input
-              id="image"
-              value={formData.image}
-              onChange={(e) => handleInputChange('image', e.target.value)}
-              placeholder="https://example.com/image.jpg"
-              required
-            />
-          </div>
+          <ImageUpload
+            value={formData.image}
+            onChange={(url) => handleInputChange('image', url)}
+            bucket="category-images"
+            label={t('categoryImage')}
+            placeholder="https://example.com/category-image.jpg"
+          />
 
           <div className="flex justify-end gap-3">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               {t('cancel')}
             </Button>
-            <Button type="submit" disabled={isLoading}>
+            <Button type="submit" disabled={isLoading || !formData.image}>
               {isLoading ? t('saving') : t('save')}
             </Button>
           </div>
