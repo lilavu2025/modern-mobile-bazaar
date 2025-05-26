@@ -13,9 +13,8 @@ import {
 
 interface Category {
   id: string;
-  name_ar: string;
-  name_en: string;
-  name_he: string;
+  name: string;
+  nameEn: string;
   image: string;
   icon: string;
   count: number;
@@ -47,7 +46,7 @@ const ViewCategoryDialog: React.FC<ViewCategoryDialogProps> = ({
           <div className="text-center">
             <img
               src={category.image}
-              alt={category.name_ar}
+              alt={category.name}
               className="w-32 h-32 object-cover rounded-lg mx-auto mb-4"
             />
             <div className="text-4xl mb-2">{category.icon}</div>
@@ -56,9 +55,8 @@ const ViewCategoryDialog: React.FC<ViewCategoryDialogProps> = ({
           <div>
             <h3 className="text-lg font-semibold mb-2">{t('categoryNames')}</h3>
             <div className="space-y-1">
-              <p><strong>{t('arabic')}:</strong> {category.name_ar}</p>
-              <p><strong>{t('english')}:</strong> {category.name_en}</p>
-              <p><strong>{t('hebrew')}:</strong> {category.name_he}</p>
+              <p><strong>{t('arabic')}:</strong> {category.name}</p>
+              <p><strong>{t('english')}:</strong> {category.nameEn}</p>
             </div>
           </div>
 
