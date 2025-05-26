@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -20,7 +19,7 @@ const Checkout: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t } = useLanguage();
-  const { items, getTotalPrice, clearCart } = useCart();
+  const { cartItems, getTotalPrice, clearCart } = useCart();
   const { toast } = useToast();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -47,7 +46,7 @@ const Checkout: React.FC = () => {
       return;
     }
 
-    if (items.length === 0) {
+    if (cartItems.length === 0) {
       toast({
         title: t('error'),
         description: t('cartIsEmpty'),
@@ -86,7 +85,7 @@ const Checkout: React.FC = () => {
       if (orderError) throw orderError;
 
       // Create order items
-      const orderItems = items.map(item => ({
+      const orderItems = cartItems.map(item => ({
         order_id: order.id,
         product_id: item.product.id,
         quantity: item.quantity,
@@ -120,7 +119,7 @@ const Checkout: React.FC = () => {
     }
   };
 
-  if (items.length === 0) {
+  if (cartItems.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header 
@@ -293,7 +292,7 @@ const Checkout: React.FC = () => {
               <CardTitle>{t('orderSummary')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {items.map((item) => (
+              {cartItems.map((item) => (
                 <div key={item.id} className="flex items-center gap-3">
                   <img
                     src={item.product.image}
