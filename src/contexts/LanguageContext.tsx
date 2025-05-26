@@ -86,6 +86,9 @@ const translations = {
     categoryAddedSuccessfully: 'تم إضافة الفئة بنجاح',
     errorAddingProduct: 'خطأ في إضافة المنتج',
     errorAddingCategory: 'خطأ في إضافة الفئة',
+    productNotFound: 'المنتج غير موجود',
+    backToHome: 'العودة للرئيسية',
+    loading: 'جاري التحميل...',
     
     // Stats
     totalProducts: 'إجمالي المنتجات',
@@ -106,9 +109,31 @@ const translations = {
     addYourFirstCategory: 'أضف فئتك الأولى',
     ordersWillAppearHere: 'ستظهر الطلبات هنا',
     usersWillAppearHere: 'سيظهر المستخدمون هنا',
+    noCategoriesFound: 'لم يتم العثور على فئات',
+    browseProductCategories: 'تصفح فئات المنتجات',
     
     // Store
-    storeName: 'متجري'
+    storeName: 'متجري',
+    
+    // Additional translations
+    productCount: 'عدد المنتجات',
+    searchPlaceholder: 'ابحث عن المنتجات...',
+    removeFromCart: 'إزالة من السلة',
+    cartEmpty: 'السلة فارغة',
+    continueShopping: 'متابعة التسوق',
+    orderNumber: 'رقم الطلب',
+    orderStatus: 'حالة الطلب',
+    pending: 'قيد الانتظار',
+    processing: 'قيد المعالجة',
+    shipped: 'تم الشحن',
+    delivered: 'تم التوصيل',
+    cancelled: 'ملغي',
+    trackYourOrders: 'تتبع طلباتك',
+    noOrdersDescription: 'لم تقم بأي طلبات بعد',
+    startShopping: 'ابدأ التسوق',
+    paymentMethod: 'طريقة الدفع',
+    cash: 'نقدا',
+    card: 'بطاقة ائتمانية'
   },
   
   en: {
@@ -186,6 +211,9 @@ const translations = {
     categoryAddedSuccessfully: 'Category added successfully',
     errorAddingProduct: 'Error adding product',
     errorAddingCategory: 'Error adding category',
+    productNotFound: 'Product not found',
+    backToHome: 'Back to Home',
+    loading: 'Loading...',
     
     // Stats
     totalProducts: 'Total Products',
@@ -206,9 +234,31 @@ const translations = {
     addYourFirstCategory: 'Add your first category',
     ordersWillAppearHere: 'Orders will appear here',
     usersWillAppearHere: 'Users will appear here',
+    noCategoriesFound: 'No categories found',
+    browseProductCategories: 'Browse product categories',
     
     // Store
-    storeName: 'My Store'
+    storeName: 'My Store',
+    
+    // Additional translations
+    productCount: 'Product Count',
+    searchPlaceholder: 'Search products...',
+    removeFromCart: 'Remove from Cart',
+    cartEmpty: 'Cart is empty',
+    continueShopping: 'Continue Shopping',
+    orderNumber: 'Order Number',
+    orderStatus: 'Order Status',
+    pending: 'Pending',
+    processing: 'Processing',
+    shipped: 'Shipped',
+    delivered: 'Delivered',
+    cancelled: 'Cancelled',
+    trackYourOrders: 'Track your orders',
+    noOrdersDescription: 'You haven\'t placed any orders yet',
+    startShopping: 'Start Shopping',
+    paymentMethod: 'Payment Method',
+    cash: 'Cash',
+    card: 'Credit Card'
   },
   
   he: {
@@ -286,6 +336,9 @@ const translations = {
     categoryAddedSuccessfully: 'הקטגוריה נוספה בהצלחה',
     errorAddingProduct: 'שגיאה בהוספת המוצר',
     errorAddingCategory: 'שגיאה בהוספת הקטגוריה',
+    productNotFound: 'המוצר לא נמצא',
+    backToHome: 'חזור לבית',
+    loading: 'טוען...',
     
     // Stats
     totalProducts: 'סך המוצרים',
@@ -306,9 +359,31 @@ const translations = {
     addYourFirstCategory: 'הוסף את הקטגוריה הראשונה שלך',
     ordersWillAppearHere: 'הזמנות יופיעו כאן',
     usersWillAppearHere: 'משתמשים יופיעו כאן',
+    noCategoriesFound: 'לא נמצאו קטגוריות',
+    browseProductCategories: 'עיין בקטגוריות מוצרים',
     
     // Store
-    storeName: 'החנות שלי'
+    storeName: 'החנות שלי',
+    
+    // Additional translations
+    productCount: 'מספר מוצרים',
+    searchPlaceholder: 'חפש מוצרים...',
+    removeFromCart: 'הסר מהעגלה',
+    cartEmpty: 'העגלה ריקה',
+    continueShopping: 'המשך לקנות',
+    orderNumber: 'מספר הזמנה',
+    orderStatus: 'סטטוס הזמנה',
+    pending: 'ממתין',
+    processing: 'בעיבוד',
+    shipped: 'נשלח',
+    delivered: 'נמסר',
+    cancelled: 'בוטל',
+    trackYourOrders: 'עקוב אחר הזמנותיך',
+    noOrdersDescription: 'עדיין לא ביצעת הזמנות',
+    startShopping: 'התחל לקנות',
+    paymentMethod: 'אמצעי תשלום',
+    cash: 'מזומן',
+    card: 'כרטיס אשראי'
   }
 };
 

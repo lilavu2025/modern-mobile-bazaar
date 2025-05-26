@@ -1,9 +1,11 @@
 
 import { useState, useEffect } from 'react';
 import { CartItem, Product } from '@/types';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from '@/hooks/use-toast';
 
 export const useCart = () => {
+  const { t } = useLanguage();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -38,8 +40,8 @@ export const useCart = () => {
               : item
           );
           toast({
-            title: "تم تحديث السلة",
-            description: `تم زيادة كمية ${product.name}`,
+            title: t('cartUpdated'),
+            description: `${t('quantityIncreased')} ${product.name}`,
           });
           return updatedItems;
         } else {
@@ -49,8 +51,8 @@ export const useCart = () => {
             quantity
           };
           toast({
-            title: "تم إضافة المنتج",
-            description: `تم إضافة ${product.name} إلى السلة`,
+            title: t('productAdded'),
+            description: `${t('productAddedToCart')} ${product.name}`,
           });
           return [...prevItems, newItem];
         }
@@ -63,8 +65,8 @@ export const useCart = () => {
     setCartItems(prevItems => {
       const updatedItems = prevItems.filter(item => item.id !== productId);
       toast({
-        title: "تم حذف المنتج",
-        description: "تم حذف المنتج من السلة",
+        title: t('productRemoved'),
+        description: t('productRemovedFromCart'),
         variant: "destructive"
       });
       return updatedItems;
@@ -89,8 +91,8 @@ export const useCart = () => {
   const clearCart = () => {
     setCartItems([]);
     toast({
-      title: "تم تفريغ السلة",
-      description: "تم حذف جميع المنتجات من السلة",
+      title: t('cartCleared'),
+      description: t('allProductsRemoved'),
     });
   };
 

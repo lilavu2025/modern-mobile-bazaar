@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCategories } from '@/hooks/useSupabaseData';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -20,12 +21,49 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { toast } from '@/hooks/use-toast';
 import AddCategoryDialog from './AddCategoryDialog';
 
 const AdminCategories: React.FC = () => {
   const { t } = useLanguage();
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const { data: categories = [], isLoading } = useCategories();
+  const { data: categories = [], isLoading, refetch } = useCategories();
+
+  const handleDeleteCategory = async (categoryId: string, categoryName: string) => {
+    try {
+      const { error } = await supabase
+        .from('categories')
+        .delete()
+        .eq('id', categoryId);
+
+      if (error) throw error;
+
+      toast({
+        title: t('categoryDeleted'),
+        description: `${t('categoryDeletedSuccessfully')} ${categoryName}`,
+      });
+
+      refetch();
+    } catch (error) {
+      console.error('Error deleting category:', error);
+      toast({
+        title: t('error'),
+        description: t('errorDeletingCategory'),
+        variant: 'destructive',
+      });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -76,7 +114,7 @@ const AdminCategories: React.FC = () => {
                   <TableHead>{t('categoryImage')}</TableHead>
                   <TableHead>{t('categoryName')}</TableHead>
                   <TableHead>{t('categoryIcon')}</TableHead>
-                  <TableHead>عدد المنتجات</TableHead>
+                  <TableHead>{t('productCount')}</TableHead>
                   <TableHead className="text-right">{t('actions')}</TableHead>
                 </TableRow>
               </TableHeader>
@@ -99,15 +137,36 @@ const AdminCategories: React.FC = () => {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center gap-2 justify-end">
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" title={t('view')}>
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" title={t('edit')}>
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm">
-                          <Trash className="h-4 w-4" />
-                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm" title={t('delete')}>
+                              <Trash className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>{t('deleteCategory')}</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                {t('deleteCategoryConfirmation')} "{category.name}"?
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={() => handleDeleteCategory(category.id, category.name)}
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                {t('delete')}
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -121,6 +180,7 @@ const AdminCategories: React.FC = () => {
       <AddCategoryDialog 
         open={showAddDialog} 
         onOpenChange={setShowAddDialog}
+        onSuccess={() => refetch()}
       />
     </div>
   );
