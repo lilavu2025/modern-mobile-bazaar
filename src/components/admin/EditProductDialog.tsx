@@ -17,7 +17,52 @@ import ProductDescriptionFields from './ProductDescriptionFields';
 import ProductPricingFields from './ProductPricingFields';
 import ProductCategoryField from './ProductCategoryField';
 import ProductToggleFields from './ProductToggleFields';
-import { Product, Category, ProductFormData } from '@/types/product';
+
+interface Product {
+  id: string;
+  name_ar: string;
+  name_en: string;
+  name_he: string;
+  description_ar: string;
+  description_en: string;
+  description_he: string;
+  price: number;
+  original_price?: number;
+  wholesale_price?: number;
+  image: string;
+  images?: string[];
+  category_id: string;
+  in_stock: boolean;
+  discount?: number;
+  featured: boolean;
+}
+
+interface Category {
+  id: string;
+  name: string;
+  nameEn: string;
+  image: string;
+  icon: string;
+  count: number;
+}
+
+interface ProductFormData {
+  name_ar: string;
+  name_en: string;
+  name_he: string;
+  description_ar: string;
+  description_en: string;
+  description_he: string;
+  price: number;
+  original_price: number;
+  wholesale_price: number;
+  image: string;
+  images: string[];
+  category_id: string;
+  in_stock: boolean;
+  discount: number;
+  featured: boolean;
+}
 
 interface EditProductDialogProps {
   open: boolean;
@@ -47,6 +92,7 @@ const EditProductDialog: React.FC<EditProductDialogProps> = ({
     original_price: 0,
     wholesale_price: 0,
     image: '',
+    images: [],
     category_id: '',
     in_stock: true,
     discount: 0,
@@ -55,6 +101,10 @@ const EditProductDialog: React.FC<EditProductDialogProps> = ({
 
   useEffect(() => {
     if (product) {
+      // تحضير الصور - التأكد من أن الصورة الرئيسية موجودة في مصفوفة الصور
+      const productImages = product.images && Array.isArray(product.images) ? product.images : [];
+      const allImages = productImages.length > 0 ? productImages : [product.image].filter(img => img);
+
       setFormData({
         name_ar: product.name_ar || '',
         name_en: product.name_en || '',
@@ -66,6 +116,7 @@ const EditProductDialog: React.FC<EditProductDialogProps> = ({
         original_price: Number(product.original_price) || 0,
         wholesale_price: Number(product.wholesale_price) || 0,
         image: product.image || '',
+        images: allImages,
         category_id: product.category_id || '',
         in_stock: product.in_stock || false,
         discount: Number(product.discount) || 0,
@@ -79,6 +130,10 @@ const EditProductDialog: React.FC<EditProductDialogProps> = ({
     setIsSubmitting(true);
 
     try {
+      // التأكد من أن الصورة الرئيسية هي أول صورة في المصفوفة
+      const finalImages = formData.images.length > 0 ? formData.images : [formData.image].filter(img => img);
+      const mainImage = finalImages[0] || formData.image;
+
       const { error } = await supabase
         .from('products')
         .update({
@@ -91,7 +146,8 @@ const EditProductDialog: React.FC<EditProductDialogProps> = ({
           price: formData.price,
           original_price: formData.original_price || null,
           wholesale_price: formData.wholesale_price || null,
-          image: formData.image,
+          image: mainImage,
+          images: finalImages,
           category_id: formData.category_id,
           in_stock: formData.in_stock,
           discount: formData.discount || null,
@@ -121,6 +177,15 @@ const EditProductDialog: React.FC<EditProductDialogProps> = ({
     }
   };
 
+  const handleImagesChange = (images: string | string[]) => {
+    const imageArray = Array.isArray(images) ? images : [images].filter(img => img);
+    setFormData(prev => ({
+      ...prev,
+      images: imageArray,
+      image: imageArray[0] || prev.image // تحديث الصورة الرئيسية
+    }));
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -134,10 +199,12 @@ const EditProductDialog: React.FC<EditProductDialogProps> = ({
           <ProductDescriptionFields formData={formData} setFormData={setFormData} />
 
           <ImageUpload
-            value={formData.image}
-            onChange={(url) => setFormData({ ...formData, image: url })}
+            value={formData.images}
+            onChange={handleImagesChange}
             bucket="product-images"
-            label={t('productImage')}
+            label="صور المنتج"
+            multiple={true}
+            maxImages={5}
           />
 
           <ProductCategoryField 

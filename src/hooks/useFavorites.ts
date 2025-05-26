@@ -12,74 +12,99 @@ export const useFavorites = () => {
   // Load favorites from localStorage on mount
   useEffect(() => {
     console.log('Loading favorites for user:', user?.id);
-    if (user?.id) {
-      const savedFavorites = localStorage.getItem(`favorites_${user.id}`);
-      console.log('Saved favorites from localStorage:', savedFavorites);
-      if (savedFavorites) {
-        try {
+    try {
+      if (user?.id) {
+        const savedFavorites = localStorage.getItem(`favorites_${user.id}`);
+        console.log('Saved favorites from localStorage:', savedFavorites);
+        if (savedFavorites) {
           const parsedFavorites = JSON.parse(savedFavorites);
           console.log('Parsed favorites:', parsedFavorites);
-          setFavorites(parsedFavorites);
-        } catch (error) {
-          console.error('Error loading favorites:', error);
+          setFavorites(Array.isArray(parsedFavorites) ? parsedFavorites : []);
+        } else {
           setFavorites([]);
         }
-      }
-    } else {
-      // إذا لم يكن هناك مستخدم، استخدم localStorage عام
-      const savedFavorites = localStorage.getItem('favorites_guest');
-      if (savedFavorites) {
-        try {
+      } else {
+        // إذا لم يكن هناك مستخدم، استخدم localStorage عام
+        const savedFavorites = localStorage.getItem('favorites_guest');
+        if (savedFavorites) {
           const parsedFavorites = JSON.parse(savedFavorites);
-          setFavorites(parsedFavorites);
-        } catch (error) {
-          console.error('Error loading guest favorites:', error);
+          setFavorites(Array.isArray(parsedFavorites) ? parsedFavorites : []);
+        } else {
           setFavorites([]);
         }
       }
+    } catch (error) {
+      console.error('Error loading favorites:', error);
+      setFavorites([]);
     }
   }, [user?.id]);
 
   // Save favorites to localStorage whenever they change
   useEffect(() => {
     console.log('Saving favorites:', favorites);
-    if (user?.id) {
-      localStorage.setItem(`favorites_${user.id}`, JSON.stringify(favorites));
-    } else {
-      localStorage.setItem('favorites_guest', JSON.stringify(favorites));
+    try {
+      if (user?.id) {
+        localStorage.setItem(`favorites_${user.id}`, JSON.stringify(favorites));
+      } else {
+        localStorage.setItem('favorites_guest', JSON.stringify(favorites));
+      }
+    } catch (error) {
+      console.error('Error saving favorites:', error);
     }
   }, [favorites, user?.id]);
 
   const toggleFavorite = (productId: string) => {
     console.log('Toggling favorite for product:', productId);
     
+    if (!productId) {
+      console.error('Product ID is required');
+      return;
+    }
+    
     setFavorites(prev => {
-      const isFavorite = prev.includes(productId);
+      const currentFavorites = Array.isArray(prev) ? prev : [];
+      const isFavorite = currentFavorites.includes(productId);
       console.log('Product is currently favorite:', isFavorite);
       
       if (isFavorite) {
-        toast.success(t('removedFromFavorites'));
-        const newFavorites = prev.filter(id => id !== productId);
+        const newFavorites = currentFavorites.filter(id => id !== productId);
         console.log('New favorites after removal:', newFavorites);
+        toast.success(t('removedFromFavorites'));
         return newFavorites;
       } else {
-        toast.success(t('addedToFavorites'));
-        const newFavorites = [...prev, productId];
+        const newFavorites = [...currentFavorites, productId];
         console.log('New favorites after addition:', newFavorites);
+        toast.success(t('addedToFavorites'));
         return newFavorites;
       }
     });
   };
 
   const isFavorite = (productId: string) => {
-    const result = favorites.includes(productId);
+    if (!productId) return false;
+    const currentFavorites = Array.isArray(favorites) ? favorites : [];
+    const result = currentFavorites.includes(productId);
     console.log(`Checking if product ${productId} is favorite:`, result);
     return result;
   };
 
+  const getFavoritesCount = () => {
+    const count = Array.isArray(favorites) ? favorites.length : 0;
+    console.log('Favorites count:', count);
+    return count;
+  };
+
+  const clearFavorites = () => {
+    console.log('Clearing all favorites');
+    setFavorites([]);
+    toast.success(t('favoritesCleared'));
+  };
+
   return {
-    favorites,
+    favorites: Array.isArray(favorites) ? favorites : [],
     toggleFavorite,
     isFavorite,
+    getFavoritesCount,
+    clearFavorites,
   };
 };

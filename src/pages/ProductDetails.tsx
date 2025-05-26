@@ -1,11 +1,10 @@
 
 import React, { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Star, Heart, Share2, ShoppingCart, Minus, Plus, ArrowRight } from 'lucide-react';
+import { Star, Heart, Share2, ShoppingCart, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useProducts } from '@/hooks/useSupabaseData';
 import { useCart } from '@/hooks/useCart';
 import { useFavorites } from '@/hooks/useFavorites';
@@ -60,42 +59,63 @@ const ProductDetails = () => {
     .filter(p => p.category === product.category && p.id !== product.id)
     .slice(0, 4);
 
-  // إصلاح مشكلة الصور المتعددة
-  const images = product.images && product.images.length > 0 ? product.images : [product.image];
+  // تحسين عرض الصور - إعطاء أولوية للصور المتعددة ثم الصورة الرئيسية
+  const images = product.images && Array.isArray(product.images) && product.images.length > 0 
+    ? product.images.filter(img => img && img.trim() !== '') 
+    : [product.image].filter(img => img && img.trim() !== '');
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     console.log('Add to cart clicked with quantity:', quantity);
     if (!product.inStock) {
       toast.error(t('productOutOfStock'));
       return;
     }
-    addToCart(product, quantity);
-    setQuantity(1);
+    
+    try {
+      await addToCart(product, quantity);
+      console.log('Product added to cart successfully');
+      setQuantity(1);
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      toast.error(t('errorAddingToCart'));
+    }
   };
 
-  const handleBuyNow = () => {
+  const handleBuyNow = async () => {
     console.log('Buy now clicked with quantity:', quantity);
     if (!product.inStock) {
       toast.error(t('productOutOfStock'));
       return;
     }
-    buyNow(product, quantity);
-    // تأخير للتأكد من إضافة المنتج للسلة قبل التوجه للدفع
-    setTimeout(() => {
-      navigate('/checkout');
-    }, 500);
+    
+    try {
+      await buyNow(product, quantity);
+      console.log('Product added for buy now, navigating to checkout');
+      // تأخير قصير للتأكد من إضافة المنتج للسلة
+      setTimeout(() => {
+        navigate('/checkout');
+      }, 200);
+    } catch (error) {
+      console.error('Error in buy now:', error);
+      toast.error(t('errorBuyingNow'));
+    }
   };
 
   const handleFavorite = () => {
     console.log('Toggle favorite for product:', product.id);
-    toggleFavorite(product.id);
+    try {
+      toggleFavorite(product.id);
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      toast.error(t('errorTogglingFavorite'));
+    }
   };
 
   const handleShare = async () => {
     const productUrl = `${window.location.origin}/product/${product.id}`;
     
     try {
-      if (navigator.share && navigator.canShare) {
+      if (navigator.share) {
         await navigator.share({
           title: product.name,
           text: product.description,
@@ -144,9 +164,9 @@ const ProductDetails = () => {
           {/* Product Images */}
           <div className="space-y-4">
             <div className="relative overflow-hidden rounded-xl bg-white border">
-              {images[selectedImage] && (
+              {images.length > 0 && (
                 <img
-                  src={images[selectedImage]}
+                  src={images[selectedImage] || product.image}
                   alt={product.name}
                   className="w-full h-96 object-cover"
                   onError={(e) => {
@@ -162,6 +182,7 @@ const ProductDetails = () => {
               )}
             </div>
             
+            {/* صور مصغرة للصور المتعددة */}
             {images.length > 1 && (
               <div className="flex gap-2 overflow-x-auto">
                 {images.map((image, index) => (

@@ -11,35 +11,54 @@ export const useCart = () => {
 
   // Load cart from localStorage on mount
   useEffect(() => {
-    const savedCart = localStorage.getItem('cart');
-    if (savedCart) {
-      try {
+    try {
+      const savedCart = localStorage.getItem('cart');
+      if (savedCart) {
         const parsedCart = JSON.parse(savedCart);
         console.log('Loading cart from localStorage:', parsedCart);
-        setCartItems(parsedCart);
-      } catch (error) {
-        console.error('Error loading cart:', error);
-        localStorage.removeItem('cart');
+        if (Array.isArray(parsedCart)) {
+          setCartItems(parsedCart);
+        } else {
+          console.error('Invalid cart data in localStorage');
+          localStorage.removeItem('cart');
+          setCartItems([]);
+        }
       }
+    } catch (error) {
+      console.error('Error loading cart:', error);
+      localStorage.removeItem('cart');
+      setCartItems([]);
     }
   }, []);
 
   // Save cart to localStorage whenever it changes
   useEffect(() => {
-    console.log('Saving cart to localStorage:', cartItems);
-    localStorage.setItem('cart', JSON.stringify(cartItems));
+    try {
+      console.log('Saving cart to localStorage:', cartItems);
+      localStorage.setItem('cart', JSON.stringify(cartItems));
+    } catch (error) {
+      console.error('Error saving cart:', error);
+    }
   }, [cartItems]);
 
-  const addToCart = (product: Product, quantity: number = 1) => {
+  const addToCart = async (product: Product, quantity: number = 1) => {
     console.log('Adding to cart:', product, 'quantity:', quantity);
+    
+    if (!product || !product.id) {
+      console.error('Invalid product data');
+      toast.error(t('invalidProduct'));
+      return;
+    }
+
     setIsLoading(true);
     
-    setTimeout(() => {
+    try {
       setCartItems(prevItems => {
-        const existingItem = prevItems.find(item => item.id === product.id);
+        const currentItems = Array.isArray(prevItems) ? prevItems : [];
+        const existingItem = currentItems.find(item => item.id === product.id);
         
         if (existingItem) {
-          const updatedItems = prevItems.map(item =>
+          const updatedItems = currentItems.map(item =>
             item.id === product.id
               ? { ...item, quantity: item.quantity + quantity }
               : item
@@ -53,80 +72,118 @@ export const useCart = () => {
             product,
             quantity
           };
-          const newItems = [...prevItems, newItem];
+          const newItems = [...currentItems, newItem];
           console.log('Added new item to cart:', newItems);
           toast.success(`${product.name} ${t('addedToCart')}`);
           return newItems;
         }
       });
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      toast.error(t('errorAddingToCart'));
+    } finally {
       setIsLoading(false);
-    }, 100);
+    }
   };
 
-  const buyNow = (product: Product, quantity: number = 1) => {
+  const buyNow = async (product: Product, quantity: number = 1) => {
     console.log('Buy now called with:', product, 'quantity:', quantity);
     
-    // مسح السلة وإضافة هذا المنتج فقط
-    const newItem: CartItem = {
-      id: product.id,
-      product,
-      quantity
-    };
+    if (!product || !product.id) {
+      console.error('Invalid product data');
+      toast.error(t('invalidProduct'));
+      return Promise.reject('Invalid product');
+    }
     
-    setCartItems([newItem]);
-    toast.success(`${product.name} ${t('addedToCart')}`);
-    console.log('Cart updated for buy now:', [newItem]);
-    
-    return Promise.resolve(); // إرجاع Promise للتأكد من انتهاء العملية
+    try {
+      // مسح السلة وإضافة هذا المنتج فقط
+      const newItem: CartItem = {
+        id: product.id,
+        product,
+        quantity
+      };
+      
+      setCartItems([newItem]);
+      toast.success(`${product.name} ${t('addedToCart')}`);
+      console.log('Cart updated for buy now:', [newItem]);
+      
+      return Promise.resolve();
+    } catch (error) {
+      console.error('Error in buy now:', error);
+      toast.error(t('errorBuyingNow'));
+      return Promise.reject(error);
+    }
   };
 
   const removeFromCart = (productId: string) => {
+    if (!productId) {
+      console.error('Product ID is required');
+      return;
+    }
+
     setCartItems(prevItems => {
-      const updatedItems = prevItems.filter(item => item.id !== productId);
+      const currentItems = Array.isArray(prevItems) ? prevItems : [];
+      const updatedItems = currentItems.filter(item => item.id !== productId);
       toast.success(t('productRemovedFromCart'));
+      console.log('Removed item from cart, new items:', updatedItems);
       return updatedItems;
     });
   };
 
   const updateQuantity = (productId: string, quantity: number) => {
+    if (!productId) {
+      console.error('Product ID is required');
+      return;
+    }
+
     if (quantity <= 0) {
       removeFromCart(productId);
       return;
     }
 
-    setCartItems(prevItems =>
-      prevItems.map(item =>
+    setCartItems(prevItems => {
+      const currentItems = Array.isArray(prevItems) ? prevItems : [];
+      return currentItems.map(item =>
         item.id === productId
           ? { ...item, quantity }
           : item
-      )
-    );
+      );
+    });
   };
 
   const clearCart = () => {
     setCartItems([]);
     toast.success(t('allProductsRemoved'));
+    console.log('Cart cleared');
   };
 
   const getTotalItems = () => {
-    const total = cartItems.reduce((total, item) => total + item.quantity, 0);
+    const currentItems = Array.isArray(cartItems) ? cartItems : [];
+    const total = currentItems.reduce((total, item) => total + (item.quantity || 0), 0);
     console.log('Total items in cart:', total);
     return total;
   };
 
   const getTotalPrice = () => {
-    return cartItems.reduce((total, item) => total + (item.product.price * item.quantity), 0);
+    const currentItems = Array.isArray(cartItems) ? cartItems : [];
+    return currentItems.reduce((total, item) => {
+      const price = item.product?.price || 0;
+      const quantity = item.quantity || 0;
+      return total + (price * quantity);
+    }, 0);
   };
 
   const getItemQuantity = (productId: string) => {
-    const item = cartItems.find(item => item.id === productId);
+    if (!productId) return 0;
+    const currentItems = Array.isArray(cartItems) ? cartItems : [];
+    const item = currentItems.find(item => item.id === productId);
     const quantity = item ? item.quantity : 0;
     console.log('Getting quantity for product', productId, ':', quantity);
     return quantity;
   };
 
   return {
-    cartItems,
+    cartItems: Array.isArray(cartItems) ? cartItems : [],
     isLoading,
     addToCart,
     buyNow,
