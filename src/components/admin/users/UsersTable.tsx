@@ -32,7 +32,7 @@ const UsersTable: React.FC<UsersTableProps> = ({ users, isLoading }) => {
           <div className="text-center py-12">
             <div className="inline-flex items-center gap-3">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              <span className="text-gray-600">جاري تحميل البيانات...</span>
+              <span className="text-gray-600">{t('loadingData')}</span>
             </div>
           </div>
         </CardContent>
@@ -48,8 +48,8 @@ const UsersTable: React.FC<UsersTableProps> = ({ users, isLoading }) => {
             <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <Users className="h-12 w-12 text-gray-400" />
             </div>
-            <h3 className="text-xl font-medium text-gray-900 mb-2">لا توجد نتائج</h3>
-            <p className="text-gray-500">جرب تغيير معايير البحث أو الفلاتر</p>
+            <h3 className="text-xl font-medium text-gray-900 mb-2">{t('noResults')}</h3>
+            <p className="text-gray-500">{t('tryChangingFilters')}</p>
           </div>
         </CardContent>
       </Card>
@@ -71,12 +71,12 @@ const UsersTable: React.FC<UsersTableProps> = ({ users, isLoading }) => {
           <Table>
             <TableHeader>
               <TableRow className="bg-gray-50 hover:bg-gray-50">
-                <TableHead className="font-semibold text-gray-700 text-xs lg:text-sm p-2 lg:p-4">المستخدم</TableHead>
-                <TableHead className="font-semibold text-gray-700 text-xs lg:text-sm p-2 lg:p-4">الاتصال</TableHead>
-                <TableHead className="font-semibold text-gray-700 text-xs lg:text-sm p-2 lg:p-4">النوع</TableHead>
-                <TableHead className="font-semibold text-gray-700 text-xs lg:text-sm p-2 lg:p-4">الحالة</TableHead>
-                <TableHead className="font-semibold text-gray-700 text-xs lg:text-sm p-2 lg:p-4 hidden lg:table-cell">تاريخ التسجيل</TableHead>
-                <TableHead className="font-semibold text-gray-700 text-xs lg:text-sm p-2 lg:p-4">الإجراءات</TableHead>
+                <TableHead className="font-semibold text-gray-700 text-xs lg:text-sm p-2 lg:p-4">{t('user')}</TableHead>
+                <TableHead className="font-semibold text-gray-700 text-xs lg:text-sm p-2 lg:p-4">{t('contact')}</TableHead>
+                <TableHead className="font-semibold text-gray-700 text-xs lg:text-sm p-2 lg:p-4">{t('type')}</TableHead>
+                <TableHead className="font-semibold text-gray-700 text-xs lg:text-sm p-2 lg:p-4">{t('status')}</TableHead>
+                <TableHead className="font-semibold text-gray-700 text-xs lg:text-sm p-2 lg:p-4 hidden lg:table-cell">{t('registrationDate')}</TableHead>
+                <TableHead className="font-semibold text-gray-700 text-xs lg:text-sm p-2 lg:p-4">{t('actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

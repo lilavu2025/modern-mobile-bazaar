@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -6,7 +7,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Mail, Phone, Calendar, CheckCircle, XCircle, Eye, ShoppingBag, MoreVertical } from 'lucide-react';
 import { format } from 'date-fns';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { toast } from 'sonner';
 import EditUserDialog from '../EditUserDialog';
 import UserDetailsDialog from './UserDetailsDialog';
 import UserOrdersDialog from './UserOrdersDialog';
@@ -110,12 +110,12 @@ const UserTableRow: React.FC<UserTableRowProps> = ({ user, index }) => {
             {user.email_confirmed_at ? (
               <>
                 <CheckCircle className="h-3 w-3 lg:h-4 lg:w-4 text-green-500 flex-shrink-0" />
-                <span className="text-xs lg:text-sm text-green-600 font-medium">مؤكد</span>
+                <span className="text-xs lg:text-sm text-green-600 font-medium">{t('confirmed')}</span>
               </>
             ) : (
               <>
                 <XCircle className="h-3 w-3 lg:h-4 lg:w-4 text-orange-500 flex-shrink-0" />
-                <span className="text-xs lg:text-sm text-orange-600 font-medium">غير مؤكد</span>
+                <span className="text-xs lg:text-sm text-orange-600 font-medium">{t('unconfirmed')}</span>
               </>
             )}
           </div>
@@ -143,11 +143,11 @@ const UserTableRow: React.FC<UserTableRowProps> = ({ user, index }) => {
               <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuItem onClick={handleViewDetails} className="text-xs lg:text-sm cursor-pointer">
                   <Eye className="h-3 w-3 lg:h-4 lg:w-4 mr-2" />
-                  عرض التفاصيل
+                  {t('viewDetails')}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleViewOrders} className="text-xs lg:text-sm cursor-pointer">
                   <ShoppingBag className="h-3 w-3 lg:h-4 lg:w-4 mr-2" />
-                  عرض الطلبيات
+                  {t('viewOrders')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

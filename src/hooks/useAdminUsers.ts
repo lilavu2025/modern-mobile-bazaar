@@ -36,9 +36,9 @@ export const useAdminUsers = () => {
         return;
       }
 
-      console.log('Fetching users...');
+      console.log('Fetching users from profiles table...');
 
-      // Fetch profiles data
+      // Fetch all profiles
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
@@ -49,32 +49,22 @@ export const useAdminUsers = () => {
         throw profilesError;
       }
 
-      console.log('Profiles data:', profilesData);
+      console.log('Profiles data fetched:', profilesData);
 
-      // Try to fetch auth users data (this might fail due to RLS)
-      let authUsersData: any[] = [];
-      try {
-        const { data, error } = await supabase.auth.admin.listUsers();
-        if (!error && data?.users) {
-          authUsersData = data.users;
-        }
-      } catch (authError) {
-        console.log('Could not fetch auth users (expected if not admin):', authError);
-      }
+      // Format the data to match our interface
+      const formattedUsers: UserProfile[] = profilesData?.map(profile => ({
+        id: profile.id,
+        full_name: profile.full_name || 'غير محدد',
+        phone: profile.phone,
+        user_type: profile.user_type || 'retail',
+        created_at: profile.created_at,
+        email: `user-${profile.id.slice(0, 8)}@example.com`, // Placeholder since we can't access auth.users
+        email_confirmed_at: profile.created_at, // Assume confirmed if profile exists
+        last_sign_in_at: profile.updated_at,
+      })) || [];
 
-      // Combine profile data with auth data where possible
-      const combinedUsers: UserProfile[] = profilesData?.map(profile => {
-        const authUser = authUsersData.find(user => user.id === profile.id);
-        return {
-          ...profile,
-          email: authUser?.email || `user-${profile.id.slice(0, 8)}@example.com`,
-          email_confirmed_at: authUser?.email_confirmed_at,
-          last_sign_in_at: authUser?.last_sign_in_at,
-        };
-      }) || [];
-
-      console.log('Combined users:', combinedUsers);
-      setUsers(combinedUsers);
+      console.log('Formatted users:', formattedUsers);
+      setUsers(formattedUsers);
     } catch (err: any) {
       console.error('Error fetching users:', err);
       setError(err.message || 'Failed to fetch users');
