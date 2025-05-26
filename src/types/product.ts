@@ -1,29 +1,22 @@
 
 export interface Product {
   id: string;
-  name_ar: string;
-  name_en: string;
-  name_he: string;
-  description_ar: string;
-  description_en: string;
-  description_he: string;
-  price: number;
-  original_price?: number;
-  wholesale_price?: number;
-  image: string;
-  category_id: string;
-  in_stock: boolean;
-  discount?: number;
-  featured: boolean;
-}
-
-export interface Category {
-  id: string;
   name: string;
-  nameEn: string;
+  nameEn?: string;
+  description: string;
+  descriptionEn?: string;
+  price: number;
+  originalPrice?: number;
+  wholesalePrice?: number;
   image: string;
-  icon: string;
-  count: number;
+  images?: string[];
+  category: string;
+  inStock: boolean;
+  rating?: number;
+  reviews?: number;
+  discount?: number;
+  featured?: boolean;
+  tags?: string[];
 }
 
 export interface ProductFormData {
@@ -34,11 +27,29 @@ export interface ProductFormData {
   description_en: string;
   description_he: string;
   price: number;
-  original_price: number;
-  wholesale_price: number;
-  image: string;
+  original_price?: number;
+  wholesale_price?: number;
   category_id: string;
+  image: string;
+  images: string[];
   in_stock: boolean;
-  discount: number;
   featured: boolean;
+  active: boolean;
+  discount?: number;
+  tags: string[];
+}
+
+export interface CartItem {
+  id: string;
+  product: Product;
+  quantity: number;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  nameEn?: string;
+  image: string;
+  icon: string;
+  count: number;
 }
