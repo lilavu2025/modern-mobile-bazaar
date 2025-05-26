@@ -42,6 +42,7 @@ const translations = {
     price: 'السعر',
     quantity: 'الكمية',
     total: 'المجموع',
+    success: 'نجح',
     
     // Products
     productDetails: 'تفاصيل المنتج',
@@ -52,6 +53,8 @@ const translations = {
     discount: 'خصم',
     rating: 'التقييم',
     reviews: 'المراجعات',
+    wholesalePrice: 'سعر الجملة',
+    retailPrice: 'سعر المفرق',
     
     // Auth
     email: 'البريد الإلكتروني',
@@ -77,6 +80,26 @@ const translations = {
     manageOrders: 'إدارة الطلبات',
     manageUsers: 'إدارة المستخدمين',
     statistics: 'الإحصائيات',
+    
+    // User Types
+    userType: 'نوع المستخدم',
+    accountType: 'نوع الحساب',
+    wholesale: 'جملة',
+    retail: 'مفرق',
+    
+    // Profile
+    accountInfo: 'معلومات الحساب',
+    settings: 'الإعدادات',
+    profileInfo: 'معلومات الملف الشخصي',
+    addresses: 'العناوين',
+    savedAddresses: 'العناوين المحفوظة',
+    addAddress: 'إضافة عنوان',
+    noAddressesSaved: 'لا توجد عناوين محفوظة',
+    profileUpdated: 'تم تحديث الملف الشخصي',
+    updateProfile: 'تحديث الملف الشخصي',
+    emailCannotBeChanged: 'لا يمكن تغيير البريد الإلكتروني',
+    notProvided: 'غير محدد',
+    manageYourAccount: 'إدارة حسابك ومعلوماتك الشخصية',
     
     // Store name
     storeName: 'متجري',
@@ -113,6 +136,7 @@ const translations = {
     price: 'Price',
     quantity: 'Quantity',
     total: 'Total',
+    success: 'Success',
     
     // Products
     productDetails: 'Product Details',
@@ -123,6 +147,8 @@ const translations = {
     discount: 'Discount',
     rating: 'Rating',
     reviews: 'Reviews',
+    wholesalePrice: 'Wholesale Price',
+    retailPrice: 'Retail Price',
     
     // Auth
     email: 'Email',
@@ -148,6 +174,26 @@ const translations = {
     manageOrders: 'Manage Orders',
     manageUsers: 'Manage Users',
     statistics: 'Statistics',
+    
+    // User Types
+    userType: 'User Type',
+    accountType: 'Account Type',
+    wholesale: 'Wholesale',
+    retail: 'Retail',
+    
+    // Profile
+    accountInfo: 'Account Information',
+    settings: 'Settings',
+    profileInfo: 'Profile Information',
+    addresses: 'Addresses',
+    savedAddresses: 'Saved Addresses',
+    addAddress: 'Add Address',
+    noAddressesSaved: 'No addresses saved',
+    profileUpdated: 'Profile updated successfully',
+    updateProfile: 'Update Profile',
+    emailCannotBeChanged: 'Email cannot be changed',
+    notProvided: 'Not provided',
+    manageYourAccount: 'Manage your account and personal information',
     
     // Store name
     storeName: 'My Store',
@@ -184,6 +230,7 @@ const translations = {
     price: 'מחיר',
     quantity: 'כמות',
     total: 'סה"כ',
+    success: 'הצלחה',
     
     // Products
     productDetails: 'פרטי מוצר',
@@ -194,6 +241,8 @@ const translations = {
     discount: 'הנחה',
     rating: 'דירוג',
     reviews: 'ביקורות',
+    wholesalePrice: 'מחיר סיטונאי',
+    retailPrice: 'מחיר קמעונאי',
     
     // Auth
     email: 'אימייל',
@@ -219,6 +268,26 @@ const translations = {
     manageOrders: 'ניהול הזמנות',
     manageUsers: 'ניהול משתמשים',
     statistics: 'סטטיסטיקות',
+    
+    // User Types
+    userType: 'סוג משתמש',
+    accountType: 'סוג חשבון',
+    wholesale: 'סיטונאי',
+    retail: 'קמעונאי',
+    
+    // Profile
+    accountInfo: 'פרטי חשבון',
+    settings: 'הגדרות',
+    profileInfo: 'פרטי פרופיל',
+    addresses: 'כתובות',
+    savedAddresses: 'כתובות שמורות',
+    addAddress: 'הוסף כתובת',
+    noAddressesSaved: 'אין כתובות שמורות',
+    profileUpdated: 'הפרופיל עודכן בהצלחה',
+    updateProfile: 'עדכן פרופיל',
+    emailCannotBeChanged: 'לא ניתן לשנות אימייל',
+    notProvided: 'לא צוין',
+    manageYourAccount: 'נהל את החשבון והמידע האישי שלך',
     
     // Store name
     storeName: 'החנות שלי',

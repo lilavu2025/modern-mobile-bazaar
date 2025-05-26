@@ -128,7 +128,7 @@ const Header: React.FC<HeaderProps> = ({ onSearchChange, onCartClick, onMenuClic
                       {t('orders')}
                     </Link>
                   </DropdownMenuItem>
-                  {profile?.is_admin && (
+                  {profile?.user_type === 'admin' && (
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>
