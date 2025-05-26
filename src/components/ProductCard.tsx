@@ -7,7 +7,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Product } from '@/types';
 import { useCart } from '@/hooks/useCart';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
 
 interface ProductCardProps {
   product: Product;
@@ -17,6 +19,7 @@ interface ProductCardProps {
 const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }) => {
   const { addToCart, getItemQuantity } = useCart();
   const { profile } = useAuth();
+  const { t } = useLanguage();
   const quantity = getItemQuantity(product.id);
 
   const handleAddToCart = (e: React.MouseEvent) => {
@@ -29,6 +32,27 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }) => {
     e.preventDefault();
     e.stopPropagation();
     onQuickView?.(product);
+  };
+
+  const handleFavorite = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toast.success(t('productAdded') + ' ' + t('favorites'));
+  };
+
+  const handleShare = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (navigator.share) {
+      navigator.share({
+        title: product.name,
+        text: product.description,
+        url: window.location.href + `/product/${product.id}`
+      });
+    } else {
+      navigator.clipboard.writeText(window.location.href + `/product/${product.id}`);
+      toast.success(t('linkCopied'));
+    }
   };
 
   // عرض السعر المناسب حسب نوع المستخدم
@@ -51,22 +75,22 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }) => {
         <div className="absolute top-2 right-2 flex flex-col gap-1">
           {showWholesaleLabel && (
             <Badge className="bg-blue-500 hover:bg-blue-600">
-              سعر الجملة
+              {t('wholesale')}
             </Badge>
           )}
           {product.discount && (
             <Badge variant="destructive" className="animate-bounce-in">
-              خصم {product.discount}%
+              {t('discount')} {product.discount}%
             </Badge>
           )}
           {product.featured && (
             <Badge className="bg-green-500 hover:bg-green-600">
-              مميز
+              {t('featured')}
             </Badge>
           )}
           {!product.inStock && (
             <Badge variant="secondary">
-              غير متوفر
+              {t('outOfStock')}
             </Badge>
           )}
         </div>
@@ -85,6 +109,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }) => {
             size="icon"
             variant="secondary"
             className="h-8 w-8 bg-white/90 hover:bg-white"
+            onClick={handleFavorite}
           >
             <Heart className="h-4 w-4" />
           </Button>
@@ -123,11 +148,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }) => {
         {/* Price */}
         <div className="flex items-center gap-2 mb-3">
           <span className="text-xl font-bold text-primary">
-            {displayPrice} ر.س
+            {displayPrice} {t('currency')}
           </span>
           {product.originalPrice && (
             <span className="text-sm text-gray-500 line-through">
-              {product.originalPrice} ر.س
+              {product.originalPrice} {t('currency')}
             </span>
           )}
         </div>
@@ -140,7 +165,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }) => {
           variant={quantity > 0 ? "secondary" : "default"}
         >
           <ShoppingCart className="h-4 w-4" />
-          {quantity > 0 ? `في السلة (${quantity})` : 'أضف للسلة'}
+          {quantity > 0 ? `${t('inCart')} (${quantity})` : t('addToCart')}
         </Button>
       </CardContent>
     </Card>

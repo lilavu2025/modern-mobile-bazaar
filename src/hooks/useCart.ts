@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { CartItem, Product } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 export const useCart = () => {
   const { t } = useLanguage();
@@ -39,10 +39,7 @@ export const useCart = () => {
               ? { ...item, quantity: item.quantity + quantity }
               : item
           );
-          toast({
-            title: t('cartUpdated'),
-            description: `${t('quantityIncreased')} ${product.name}`,
-          });
+          toast.success(t('productAddedToCart'));
           return updatedItems;
         } else {
           const newItem: CartItem = {
@@ -50,10 +47,7 @@ export const useCart = () => {
             product,
             quantity
           };
-          toast({
-            title: t('productAdded'),
-            description: `${t('productAddedToCart')} ${product.name}`,
-          });
+          toast.success(t('productAddedToCart'));
           return [...prevItems, newItem];
         }
       });
@@ -64,11 +58,7 @@ export const useCart = () => {
   const removeFromCart = (productId: string) => {
     setCartItems(prevItems => {
       const updatedItems = prevItems.filter(item => item.id !== productId);
-      toast({
-        title: t('productRemoved'),
-        description: t('productRemovedFromCart'),
-        variant: "destructive"
-      });
+      toast.success(t('productRemovedFromCart'));
       return updatedItems;
     });
   };
@@ -90,10 +80,7 @@ export const useCart = () => {
 
   const clearCart = () => {
     setCartItems([]);
-    toast({
-      title: t('cartCleared'),
-      description: t('allProductsRemoved'),
-    });
+    toast.success(t('allProductsRemoved'));
   };
 
   const getTotalItems = () => {

@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { useCart } from '@/hooks/useCart';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Link } from 'react-router-dom';
 
 interface CartSidebarProps {
@@ -15,6 +16,7 @@ interface CartSidebarProps {
 
 const CartSidebar: React.FC<CartSidebarProps> = ({ isOpen, onClose }) => {
   const { cartItems, updateQuantity, removeFromCart, getTotalPrice, getTotalItems } = useCart();
+  const { t, isRTL } = useLanguage();
 
   return (
     <>
@@ -28,8 +30,8 @@ const CartSidebar: React.FC<CartSidebarProps> = ({ isOpen, onClose }) => {
 
       {/* Sidebar */}
       <div
-        className={`fixed top-0 left-0 h-full w-full max-w-md bg-white z-50 transform transition-transform duration-300 shadow-2xl ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
+        className={`fixed top-0 ${isRTL ? 'right-0' : 'left-0'} h-full w-full max-w-md bg-white z-50 transform transition-transform duration-300 shadow-2xl ${
+          isOpen ? 'translate-x-0' : isRTL ? 'translate-x-full' : '-translate-x-full'
         }`}
       >
         <div className="flex flex-col h-full">
@@ -37,7 +39,7 @@ const CartSidebar: React.FC<CartSidebarProps> = ({ isOpen, onClose }) => {
           <div className="flex items-center justify-between p-6 border-b">
             <div className="flex items-center gap-2">
               <ShoppingBag className="h-6 w-6 text-primary" />
-              <h2 className="text-xl font-bold">سلة التسوق</h2>
+              <h2 className="text-xl font-bold">{t('cart')}</h2>
               {getTotalItems() > 0 && (
                 <Badge variant="secondary">{getTotalItems()}</Badge>
               )}
@@ -53,14 +55,14 @@ const CartSidebar: React.FC<CartSidebarProps> = ({ isOpen, onClose }) => {
               <ShoppingBag className="h-24 w-24 text-gray-300" />
               <div className="text-center">
                 <h3 className="text-lg font-semibold text-gray-600 mb-2">
-                  السلة فارغة
+                  {t('cartEmpty')}
                 </h3>
                 <p className="text-gray-500 mb-4">
-                  لم تقم بإضافة أي منتجات بعد
+                  {t('noProductsAdded')}
                 </p>
                 <Button onClick={onClose} asChild>
                   <Link to="/products">
-                    تصفح المنتجات
+                    {t('browseProducts')}
                   </Link>
                 </Button>
               </div>
@@ -83,7 +85,7 @@ const CartSidebar: React.FC<CartSidebarProps> = ({ isOpen, onClose }) => {
                           {item.product.name}
                         </h4>
                         <p className="text-primary font-bold text-sm">
-                          {item.product.price} ر.س
+                          {item.product.price} {t('currency')}
                         </p>
                         
                         <div className="flex items-center justify-between mt-2">
@@ -129,9 +131,9 @@ const CartSidebar: React.FC<CartSidebarProps> = ({ isOpen, onClose }) => {
               {/* Footer */}
               <div className="border-t p-6 space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-lg font-semibold">المجموع:</span>
+                  <span className="text-lg font-semibold">{t('total')}:</span>
                   <span className="text-2xl font-bold text-primary">
-                    {getTotalPrice().toFixed(2)} ر.س
+                    {getTotalPrice().toFixed(2)} {t('currency')}
                   </span>
                 </div>
                 
@@ -145,7 +147,7 @@ const CartSidebar: React.FC<CartSidebarProps> = ({ isOpen, onClose }) => {
                     asChild
                   >
                     <Link to="/checkout">
-                      إتمام الشراء
+                      {t('checkout')}
                     </Link>
                   </Button>
                   
@@ -156,7 +158,7 @@ const CartSidebar: React.FC<CartSidebarProps> = ({ isOpen, onClose }) => {
                     asChild
                   >
                     <Link to="/products">
-                      متابعة التسوق
+                      {t('continueShopping')}
                     </Link>
                   </Button>
                 </div>

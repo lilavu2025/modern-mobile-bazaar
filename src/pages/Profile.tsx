@@ -8,15 +8,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useToast } from '@/hooks/use-toast';
-import { User, Settings, MapPin, Shield } from 'lucide-react';
+import { toast } from 'sonner';
+import { User, Settings, MapPin } from 'lucide-react';
 
 const Profile: React.FC = () => {
   const { user, profile, updateProfile } = useAuth();
-  const { t } = useLanguage();
-  const { toast } = useToast();
+  const { t, isRTL } = useLanguage();
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -24,7 +22,6 @@ const Profile: React.FC = () => {
   const [profileData, setProfileData] = useState({
     full_name: profile?.full_name || '',
     phone: profile?.phone || '',
-    user_type: (profile?.user_type as 'admin' | 'wholesale' | 'retail') || 'retail',
   });
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
@@ -33,16 +30,9 @@ const Profile: React.FC = () => {
 
     try {
       await updateProfile(profileData);
-      toast({
-        title: t('success'),
-        description: t('profileUpdated'),
-      });
+      toast.success(t('profileUpdated'));
     } catch (error: any) {
-      toast({
-        title: t('error'),
-        description: error.message,
-        variant: 'destructive',
-      });
+      toast.error(error.message);
     } finally {
       setIsLoading(false);
     }
@@ -71,7 +61,7 @@ const Profile: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className={`min-h-screen bg-gray-50 ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
       <Header 
         onSearchChange={() => {}}
         onCartClick={() => setIsCartOpen(true)}
@@ -110,10 +100,7 @@ const Profile: React.FC = () => {
               </div>
               <div>
                 <p className="text-sm text-gray-600">{t('accountType')}</p>
-                <div className="flex items-center gap-2">
-                  {profile?.user_type === 'admin' && <Shield className="h-4 w-4 text-red-500" />}
-                  <p className="font-medium text-primary">{getUserTypeLabel(profile?.user_type || 'retail')}</p>
-                </div>
+                <p className="font-medium text-primary">{getUserTypeLabel(profile?.user_type || 'retail')}</p>
               </div>
             </CardContent>
           </Card>
@@ -154,26 +141,6 @@ const Profile: React.FC = () => {
                         onChange={(e) => setProfileData(prev => ({ ...prev, phone: e.target.value }))}
                       />
                     </div>
-
-                    {profile?.user_type === 'admin' && (
-                      <div className="space-y-2">
-                        <Label htmlFor="user_type">{t('userType')}</Label>
-                        <Select
-                          value={profileData.user_type}
-                          onValueChange={(value: 'admin' | 'wholesale' | 'retail') => 
-                            setProfileData(prev => ({ ...prev, user_type: value }))}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="admin">{t('admin')}</SelectItem>
-                            <SelectItem value="wholesale">{t('wholesale')}</SelectItem>
-                            <SelectItem value="retail">{t('retail')}</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
 
                     <div className="space-y-2">
                       <Label htmlFor="email">{t('email')}</Label>
