@@ -7,6 +7,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Mail, Phone, Calendar, CheckCircle, XCircle, Eye, ShoppingBag, MoreVertical } from 'lucide-react';
 import { format } from 'date-fns';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { toast } from 'sonner';
 import EditUserDialog from '../EditUserDialog';
 
 interface UserProfile {
@@ -48,6 +49,16 @@ const UserTableRow: React.FC<UserTableRowProps> = ({ user, index }) => {
       case 'retail': return '🛒';
       default: return '👤';
     }
+  };
+
+  const handleViewDetails = () => {
+    toast.info(`عرض تفاصيل المستخدم: ${user.full_name}`);
+    console.log('View user details:', user);
+  };
+
+  const handleViewOrders = () => {
+    toast.info(`عرض طلبيات المستخدم: ${user.full_name}`);
+    console.log('View user orders:', user);
   };
 
   return (
@@ -126,11 +137,11 @@ const UserTableRow: React.FC<UserTableRowProps> = ({ user, index }) => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem className="text-xs lg:text-sm">
+              <DropdownMenuItem onClick={handleViewDetails} className="text-xs lg:text-sm cursor-pointer">
                 <Eye className="h-3 w-3 lg:h-4 lg:w-4 mr-2" />
                 عرض التفاصيل
               </DropdownMenuItem>
-              <DropdownMenuItem className="text-xs lg:text-sm">
+              <DropdownMenuItem onClick={handleViewOrders} className="text-xs lg:text-sm cursor-pointer">
                 <ShoppingBag className="h-3 w-3 lg:h-4 lg:w-4 mr-2" />
                 عرض الطلبيات
               </DropdownMenuItem>
