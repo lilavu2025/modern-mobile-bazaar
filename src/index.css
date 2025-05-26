@@ -109,6 +109,53 @@
     --tw-space-x-reverse: 1;
   }
 
+  /* Table RTL Support */
+  [dir="rtl"] table {
+    direction: rtl;
+  }
+
+  [dir="rtl"] th {
+    text-align: right;
+  }
+
+  [dir="rtl"] td {
+    text-align: right;
+  }
+
+  [dir="ltr"] th {
+    text-align: left;
+  }
+
+  [dir="ltr"] td {
+    text-align: left;
+  }
+
+  /* Form RTL Support */
+  [dir="rtl"] .space-y-4 > * {
+    text-align: right;
+  }
+
+  [dir="rtl"] label {
+    text-align: right;
+  }
+
+  [dir="rtl"] input {
+    text-align: right;
+  }
+
+  [dir="rtl"] select {
+    text-align: right;
+  }
+
+  /* Card Content RTL */
+  [dir="rtl"] .space-y-4 div {
+    text-align: right;
+  }
+
+  [dir="rtl"] .space-y-4 p {
+    text-align: right;
+  }
+
   /* Ensure dropdowns and modals work properly in RTL */
   [dir="rtl"] .dropdown-content {
     right: 0;
