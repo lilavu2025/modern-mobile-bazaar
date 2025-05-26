@@ -22,13 +22,21 @@ const translations = {
     profile: 'الملف الشخصي',
     
     // Auth
+    login: 'تسجيل الدخول',
+    signup: 'إنشاء حساب',
     signIn: 'تسجيل الدخول',
     signUp: 'إنشاء حساب',
     logout: 'تسجيل الخروج',
     email: 'البريد الإلكتروني',
     password: 'كلمة المرور',
+    confirmPassword: 'تأكيد كلمة المرور',
     fullName: 'الاسم الكامل',
     phone: 'رقم الهاتف',
+    loginSuccess: 'تم تسجيل الدخول بنجاح',
+    loginError: 'فشل في تسجيل الدخول',
+    signupSuccess: 'تم إنشاء الحساب بنجاح. يرجى التحقق من بريدك الإلكتروني.',
+    signupError: 'فشل في إنشاء الحساب',
+    passwordMismatch: 'كلمات المرور غير متطابقة',
     
     // Products
     addToCart: 'أضف للسلة',
@@ -114,6 +122,7 @@ const translations = {
     
     // Store
     storeName: 'متجري',
+    storeDescription: 'تطبيق متجر متكامل مع إدارة شاملة',
     
     // Additional translations
     productCount: 'عدد المنتجات',
@@ -132,10 +141,10 @@ const translations = {
     noOrdersDescription: 'لم تقم بأي طلبات بعد',
     startShopping: 'ابدأ التسوق',
     paymentMethod: 'طريقة الدفع',
-    cash: 'نقدا',
+    cash: 'نقداً',
     card: 'بطاقة ائتمانية',
     
-    // New missing translations
+    // Featured products
     featuredProducts: 'المنتجات المميزة',
     viewAll: 'عرض الكل',
     noFeaturedProducts: 'لا توجد منتجات مميزة',
@@ -191,14 +200,90 @@ const translations = {
     cartCleared: 'تم مسح السلة',
     allProductsRemoved: 'تم إزالة جميع المنتجات',
     
-    // New translations
+    // Search and results
     searchResults: 'نتائج البحث',
     noProductsFound: 'لم يتم العثور على منتجات',
     success: 'نجح',
     error: 'خطأ',
     profileUpdated: 'تم تحديث الملف الشخصي',
     updateProfile: 'تحديث الملف الشخصي',
-    notProvided: 'غير محدد'
+    notProvided: 'غير محدد',
+    
+    // User management specific
+    userDetails: 'تفاصيل المستخدم',
+    userOrders: 'طلبيات المستخدم',
+    userInfo: 'معلومات المستخدم',
+    registrationDate: 'تاريخ التسجيل',
+    lastOrderDate: 'تاريخ آخر طلبية',
+    highestOrderValue: 'أعلى قيمة طلبية',
+    orderDate: 'تاريخ الطلبية',
+    orderValue: 'قيمة الطلبية',
+    orderItems: 'عناصر الطلبية',
+    noOrdersForUser: 'لا توجد طلبيات لهذا المستخدم',
+    userId: 'معرف المستخدم',
+    joinedDate: 'تاريخ الانضمام',
+    orderCount: 'عدد الطلبيات',
+    totalSpent: 'إجمالي المبلغ المنفق',
+    
+    // Additional admin translations
+    userManagement: 'إدارة المستخدمين',
+    usersOverview: 'نظرة عامة على المستخدمين',
+    filterUsers: 'تصفية المستخدمين',
+    sortUsers: 'ترتيب المستخدمين',
+    byName: 'حسب الاسم',
+    byEmail: 'حسب البريد الإلكتروني',
+    byRegistrationDate: 'حسب تاريخ التسجيل',
+    byLastOrderDate: 'حسب تاريخ آخر طلبية',
+    byHighestOrderValue: 'حسب أعلى قيمة طلبية',
+    ascending: 'تصاعدي',
+    descending: 'تنازلي',
+    
+    // Page not found
+    pageNotFound: 'الصفحة غير موجودة',
+    pageNotFoundDescription: 'عذراً، الصفحة التي تبحث عنها غير موجودة',
+    goHome: 'العودة للرئيسية',
+    
+    // Contact page
+    contactUs: 'اتصل بنا',
+    getInTouch: 'تواصل معنا',
+    name: 'الاسم',
+    message: 'الرسالة',
+    send: 'إرسال',
+    contactInfo: 'معلومات الاتصال',
+    
+    // Checkout
+    shippingAddress: 'عنوان الشحن',
+    billingAddress: 'عنوان الفاتورة',
+    orderSummary: 'ملخص الطلبية',
+    placeOrder: 'تأكيد الطلبية',
+    
+    // Additional common terms
+    close: 'إغلاق',
+    open: 'فتح',
+    yes: 'نعم',
+    no: 'لا',
+    confirm: 'تأكيد',
+    back: 'رجوع',
+    next: 'التالي',
+    previous: 'السابق',
+    done: 'تم',
+    submit: 'إرسال',
+    reset: 'إعادة تعيين',
+    clear: 'مسح',
+    apply: 'تطبيق',
+    remove: 'إزالة',
+    update: 'تحديث',
+    create: 'إنشاء',
+    modify: 'تعديل',
+    duplicate: 'نسخ',
+    copy: 'نسخ',
+    paste: 'لصق',
+    cut: 'قص',
+    selectAll: 'تحديد الكل',
+    deselectAll: 'إلغاء تحديد الكل',
+    refresh: 'تحديث',
+    reload: 'إعادة تحميل',
+    retry: 'إعادة المحاولة'
   },
   
   en: {
@@ -212,13 +297,21 @@ const translations = {
     profile: 'Profile',
     
     // Auth
+    login: 'Login',
+    signup: 'Sign Up',
     signIn: 'Sign In',
     signUp: 'Sign Up',
     logout: 'Logout',
     email: 'Email',
     password: 'Password',
+    confirmPassword: 'Confirm Password',
     fullName: 'Full Name',
     phone: 'Phone',
+    loginSuccess: 'Logged in successfully',
+    loginError: 'Failed to log in',
+    signupSuccess: 'Account created successfully. Please check your email.',
+    signupError: 'Failed to create account',
+    passwordMismatch: 'Passwords do not match',
     
     // Products
     addToCart: 'Add to Cart',
@@ -304,6 +397,7 @@ const translations = {
     
     // Store
     storeName: 'My Store',
+    storeDescription: 'Complete store application with comprehensive management',
     
     // Additional translations
     productCount: 'Product Count',
@@ -325,7 +419,7 @@ const translations = {
     cash: 'Cash',
     card: 'Credit Card',
     
-    // New missing translations
+    // Featured products
     featuredProducts: 'Featured Products',
     viewAll: 'View All',
     noFeaturedProducts: 'No Featured Products',
@@ -381,14 +475,90 @@ const translations = {
     cartCleared: 'Cart Cleared',
     allProductsRemoved: 'All products removed',
     
-    // New translations
+    // Search and results
     searchResults: 'Search Results',
     noProductsFound: 'No products found',
     success: 'Success',
     error: 'Error',
     profileUpdated: 'Profile updated',
     updateProfile: 'Update Profile',
-    notProvided: 'Not provided'
+    notProvided: 'Not provided',
+    
+    // User management specific
+    userDetails: 'User Details',
+    userOrders: 'User Orders',
+    userInfo: 'User Information',
+    registrationDate: 'Registration Date',
+    lastOrderDate: 'Last Order Date',
+    highestOrderValue: 'Highest Order Value',
+    orderDate: 'Order Date',
+    orderValue: 'Order Value',
+    orderItems: 'Order Items',
+    noOrdersForUser: 'No orders found for this user',
+    userId: 'User ID',
+    joinedDate: 'Joined Date',
+    orderCount: 'Order Count',
+    totalSpent: 'Total Spent',
+    
+    // Additional admin translations
+    userManagement: 'User Management',
+    usersOverview: 'Users Overview',
+    filterUsers: 'Filter Users',
+    sortUsers: 'Sort Users',
+    byName: 'By Name',
+    byEmail: 'By Email',
+    byRegistrationDate: 'By Registration Date',
+    byLastOrderDate: 'By Last Order Date',
+    byHighestOrderValue: 'By Highest Order Value',
+    ascending: 'Ascending',
+    descending: 'Descending',
+    
+    // Page not found
+    pageNotFound: 'Page Not Found',
+    pageNotFoundDescription: 'Sorry, the page you are looking for does not exist',
+    goHome: 'Go Home',
+    
+    // Contact page
+    contactUs: 'Contact Us',
+    getInTouch: 'Get In Touch',
+    name: 'Name',
+    message: 'Message',
+    send: 'Send',
+    contactInfo: 'Contact Information',
+    
+    // Checkout
+    shippingAddress: 'Shipping Address',
+    billingAddress: 'Billing Address',
+    orderSummary: 'Order Summary',
+    placeOrder: 'Place Order',
+    
+    // Additional common terms
+    close: 'Close',
+    open: 'Open',
+    yes: 'Yes',
+    no: 'No',
+    confirm: 'Confirm',
+    back: 'Back',
+    next: 'Next',
+    previous: 'Previous',
+    done: 'Done',
+    submit: 'Submit',
+    reset: 'Reset',
+    clear: 'Clear',
+    apply: 'Apply',
+    remove: 'Remove',
+    update: 'Update',
+    create: 'Create',
+    modify: 'Modify',
+    duplicate: 'Duplicate',
+    copy: 'Copy',
+    paste: 'Paste',
+    cut: 'Cut',
+    selectAll: 'Select All',
+    deselectAll: 'Deselect All',
+    refresh: 'Refresh',
+    reload: 'Reload',
+    retry: 'Retry'
   },
   
   he: {
@@ -402,13 +572,21 @@ const translations = {
     profile: 'פרופיל',
     
     // Auth
+    login: 'התחברות',
+    signup: 'הרשמה',
     signIn: 'התחברות',
     signUp: 'הרשמה',
     logout: 'התנתקות',
     email: 'אימייל',
     password: 'סיסמה',
+    confirmPassword: 'אימות סיסמה',
     fullName: 'שם מלא',
     phone: 'טלפון',
+    loginSuccess: 'התחברת בהצלחה',
+    loginError: 'נכשל בהתחברות',
+    signupSuccess: 'החשבון נוצר בהצלחה. אנא בדוק את האימייל שלך.',
+    signupError: 'נכשל ביצירת החשבון',
+    passwordMismatch: 'הסיסמאות לא תואמות',
     
     // Products
     addToCart: 'הוסף לעגלה',
@@ -494,6 +672,7 @@ const translations = {
     
     // Store
     storeName: 'החנות שלי',
+    storeDescription: 'אפליקציית חנות מלאה עם ניהול מקיף',
     
     // Additional translations
     productCount: 'מספר מוצרים',
@@ -515,7 +694,7 @@ const translations = {
     cash: 'מזומן',
     card: 'כרטיס אשראי',
     
-    // New missing translations
+    // Featured products
     featuredProducts: 'מוצרים מומלצים',
     viewAll: 'הצג הכל',
     noFeaturedProducts: 'אין מוצרים מומלצים',
@@ -571,14 +750,90 @@ const translations = {
     cartCleared: 'העגלה נוקתה',
     allProductsRemoved: 'כל המוצרים הוסרו',
     
-    // New translations
+    // Search and results
     searchResults: 'תוצאות חיפוש',
     noProductsFound: 'לא נמצאו מוצרים',
     success: 'הצלחה',
     error: 'שגיאה',
     profileUpdated: 'הפרופיל עודכן',
     updateProfile: 'עדכן פרופיל',
-    notProvided: 'לא סופק'
+    notProvided: 'לא סופק',
+    
+    // User management specific
+    userDetails: 'פרטי משתמש',
+    userOrders: 'הזמנות משתמש',
+    userInfo: 'מידע משתמש',
+    registrationDate: 'תאריך הרשמה',
+    lastOrderDate: 'תאריך הזמנה אחרונה',
+    highestOrderValue: 'ערך הזמנה הגבוה ביותר',
+    orderDate: 'תאריך הזמנה',
+    orderValue: 'ערך הזמנה',
+    orderItems: 'פריטי הזמנה',
+    noOrdersForUser: 'לא נמצאו הזמנות עבור משתמש זה',
+    userId: 'מזהה משתמש',
+    joinedDate: 'תאריך הצטרפות',
+    orderCount: 'מספר הזמנות',
+    totalSpent: 'סך הוצאות',
+    
+    // Additional admin translations
+    userManagement: 'ניהול משתמשים',
+    usersOverview: 'סקירת משתמשים',
+    filterUsers: 'סנן משתמשים',
+    sortUsers: 'מיין משתמשים',
+    byName: 'לפי שם',
+    byEmail: 'לפי אימייל',
+    byRegistrationDate: 'לפי תאריך הרשמה',
+    byLastOrderDate: 'לפי תאריך הזמנה אחרונה',
+    byHighestOrderValue: 'לפי ערך הזמנה הגבוה ביותר',
+    ascending: 'עולה',
+    descending: 'יורד',
+    
+    // Page not found
+    pageNotFound: 'העמוד לא נמצא',
+    pageNotFoundDescription: 'סליחה, הדף שאתה מחפש לא קיים',
+    goHome: 'חזור לבית',
+    
+    // Contact page
+    contactUs: 'צור קשר',
+    getInTouch: 'צור קשר',
+    name: 'שם',
+    message: 'הודעה',
+    send: 'שלח',
+    contactInfo: 'מידע ליצירת קשר',
+    
+    // Checkout
+    shippingAddress: 'כתובת משלוח',
+    billingAddress: 'כתובת חיוב',
+    orderSummary: 'סיכום הזמנה',
+    placeOrder: 'בצע הזמנה',
+    
+    // Additional common terms
+    close: 'סגור',
+    open: 'פתח',
+    yes: 'כן',
+    no: 'לא',
+    confirm: 'אשר',
+    back: 'חזור',
+    next: 'הבא',
+    previous: 'הקודם',
+    done: 'סיום',
+    submit: 'שלח',
+    reset: 'איפוס',
+    clear: 'נקה',
+    apply: 'החל',
+    remove: 'הסר',
+    update: 'עדכן',
+    create: 'צור',
+    modify: 'שנה',
+    duplicate: 'שכפל',
+    copy: 'העתק',
+    paste: 'הדבק',
+    cut: 'גזור',
+    selectAll: 'בחר הכל',
+    deselectAll: 'בטל בחירת הכל',
+    refresh: 'רענן',
+    reload: 'טען מחדש',
+    retry: 'נסה שוב'
   }
 };
 
