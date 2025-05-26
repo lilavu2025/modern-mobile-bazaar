@@ -1,0 +1,133 @@
+
+import React from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Edit, Trash, Eye } from 'lucide-react';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+
+interface AdminProductsTableProps {
+  products: any[];
+  onViewProduct: (product: any) => void;
+  onEditProduct: (product: any) => void;
+  onDeleteProduct: (productId: string, productName: string) => void;
+}
+
+const AdminProductsTable: React.FC<AdminProductsTableProps> = ({
+  products,
+  onViewProduct,
+  onEditProduct,
+  onDeleteProduct,
+}) => {
+  const { t } = useLanguage();
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{t('products')}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>{t('productImage')}</TableHead>
+              <TableHead>{t('productName')}</TableHead>
+              <TableHead>{t('category')}</TableHead>
+              <TableHead>{t('price')}</TableHead>
+              <TableHead>{t('stockQuantity')}</TableHead>
+              <TableHead>{t('inStock')}</TableHead>
+              <TableHead className="text-right">{t('actions')}</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {products.map((product) => (
+              <TableRow key={product.id}>
+                <TableCell>
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="w-12 h-12 object-cover rounded-lg"
+                  />
+                </TableCell>
+                <TableCell className="font-medium">{product.name}</TableCell>
+                <TableCell>{product.category}</TableCell>
+                <TableCell>{product.price} {t('currency')}</TableCell>
+                <TableCell>0</TableCell>
+                <TableCell>
+                  <Badge variant={product.inStock ? 'default' : 'destructive'}>
+                    {product.inStock ? t('inStock') : t('outOfStock')}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex items-center gap-2 justify-end">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      title={t('view')}
+                      onClick={() => onViewProduct(product)}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      title={t('edit')}
+                      onClick={() => onEditProduct(product)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="sm" title={t('delete')}>
+                          <Trash className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>{t('deleteProduct')}</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            {t('deleteProductConfirmation')} "{product.name}"?
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
+                          <AlertDialogAction 
+                            onClick={() => onDeleteProduct(product.id, product.name)}
+                            className="bg-red-600 hover:bg-red-700"
+                          >
+                            {t('delete')}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
+};
+
+export default AdminProductsTable;

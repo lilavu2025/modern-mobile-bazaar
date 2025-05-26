@@ -37,9 +37,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }) => {
     buyNow(product, quantity);
   };
 
-  const handleQuickView = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleQuickView = () => {
     if (onQuickView) {
       onQuickView(product);
     } else {
@@ -47,9 +45,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }) => {
     }
   };
 
-  const handleFavorite = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleFavorite = () => {
     if (!user) {
       toast.error(t('pleaseLogin'));
       return;
@@ -57,9 +53,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onQuickView }) => {
     toggleFavorite(product.id);
   };
 
-  const handleShare = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleShare = () => {
     const productUrl = `${window.location.origin}/product/${product.id}`;
     
     if (navigator.share) {
