@@ -15,13 +15,13 @@ const Products: React.FC = () => {
   const { t } = useLanguage();
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [sortBy, setSortBy] = useState<string>('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<string>('default');
   const [priceRange, setPriceRange] = useState<{ min: string; max: string }>({ min: '', max: '' });
   const [showFilters, setShowFilters] = useState(false);
 
   const { data: categories = [], isLoading: categoriesLoading } = useCategories();
-  const { data: products = [], isLoading: productsLoading } = useProducts(selectedCategory || undefined);
+  const { data: products = [], isLoading: productsLoading } = useProducts(selectedCategory === 'all' ? undefined : selectedCategory);
 
   // Filter and sort products
   const filteredProducts = products
@@ -50,13 +50,18 @@ const Products: React.FC = () => {
     });
 
   const clearFilters = () => {
-    setSelectedCategory('');
-    setSortBy('');
+    setSelectedCategory('all');
+    setSortBy('default');
     setPriceRange({ min: '', max: '' });
     setSearchQuery('');
   };
 
-  const activeFiltersCount = [selectedCategory, sortBy, priceRange.min, priceRange.max].filter(Boolean).length;
+  const activeFiltersCount = [
+    selectedCategory !== 'all' ? selectedCategory : null, 
+    sortBy !== 'default' ? sortBy : null, 
+    priceRange.min, 
+    priceRange.max
+  ].filter(Boolean).length;
 
   if (productsLoading || categoriesLoading) {
     return (
@@ -114,7 +119,7 @@ const Products: React.FC = () => {
                     <SelectValue placeholder={t('allCategories')} />
                   </SelectTrigger>
                   <SelectContent className="bg-white z-50">
-                    <SelectItem value="">{t('allCategories')}</SelectItem>
+                    <SelectItem value="all">{t('allCategories')}</SelectItem>
                     {categories.map(category => (
                       <SelectItem key={category.id} value={category.id}>
                         {category.name}
@@ -132,6 +137,7 @@ const Products: React.FC = () => {
                     <SelectValue placeholder={t('sortBy')} />
                   </SelectTrigger>
                   <SelectContent className="bg-white z-50">
+                    <SelectItem value="default">{t('default')}</SelectItem>
                     <SelectItem value="newest">{t('newest')}</SelectItem>
                     <SelectItem value="price-low">{t('priceLowHigh')}</SelectItem>
                     <SelectItem value="price-high">{t('priceHighLow')}</SelectItem>
@@ -178,16 +184,16 @@ const Products: React.FC = () => {
         {/* Active Filters */}
         {activeFiltersCount > 0 && (
           <div className="flex flex-wrap gap-2 mb-6">
-            {selectedCategory && (
+            {selectedCategory !== 'all' && (
               <Badge variant="secondary" className="gap-2">
                 {categories.find(c => c.id === selectedCategory)?.name}
-                <X className="h-3 w-3 cursor-pointer" onClick={() => setSelectedCategory('')} />
+                <X className="h-3 w-3 cursor-pointer" onClick={() => setSelectedCategory('all')} />
               </Badge>
             )}
-            {sortBy && (
+            {sortBy !== 'default' && (
               <Badge variant="secondary" className="gap-2">
                 {t('sortBy')}: {t(sortBy)}
-                <X className="h-3 w-3 cursor-pointer" onClick={() => setSortBy('')} />
+                <X className="h-3 w-3 cursor-pointer" onClick={() => setSortBy('default')} />
               </Badge>
             )}
             {(priceRange.min || priceRange.max) && (
