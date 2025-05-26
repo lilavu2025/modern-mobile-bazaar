@@ -74,3 +74,35 @@ export interface Banner {
   link?: string;
   active: boolean;
 }
+
+export interface DatabaseProduct {
+  id: string;
+  name_ar: string;
+  name_en: string;
+  name_he: string;
+  description_ar: string;
+  description_en: string;
+  description_he: string;
+  price: number;
+  original_price?: number;
+  image: string;
+  images?: string[];
+  category_id: string;
+  in_stock: boolean;
+  rating: number;
+  reviews_count: number;
+  discount?: number;
+  featured?: boolean;
+  tags?: string[];
+  active: boolean;
+}
+
+export interface DatabaseCategory {
+  id: string;
+  name_ar: string;
+  name_en: string;
+  name_he: string;
+  image: string;
+  icon: string;
+  active: boolean;
+}

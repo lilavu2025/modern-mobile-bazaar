@@ -1,0 +1,221 @@
+
+import React, { useState } from 'react';
+import { useProducts, useCategories } from '@/hooks/useSupabaseData';
+import { useLanguage } from '@/contexts/LanguageContext';
+import Header from '@/components/Header';
+import ProductCard from '@/components/ProductCard';
+import CartSidebar from '@/components/CartSidebar';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Filter, X } from 'lucide-react';
+
+const Products: React.FC = () => {
+  const { t } = useLanguage();
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [sortBy, setSortBy] = useState<string>('');
+  const [priceRange, setPriceRange] = useState<{ min: string; max: string }>({ min: '', max: '' });
+  const [showFilters, setShowFilters] = useState(false);
+
+  const { data: categories = [], isLoading: categoriesLoading } = useCategories();
+  const { data: products = [], isLoading: productsLoading } = useProducts(selectedCategory || undefined);
+
+  // Filter and sort products
+  const filteredProducts = products
+    .filter(product => {
+      const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           product.description.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesPrice = (!priceRange.min || product.price >= Number(priceRange.min)) &&
+                          (!priceRange.max || product.price <= Number(priceRange.max));
+      
+      return matchesSearch && matchesPrice;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case 'price-low':
+          return a.price - b.price;
+        case 'price-high':
+          return b.price - a.price;
+        case 'rating':
+          return b.rating - a.rating;
+        case 'newest':
+          return 0; // Would use created_at if available
+        default:
+          return 0;
+      }
+    });
+
+  const clearFilters = () => {
+    setSelectedCategory('');
+    setSortBy('');
+    setPriceRange({ min: '', max: '' });
+    setSearchQuery('');
+  };
+
+  const activeFiltersCount = [selectedCategory, sortBy, priceRange.min, priceRange.max].filter(Boolean).length;
+
+  if (productsLoading || categoriesLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-2">{t('loading')}</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Header 
+        onSearchChange={setSearchQuery}
+        onCartClick={() => setIsCartOpen(true)}
+        onMenuClick={() => {}}
+      />
+
+      <div className="container mx-auto px-4 py-6">
+        {/* Page Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-bold">{t('products')}</h1>
+            <p className="text-gray-600 mt-1">
+              {filteredProducts.length} {t('products')}
+            </p>
+          </div>
+          
+          <Button
+            variant="outline"
+            onClick={() => setShowFilters(!showFilters)}
+            className="gap-2"
+          >
+            <Filter className="h-4 w-4" />
+            {t('filters')}
+            {activeFiltersCount > 0 && (
+              <Badge variant="secondary" className="ml-1">
+                {activeFiltersCount}
+              </Badge>
+            )}
+          </Button>
+        </div>
+
+        {/* Filters */}
+        {showFilters && (
+          <div className="bg-white rounded-lg p-6 mb-6 shadow-sm">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {/* Category Filter */}
+              <div>
+                <label className="block text-sm font-medium mb-2">{t('category')}</label>
+                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t('allCategories')} />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white z-50">
+                    <SelectItem value="">{t('allCategories')}</SelectItem>
+                    {categories.map(category => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Sort Filter */}
+              <div>
+                <label className="block text-sm font-medium mb-2">{t('sortBy')}</label>
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t('sortBy')} />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white z-50">
+                    <SelectItem value="newest">{t('newest')}</SelectItem>
+                    <SelectItem value="price-low">{t('priceLowHigh')}</SelectItem>
+                    <SelectItem value="price-high">{t('priceHighLow')}</SelectItem>
+                    <SelectItem value="rating">{t('topRated')}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Price Range */}
+              <div>
+                <label className="block text-sm font-medium mb-2">{t('priceRange')}</label>
+                <div className="flex gap-2">
+                  <Input
+                    type="number"
+                    placeholder={t('min')}
+                    value={priceRange.min}
+                    onChange={(e) => setPriceRange(prev => ({ ...prev, min: e.target.value }))}
+                  />
+                  <Input
+                    type="number"
+                    placeholder={t('max')}
+                    value={priceRange.max}
+                    onChange={(e) => setPriceRange(prev => ({ ...prev, max: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              {/* Clear Filters */}
+              <div className="flex items-end">
+                <Button
+                  variant="outline"
+                  onClick={clearFilters}
+                  className="w-full gap-2"
+                  disabled={activeFiltersCount === 0}
+                >
+                  <X className="h-4 w-4" />
+                  {t('clearFilters')}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Active Filters */}
+        {activeFiltersCount > 0 && (
+          <div className="flex flex-wrap gap-2 mb-6">
+            {selectedCategory && (
+              <Badge variant="secondary" className="gap-2">
+                {categories.find(c => c.id === selectedCategory)?.name}
+                <X className="h-3 w-3 cursor-pointer" onClick={() => setSelectedCategory('')} />
+              </Badge>
+            )}
+            {sortBy && (
+              <Badge variant="secondary" className="gap-2">
+                {t('sortBy')}: {t(sortBy)}
+                <X className="h-3 w-3 cursor-pointer" onClick={() => setSortBy('')} />
+              </Badge>
+            )}
+            {(priceRange.min || priceRange.max) && (
+              <Badge variant="secondary" className="gap-2">
+                {priceRange.min || '0'} - {priceRange.max || '∞'} {t('currency')}
+                <X className="h-3 w-3 cursor-pointer" onClick={() => setPriceRange({ min: '', max: '' })} />
+              </Badge>
+            )}
+          </div>
+        )}
+
+        {/* Products Grid */}
+        {filteredProducts.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-gray-500 text-lg">{t('noProductsFound')}</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredProducts.map(product => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        )}
+      </div>
+
+      <CartSidebar isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+    </div>
+  );
+};
+
+export default Products;
