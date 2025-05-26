@@ -1,12 +1,13 @@
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
-type Language = 'ar' | 'en' | 'he';
+export type Language = 'ar' | 'en' | 'he';
 
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
   t: (key: string) => string;
+  isRTL: boolean;
 }
 
 const translations = {
@@ -320,8 +321,10 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
     return translations[language][key as keyof typeof translations['ar']] || key;
   };
 
+  const isRTL = language === 'ar' || language === 'he';
+
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t }}>
+    <LanguageContext.Provider value={{ language, setLanguage, t, isRTL }}>
       {children}
     </LanguageContext.Provider>
   );
