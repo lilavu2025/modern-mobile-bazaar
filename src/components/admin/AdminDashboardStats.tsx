@@ -1,11 +1,10 @@
-
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { BarChart, Bar, XAxis, YAxis, PieChart, Pie, Cell, LineChart, Line, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { Package, ShoppingCart, Users, BarChart3 } from 'lucide-react';
 
 const AdminDashboardStats: React.FC = () => {
@@ -90,6 +89,11 @@ const AdminDashboardStats: React.FC = () => {
     products: { label: t('products'), color: '#10b981' },
     orders: { label: t('orders'), color: '#f59e0b' },
     revenue: { label: t('revenue'), color: '#ef4444' },
+    inStock: { label: t('inStock'), color: '#10b981' },
+    outOfStock: { label: t('outOfStock'), color: '#ef4444' },
+    admin: { label: t('admin'), color: '#ef4444' },
+    wholesale: { label: t('wholesale'), color: '#3b82f6' },
+    retail: { label: t('retail'), color: '#10b981' },
   };
 
   return (
@@ -165,26 +169,24 @@ const AdminDashboardStats: React.FC = () => {
             <CardTitle className="text-lg font-semibold">{t('usersDistribution')}</CardTitle>
           </CardHeader>
           <CardContent className="p-4">
-            <div className="w-full h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={usersStats}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={100}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {usersStats.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
+            <ChartContainer config={chartConfig} className="h-80 w-full">
+              <PieChart>
+                <Pie
+                  data={usersStats}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={100}
+                  paddingAngle={5}
+                  dataKey="value"
+                >
+                  {usersStats.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <ChartTooltip content={<ChartTooltipContent />} />
+              </PieChart>
+            </ChartContainer>
           </CardContent>
         </Card>
 
@@ -194,24 +196,22 @@ const AdminDashboardStats: React.FC = () => {
             <CardTitle className="text-lg font-semibold">{t('productsByCategory')}</CardTitle>
           </CardHeader>
           <CardContent className="p-4">
-            <div className="w-full h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={productsStats} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                  <XAxis 
-                    dataKey="name" 
-                    tick={{ fontSize: 12 }}
-                    interval={0}
-                    angle={-45}
-                    textAnchor="end"
-                    height={80}
-                  />
-                  <YAxis tick={{ fontSize: 12 }} />
-                  <Bar dataKey="inStock" fill="#10b981" name={t('inStock')} />
-                  <Bar dataKey="outOfStock" fill="#ef4444" name={t('outOfStock')} />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            <ChartContainer config={chartConfig} className="h-80 w-full">
+              <BarChart data={productsStats} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                <XAxis 
+                  dataKey="name" 
+                  tick={{ fontSize: 12 }}
+                  interval={0}
+                  angle={-45}
+                  textAnchor="end"
+                  height={80}
+                />
+                <YAxis tick={{ fontSize: 12 }} />
+                <Bar dataKey="inStock" fill="#10b981" name={t('inStock')} />
+                <Bar dataKey="outOfStock" fill="#ef4444" name={t('outOfStock')} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+              </BarChart>
+            </ChartContainer>
           </CardContent>
         </Card>
       </div>
@@ -224,34 +224,32 @@ const AdminDashboardStats: React.FC = () => {
             <CardTitle className="text-lg font-semibold">{t('ordersAndRevenueTrend')}</CardTitle>
           </CardHeader>
           <CardContent className="p-4">
-            <div className="w-full h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={ordersData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                  <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                  <YAxis yAxisId="left" tick={{ fontSize: 12 }} />
-                  <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12 }} />
-                  <Line 
-                    yAxisId="left" 
-                    type="monotone" 
-                    dataKey="orders" 
-                    stroke="#3b82f6" 
-                    strokeWidth={3}
-                    name={t('orders')}
-                    dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
-                  />
-                  <Line 
-                    yAxisId="right" 
-                    type="monotone" 
-                    dataKey="revenue" 
-                    stroke="#ef4444" 
-                    strokeWidth={3}
-                    name={t('revenue')}
-                    dot={{ fill: '#ef4444', strokeWidth: 2, r: 4 }}
-                  />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+            <ChartContainer config={chartConfig} className="h-80 w-full">
+              <LineChart data={ordersData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                <YAxis yAxisId="left" tick={{ fontSize: 12 }} />
+                <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12 }} />
+                <Line 
+                  yAxisId="left" 
+                  type="monotone" 
+                  dataKey="orders" 
+                  stroke="#3b82f6" 
+                  strokeWidth={3}
+                  name={t('orders')}
+                  dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
+                />
+                <Line 
+                  yAxisId="right" 
+                  type="monotone" 
+                  dataKey="revenue" 
+                  stroke="#ef4444" 
+                  strokeWidth={3}
+                  name={t('revenue')}
+                  dot={{ fill: '#ef4444', strokeWidth: 2, r: 4 }}
+                />
+                <ChartTooltip content={<ChartTooltipContent />} />
+              </LineChart>
+            </ChartContainer>
           </CardContent>
         </Card>
 
