@@ -35,6 +35,7 @@ const EmailConfirmationPending: React.FC<EmailConfirmationPendingProps> = ({ ema
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log('Auth state changed:', event, session);
         if (event === 'SIGNED_IN' && session?.user?.email_confirmed_at) {
           toast({
             title: t('success'),
@@ -48,14 +49,19 @@ const EmailConfirmationPending: React.FC<EmailConfirmationPendingProps> = ({ ema
   }, [t, toast]);
 
   const handleResendEmail = async () => {
+    console.log('Resending email for:', email);
     setIsResending(true);
+    
     try {
       const { error } = await supabase.auth.resend({
         type: 'signup',
         email: email,
       });
 
+      console.log('Resend result:', { error });
+
       if (error) {
+        console.error('Resend error:', error);
         throw error;
       }
 
@@ -64,9 +70,11 @@ const EmailConfirmationPending: React.FC<EmailConfirmationPendingProps> = ({ ema
         description: t('confirmationEmailResent'),
       });
 
+      // Reset countdown
       setCountdown(60);
       setCanResend(false);
     } catch (error: any) {
+      console.error('Error resending email:', error);
       toast({
         title: t('error'),
         description: error.message || t('resendEmailError'),
