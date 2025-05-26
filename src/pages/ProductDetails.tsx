@@ -60,35 +60,63 @@ const ProductDetails = () => {
     .filter(p => p.category === product.category && p.id !== product.id)
     .slice(0, 4);
 
-  const images = product.images || [product.image];
+  // إصلاح مشكلة الصور المتعددة
+  const images = product.images && product.images.length > 0 ? product.images : [product.image];
 
   const handleAddToCart = () => {
     console.log('Add to cart clicked with quantity:', quantity);
+    if (!product.inStock) {
+      toast.error(t('productOutOfStock'));
+      return;
+    }
     addToCart(product, quantity);
     setQuantity(1);
   };
 
   const handleBuyNow = () => {
     console.log('Buy now clicked with quantity:', quantity);
+    if (!product.inStock) {
+      toast.error(t('productOutOfStock'));
+      return;
+    }
     buyNow(product, quantity);
+    // تأخير للتأكد من إضافة المنتج للسلة قبل التوجه للدفع
+    setTimeout(() => {
+      navigate('/checkout');
+    }, 500);
   };
 
   const handleFavorite = () => {
+    console.log('Toggle favorite for product:', product.id);
     toggleFavorite(product.id);
   };
 
-  const handleShare = () => {
+  const handleShare = async () => {
     const productUrl = `${window.location.origin}/product/${product.id}`;
     
-    if (navigator.share) {
-      navigator.share({
-        title: product.name,
-        text: product.description,
-        url: productUrl
-      });
-    } else {
-      navigator.clipboard.writeText(productUrl);
-      toast.success(t('linkCopied'));
+    try {
+      if (navigator.share && navigator.canShare) {
+        await navigator.share({
+          title: product.name,
+          text: product.description,
+          url: productUrl
+        });
+        toast.success(t('sharedSuccessfully'));
+      } else {
+        // النسخ للحافظة إذا لم يكن المتصفح يدعم المشاركة
+        await navigator.clipboard.writeText(productUrl);
+        toast.success(t('linkCopied'));
+      }
+    } catch (error) {
+      console.error('Error sharing:', error);
+      // محاولة النسخ للحافظة كخطة احتياطية
+      try {
+        await navigator.clipboard.writeText(productUrl);
+        toast.success(t('linkCopied'));
+      } catch (clipboardError) {
+        console.error('Clipboard error:', clipboardError);
+        toast.error(t('shareError'));
+      }
     }
   };
 
@@ -116,11 +144,17 @@ const ProductDetails = () => {
           {/* Product Images */}
           <div className="space-y-4">
             <div className="relative overflow-hidden rounded-xl bg-white border">
-              <img
-                src={images[selectedImage]}
-                alt={product.name}
-                className="w-full h-96 object-cover"
-              />
+              {images[selectedImage] && (
+                <img
+                  src={images[selectedImage]}
+                  alt={product.name}
+                  className="w-full h-96 object-cover"
+                  onError={(e) => {
+                    console.error('Image failed to load:', images[selectedImage]);
+                    e.currentTarget.src = '/placeholder.svg';
+                  }}
+                />
+              )}
               {product.discount && (
                 <Badge variant="destructive" className="absolute top-4 right-4">
                   {t('discount')} {product.discount}%
@@ -129,12 +163,12 @@ const ProductDetails = () => {
             </div>
             
             {images.length > 1 && (
-              <div className="flex gap-2">
+              <div className="flex gap-2 overflow-x-auto">
                 {images.map((image, index) => (
                   <button
                     key={index}
                     onClick={() => setSelectedImage(index)}
-                    className={`w-20 h-20 rounded-lg overflow-hidden border-2 transition-colors ${
+                    className={`w-20 h-20 rounded-lg overflow-hidden border-2 transition-colors flex-shrink-0 ${
                       index === selectedImage ? 'border-primary' : 'border-gray-200'
                     }`}
                   >
@@ -142,6 +176,10 @@ const ProductDetails = () => {
                       src={image}
                       alt={`${product.name} ${index + 1}`}
                       className="w-full h-full object-cover"
+                      onError={(e) => {
+                        console.error('Thumbnail failed to load:', image);
+                        e.currentTarget.src = '/placeholder.svg';
+                      }}
                     />
                   </button>
                 ))}
@@ -163,15 +201,15 @@ const ProductDetails = () => {
                   <Star
                     key={i}
                     className={`h-5 w-5 ${
-                      i < Math.floor(product.rating)
+                      i < Math.floor(product.rating || 0)
                         ? 'text-yellow-400 fill-current'
                         : 'text-gray-300'
                     }`}
                   />
                 ))}
-                <span className="mr-2 font-semibold">{product.rating}</span>
+                <span className="mr-2 font-semibold">{product.rating || 0}</span>
               </div>
-              <span className="text-gray-600">({product.reviews} {t('reviews')})</span>
+              <span className="text-gray-600">({product.reviews || 0} {t('reviews')})</span>
             </div>
 
             {/* Price */}
@@ -223,6 +261,7 @@ const ProductDetails = () => {
                     onClick={handleAddToCart}
                     className="flex-1 gap-2"
                     size="lg"
+                    disabled={!product.inStock}
                   >
                     <ShoppingCart className="h-5 w-5" />
                     {t('addToCart')}
@@ -238,6 +277,7 @@ const ProductDetails = () => {
                     variant="secondary"
                     size="lg"
                     className="flex-1"
+                    disabled={!product.inStock}
                   >
                     {t('buyNow')}
                   </Button>
@@ -250,7 +290,7 @@ const ProductDetails = () => {
               <Button 
                 variant="outline" 
                 size="icon" 
-                className={`flex-1 ${isFav ? 'text-red-500' : ''}`}
+                className={`flex-1 ${isFav ? 'text-red-500 border-red-500' : ''}`}
                 onClick={handleFavorite}
               >
                 <Heart className={`h-5 w-5 ${isFav ? 'fill-current' : ''}`} />

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { CartItem, Product } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -64,20 +65,19 @@ export const useCart = () => {
 
   const buyNow = (product: Product, quantity: number = 1) => {
     console.log('Buy now called with:', product, 'quantity:', quantity);
-    // Clear cart and add this product
+    
+    // مسح السلة وإضافة هذا المنتج فقط
     const newItem: CartItem = {
       id: product.id,
       product,
       quantity
     };
+    
     setCartItems([newItem]);
     toast.success(`${product.name} ${t('addedToCart')}`);
+    console.log('Cart updated for buy now:', [newItem]);
     
-    // Navigate to checkout immediately
-    setTimeout(() => {
-      console.log('Navigating to checkout...');
-      window.location.href = '/checkout';
-    }, 100);
+    return Promise.resolve(); // إرجاع Promise للتأكد من انتهاء العملية
   };
 
   const removeFromCart = (productId: string) => {
