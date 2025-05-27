@@ -78,18 +78,17 @@ export const useFavorites = () => {
     }
   }, [user?.id, t]);
 
-  // حفظ المفضلة في localStorage (اختياري)
+  // حفظ المفضلة في localStorage
   useEffect(() => {
     try {
-      if (user?.id) {
-        localStorage.setItem(`favorites_${user.id}`, JSON.stringify(favorites));
-      } else {
+      if (!user) {
+        // للضيوف، حفظ في localStorage
         localStorage.setItem('favorites_guest', JSON.stringify(favorites));
       }
     } catch (error) {
       console.error('Error saving favorites:', error);
     }
-  }, [favorites, user?.id]);
+  }, [favorites, user]);
 
   // إضافة/حذف منتج من المفضلة في Supabase
   const toggleFavorite = async (productId: string) => {

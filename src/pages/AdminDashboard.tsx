@@ -12,7 +12,8 @@ import {
   Menu,
   X,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Image
 } from 'lucide-react';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import AdminProducts from '@/components/admin/AdminProducts';
@@ -21,6 +22,7 @@ import AdminOrders from '@/components/admin/AdminOrders';
 import AdminUsers from '@/components/admin/AdminUsers';
 import AdminDashboardStats from '@/components/admin/AdminDashboardStats';
 import AdminOffers from '@/components/admin/AdminOffers';
+import AdminBanners from '@/components/admin/AdminBanners';
 
 const AdminDashboard: React.FC = () => {
   const { profile, signOut } = useAuth();
@@ -36,7 +38,8 @@ const AdminDashboard: React.FC = () => {
     { path: '/admin/categories', label: t('manageCategories'), icon: FolderOpen },
     { path: '/admin/orders', label: t('manageOrders'), icon: ShoppingCart },
     { path: '/admin/users', label: t('manageUsers'), icon: Users },
-    { path: '/admin/offers', label: t('manageOffers'), icon: Package }, // أيقونة مؤقتة
+    { path: '/admin/offers', label: t('manageOffers'), icon: Package },
+    { path: '/admin/banners', label: t('manageBanners'), icon: Image },
   ];
 
   const isActive = (path: string) => {
@@ -207,6 +210,7 @@ const AdminDashboard: React.FC = () => {
                 <Route path="/orders" element={<AdminOrders />} />
                 <Route path="/users" element={<AdminUsers />} />
                 <Route path="/offers" element={<AdminOffers />} />
+                <Route path="/banners" element={<AdminBanners />} />
               </Routes>
             </div>
           </div>

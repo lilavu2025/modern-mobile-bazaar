@@ -18,14 +18,28 @@ const Offers: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const { addToCart } = useCart();
 
-  // جلب المنتجات المخفضة
-  const { data: products = [], isLoading } = useProducts();
-  const discountedProducts = products
-    .filter(product => product.discount && product.discount > 0)
-    .filter(product =>
-      searchQuery === '' || product.name.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-    .sort((a, b) => (b.discount || 0) - (a.discount || 0));
+  // جلب العروض من قاعدة البيانات
+  const { data: offers = [], isLoading } = useQuery({
+    queryKey: ['offers'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('offers')
+        .select('*')
+        .eq('active', true)
+        .gte('end_date', new Date().toISOString())
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  // تصفية العروض حسب البحث
+  const filteredOffers = offers.filter(offer =>
+    searchQuery === '' || 
+    offer.title_ar?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    offer.title_en?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   if (isLoading) {
     return (
@@ -109,9 +123,9 @@ const Offers: React.FC = () => {
           <p className="text-gray-600 mb-6">
             {t('specialOffers')}
           </p>
-          {discountedProducts.length > 0 && (
+          {filteredOffers.length > 0 && (
             <Badge variant="secondary" className="text-lg px-4 py-2">
-              {discountedProducts.length} {t('productsOnSale')}
+              {filteredOffers.length} {t('offers')}
             </Badge>
           )}
         </div>
@@ -124,8 +138,8 @@ const Offers: React.FC = () => {
           </div>
         )}
 
-        {/* Products Grid */}
-        {discountedProducts.length === 0 ? (
+        {/* Offers Grid */}
+        {filteredOffers.length === 0 ? (
           <div className="text-center py-12">
             <Percent className="h-16 w-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">{t('noOffersAvailable')}</h3>
@@ -133,42 +147,39 @@ const Offers: React.FC = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {discountedProducts.map(product => (
-              <Link
-                key={product.id}
-                to={`/product/${product.id}`}
-                className="bg-white rounded-xl shadow-md p-4 flex flex-col items-center transition hover:shadow-lg focus:outline-none group relative"
-                style={{ textDecoration: 'none', color: 'inherit' }}
+            {filteredOffers.map(offer => (
+              <div
+                key={offer.id}
+                className="bg-white rounded-xl shadow-md p-4 flex flex-col items-center transition hover:shadow-lg group relative"
               >
-                <img src={product.image} alt={product.name} className="w-full h-40 object-cover rounded mb-4 group-hover:scale-105 transition-transform duration-200" />
-                <h3 className="text-xl font-bold mb-2 text-center w-full truncate">{product.name}</h3>
-                <p className="text-gray-600 mb-2 text-center w-full line-clamp-2">{product.description}</p>
+                <img 
+                  src={offer.image_url} 
+                  alt={offer.title_ar || offer.title_en} 
+                  className="w-full h-40 object-cover rounded mb-4 group-hover:scale-105 transition-transform duration-200" 
+                />
+                <h3 className="text-xl font-bold mb-2 text-center w-full truncate">
+                  {offer.title_ar || offer.title_en}
+                </h3>
+                <p className="text-gray-600 mb-2 text-center w-full line-clamp-2">
+                  {offer.description_ar || offer.description_en}
+                </p>
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-lg font-bold text-primary">{t('discount')}: {product.discount}%</span>
-                  {product.originalPrice && (
-                    <span className="text-sm text-gray-400 line-through">{product.originalPrice} {t('currency')}</span>
-                  )}
+                  <span className="text-lg font-bold text-primary">
+                    {t('discount')}: {offer.discount_percentage}%
+                  </span>
                 </div>
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="text-lg font-bold text-green-600">{product.price} {t('currency')}</span>
+                <div className="text-sm text-gray-500 mb-4">
+                  {t('validUntil')}: {new Date(offer.end_date).toLocaleDateString()}
                 </div>
-                {/* أزرار العمليات */}
-                <div className="flex gap-2 absolute top-2 right-2 z-10">
-                  <FavoriteButton productId={product.id} />
-                  <ShareButton product={product} />
-                </div>
-                <button
-                  type="button"
-                  className="mt-auto w-full bg-primary text-white rounded-lg py-2 font-bold hover:bg-primary/90 transition"
-                  onClick={e => {
-                    e.preventDefault();
-                    // منطق الشراء الآن (إضافة للسلة وفتح السلة)
-                    handleBuyNow(product);
-                  }}
+                <a
+                  href={offer.external_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-auto w-full bg-primary text-white rounded-lg py-2 font-bold hover:bg-primary/90 transition text-center block"
                 >
-                  {t('buyNow')}
-                </button>
-              </Link>
+                  {t('viewOffer')}
+                </a>
+              </div>
             ))}
           </div>
         )}

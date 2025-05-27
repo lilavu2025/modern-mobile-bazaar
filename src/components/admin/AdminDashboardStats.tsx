@@ -21,6 +21,7 @@ const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
   const navigate = useNavigate();
   const [isUsersExpanded, setIsUsersExpanded] = useState(false);
   const [isOrdersExpanded, setIsOrdersExpanded] = useState(false);
+  const [isRevenueExpanded, setIsRevenueExpanded] = useState(false);
 
   // Fetch users statistics
   const { data: usersStats = [] } = useQuery({
@@ -87,7 +88,7 @@ const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
   });
 
   // Fetch orders statistics
-  const { data: ordersStats = { statusStats: [], totalOrders: 0, totalRevenue: 0 } } = useQuery({
+  const { data: ordersStats } = useQuery({
     queryKey: ['admin-orders-stats'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -101,19 +102,54 @@ const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
         return acc;
       }, {});
 
-      const totalRevenue = data.reduce((sum, order) => sum + (order.total || 0), 0);
+      const revenueByStatus = data.reduce((acc: any, order) => {
+        if (!acc[order.status]) acc[order.status] = 0;
+        // لا نحسب الإيرادات للطلبات الملغية
+        if (order.status !== 'cancelled') {
+          acc[order.status] += order.total || 0;
+        }
+        return acc;
+      }, {});
+
+      const totalRevenue = data
+        .filter(order => order.status !== 'cancelled')
+        .reduce((sum, order) => sum + (order.total || 0), 0);
 
       return {
         statusStats: [
-          { status: 'open', label: t('openOrders'), value: ordersByStatus.open || 0, color: '#3b82f6' },
-          { status: 'processing', label: t('processingOrders'), value: ordersByStatus.processing || 0, color: '#f59e0b' },
-          { status: 'ready', label: t('readyOrders'), value: ordersByStatus.ready || 0, color: '#10b981' },
-          { status: 'cancelled', label: t('cancelledOrders'), value: ordersByStatus.cancelled || 0, color: '#ef4444' },
+          { 
+            status: 'processing', 
+            label: 'قيد المعالجة', 
+            value: ordersByStatus.processing || 0, 
+            revenue: revenueByStatus.processing || 0,
+            color: '#f59e0b' 
+          },
+          { 
+            status: 'shipped', 
+            label: 'تم الشحن', 
+            value: ordersByStatus.shipped || 0, 
+            revenue: revenueByStatus.shipped || 0,
+            color: '#3b82f6' 
+          },
+          { 
+            status: 'delivered', 
+            label: 'تم التسليم', 
+            value: ordersByStatus.delivered || 0, 
+            revenue: revenueByStatus.delivered || 0,
+            color: '#10b981' 
+          },
+          { 
+            status: 'cancelled', 
+            label: 'ملغية', 
+            value: ordersByStatus.cancelled || 0, 
+            revenue: 0,
+            color: '#ef4444' 
+          },
         ],
         totalOrders: data.length,
         totalRevenue
       };
-    },
+    }
   });
 
   const handleUserTypeClick = (userType: string) => {
@@ -243,18 +279,39 @@ const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
           </CardContent>
         </Card>
         
-        <Card className="hover:shadow-lg transition-shadow">
+        <Card 
+          className="hover:shadow-lg transition-shadow cursor-pointer"
+          onClick={() => setIsRevenueExpanded(!isRevenueExpanded)}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{t('totalRevenue')}</CardTitle>
             <BarChart3 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {ordersStats?.totalRevenue?.toLocaleString() || 0} {t('currency')}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {t('thisMonth')}
-            </p>
+            {!isRevenueExpanded ? (
+              <>
+                <div className="text-2xl font-bold">
+                  {ordersStats?.totalRevenue?.toLocaleString() || 0} {t('currency')}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  إجمالي الإيرادات
+                </p>
+              </>
+            ) : (
+              <div className="grid grid-cols-1 gap-2">
+                {ordersStats?.statusStats?.filter(stat => stat.status !== 'cancelled').map((stat) => (
+                  <div 
+                    key={stat.status} 
+                    className="rounded-lg border bg-card p-2 hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="text-[0.8rem] font-medium">{stat.label}</div>
+                    <div className="text-lg font-bold mt-1" style={{ color: stat.color }}>
+                      {stat.revenue?.toLocaleString() || 0} {t('currency')}
+                    </div>
+                  </div>
+                )) || []}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

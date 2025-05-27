@@ -20,6 +20,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
+import ImageUpload from '@/components/ImageUpload';
 import type { Database } from '@/integrations/supabase/types';
 
 const AdminOffers: React.FC = () => {
@@ -512,12 +513,13 @@ const AdminOffers: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <Label className="text-sm font-medium">{t('imageUrl')}</Label>
-                  <Input 
-                    name="image_url" 
-                    value={form.image_url} 
-                    onChange={handleInput} 
-                    placeholder="https://example.com/image.jpg"
+                  <Label className="text-sm font-medium">{t('image')}</Label>
+                  <ImageUpload
+                    value={form.image_url}
+                    onChange={(url) => setForm(prev => ({ ...prev, image_url: url as string }))}
+                    label={t('image')}
+                    placeholder={t('uploadImage')}
+                    bucket="product-images"
                   />
                 </div>
               </div>
@@ -686,12 +688,13 @@ const AdminOffers: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <Label className="text-sm font-medium">{t('imageUrl')}</Label>
-                  <Input 
-                    name="image_url" 
-                    value={form.image_url} 
-                    onChange={handleInput} 
-                    placeholder="https://example.com/image.jpg"
+                  <Label className="text-sm font-medium">{t('image')}</Label>
+                  <ImageUpload
+                    value={form.image_url}
+                    onChange={(url) => setForm(prev => ({ ...prev, image_url: url as string }))}
+                    label={t('image')}
+                    placeholder={t('uploadImage')}
+                    bucket="product-images"
                   />
                 </div>
               </div>
