@@ -5,12 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import ImageUpload from '@/components/ImageUpload';
+import ProductCategoryField from './ProductCategoryField';
 
 interface AddProductDialogProps {
   open: boolean;
@@ -215,21 +215,10 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
 
           {/* Category and Stock */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="category">{t('productCategory')} *</Label>
-              <Select value={formData.category_id} onValueChange={(value) => setFormData(prev => ({ ...prev, category_id: value }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="اختر الفئة" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.name_ar}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <ProductCategoryField 
+              formData={formData} 
+              setFormData={setFormData} 
+            />
             <div>
               <Label htmlFor="stock_quantity">كمية المخزون</Label>
               <Input
