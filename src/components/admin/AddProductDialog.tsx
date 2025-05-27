@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import ImageUpload from '@/components/ImageUpload';
 import ProductCategoryField from './ProductCategoryField';
+import { ProductFormData } from '@/types/product';
 
 interface AddProductDialogProps {
   open: boolean;
@@ -27,24 +28,25 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
 }) => {
   const { t, isRTL } = useLanguage();
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<ProductFormData>({
     name_ar: '',
     name_en: '',
     name_he: '',
     description_ar: '',
     description_en: '',
     description_he: '',
-    price: '',
-    original_price: '',
-    wholesale_price: '',
+    price: 0,
+    original_price: 0,
+    wholesale_price: 0,
     category_id: '',
     image: '',
-    images: [] as string[],
+    images: [],
     in_stock: true,
-    stock_quantity: '',
+    stock_quantity: 0,
     featured: false,
     active: true,
-    discount: '',
+    discount: 0,
+    tags: [],
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -59,17 +61,17 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
         description_ar: formData.description_ar,
         description_en: formData.description_en,
         description_he: formData.description_he,
-        price: parseFloat(formData.price),
-        original_price: formData.original_price ? parseFloat(formData.original_price) : null,
-        wholesale_price: formData.wholesale_price ? parseFloat(formData.wholesale_price) : null,
+        price: formData.price,
+        original_price: formData.original_price || null,
+        wholesale_price: formData.wholesale_price || null,
         category_id: formData.category_id,
         image: formData.image || (formData.images.length > 0 ? formData.images[0] : ''),
         images: formData.images,
         in_stock: formData.in_stock,
-        stock_quantity: formData.stock_quantity ? parseInt(formData.stock_quantity) : 0,
+        stock_quantity: formData.stock_quantity,
         featured: formData.featured,
         active: formData.active,
-        discount: formData.discount ? parseFloat(formData.discount) : null,
+        discount: formData.discount || null,
       };
 
       const { error } = await supabase
@@ -88,17 +90,18 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
         description_ar: '',
         description_en: '',
         description_he: '',
-        price: '',
-        original_price: '',
-        wholesale_price: '',
+        price: 0,
+        original_price: 0,
+        wholesale_price: 0,
         category_id: '',
         image: '',
         images: [],
         in_stock: true,
-        stock_quantity: '',
+        stock_quantity: 0,
         featured: false,
         active: true,
-        discount: '',
+        discount: 0,
+        tags: [],
       });
     } catch (error: any) {
       console.error('Error adding product:', error);
@@ -187,7 +190,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                 type="number"
                 step="0.01"
                 value={formData.price}
-                onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
+                onChange={(e) => setFormData(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
                 required
               />
             </div>
@@ -198,7 +201,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                 type="number"
                 step="0.01"
                 value={formData.original_price}
-                onChange={(e) => setFormData(prev => ({ ...prev, original_price: e.target.value }))}
+                onChange={(e) => setFormData(prev => ({ ...prev, original_price: parseFloat(e.target.value) || 0 }))}
               />
             </div>
             <div>
@@ -208,7 +211,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                 type="number"
                 step="0.01"
                 value={formData.wholesale_price}
-                onChange={(e) => setFormData(prev => ({ ...prev, wholesale_price: e.target.value }))}
+                onChange={(e) => setFormData(prev => ({ ...prev, wholesale_price: parseFloat(e.target.value) || 0 }))}
               />
             </div>
           </div>
@@ -225,7 +228,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
                 id="stock_quantity"
                 type="number"
                 value={formData.stock_quantity}
-                onChange={(e) => setFormData(prev => ({ ...prev, stock_quantity: e.target.value }))}
+                onChange={(e) => setFormData(prev => ({ ...prev, stock_quantity: parseInt(e.target.value) || 0 }))}
               />
             </div>
           </div>
@@ -240,7 +243,7 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
               min="0"
               max="100"
               value={formData.discount}
-              onChange={(e) => setFormData(prev => ({ ...prev, discount: e.target.value }))}
+              onChange={(e) => setFormData(prev => ({ ...prev, discount: parseFloat(e.target.value) || 0 }))}
             />
           </div>
 

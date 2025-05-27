@@ -219,7 +219,6 @@ const EditProductDialog: React.FC<EditProductDialogProps> = ({
           <ProductCategoryField 
             formData={formData} 
             setFormData={setFormData} 
-            categories={categories} 
           />
 
           <ProductPricingFields formData={formData} setFormData={setFormData} />
