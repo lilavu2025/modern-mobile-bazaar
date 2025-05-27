@@ -1,7 +1,7 @@
+
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import type { User } from '@supabase/supabase-js';
 
 interface UserProfile {
   id: string;
@@ -36,10 +36,9 @@ export const useAdminUsers = () => {
         return;
       }
 
-      console.log('Fetching all authenticated users...');
+      console.log('Fetching all user profiles...');
 
-      // Get all users from auth.users table via RPC or admin API
-      // Since we can't directly access auth.users, we'll get profiles and then get auth data
+      // Get all users from profiles table
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
@@ -52,63 +51,17 @@ export const useAdminUsers = () => {
 
       console.log('Profiles data fetched:', profilesData);
 
-      // Get auth users data using admin functions
-      const { data: authResponse, error: authError } = await supabase.auth.admin.listUsers();
-
-      if (authError) {
-        console.error('Error fetching auth users:', authError);
-        // If we can't access auth users (permission issue), use profiles only
-        const formattedUsers: UserProfile[] = profilesData?.map(profile => ({
-          id: profile.id,
-          full_name: profile.full_name || 'غير محدد',
-          phone: profile.phone,
-          user_type: profile.user_type || 'retail',
-          created_at: profile.created_at,
-          email: profile.email || `user-${profile.id.slice(0, 8)}@example.com`,
-          email_confirmed_at: profile.created_at,
-          last_sign_in_at: profile.updated_at,
-        })) || [];
-
-        setUsers(formattedUsers);
-        return;
-      }
-
-      const authUsers = authResponse.users;
-
-      // Merge profiles with auth users data
-      const formattedUsers: UserProfile[] = profilesData?.map(profile => {
-        const authUser = authUsers?.find((user: User) => user.id === profile.id);
-        
-        return {
-          id: profile.id,
-          full_name: profile.full_name || 'غير محدد',
-          phone: profile.phone,
-          user_type: profile.user_type || 'retail',
-          created_at: profile.created_at,
-          email: authUser?.email || profile.email || `user-${profile.id.slice(0, 8)}@example.com`,
-          email_confirmed_at: authUser?.email_confirmed_at || profile.created_at,
-          last_sign_in_at: authUser?.last_sign_in_at || profile.updated_at,
-        };
-      }) || [];
-
-      // Also include auth users that might not have profiles yet
-      if (authUsers) {
-        const existingProfileIds = new Set(profilesData?.map(p => p.id) || []);
-        const usersWithoutProfiles = authUsers.filter((user: User) => !existingProfileIds.has(user.id));
-        
-        const additionalUsers: UserProfile[] = usersWithoutProfiles.map((user: User) => ({
-          id: user.id,
-          full_name: user.user_metadata?.full_name || 'غير محدد',
-          phone: user.user_metadata?.phone || null,
-          user_type: 'retail' as const,
-          created_at: user.created_at,
-          email: user.email || `user-${user.id.slice(0, 8)}@example.com`,
-          email_confirmed_at: user.email_confirmed_at,
-          last_sign_in_at: user.last_sign_in_at,
-        }));
-
-        formattedUsers.push(...additionalUsers);
-      }
+      // Format users data using profiles table as the main source
+      const formattedUsers: UserProfile[] = profilesData?.map(profile => ({
+        id: profile.id,
+        full_name: profile.full_name || 'غير محدد',
+        phone: profile.phone,
+        user_type: profile.user_type || 'retail',
+        created_at: profile.created_at,
+        email: profile.email || `user-${profile.id.slice(0, 8)}@example.com`,
+        email_confirmed_at: profile.created_at, // Using profile creation as confirmed date
+        last_sign_in_at: profile.updated_at,
+      })) || [];
 
       console.log('Final formatted users:', formattedUsers);
       setUsers(formattedUsers);
