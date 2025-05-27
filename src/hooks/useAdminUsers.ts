@@ -1,7 +1,7 @@
-
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import type { User } from '@supabase/supabase-js';
 
 interface UserProfile {
   id: string;
@@ -53,7 +53,7 @@ export const useAdminUsers = () => {
       console.log('Profiles data fetched:', profilesData);
 
       // Get auth users data using admin functions
-      const { data: { users: authUsers }, error: authError } = await supabase.auth.admin.listUsers();
+      const { data: authResponse, error: authError } = await supabase.auth.admin.listUsers();
 
       if (authError) {
         console.error('Error fetching auth users:', authError);
@@ -73,9 +73,11 @@ export const useAdminUsers = () => {
         return;
       }
 
+      const authUsers = authResponse.users;
+
       // Merge profiles with auth users data
       const formattedUsers: UserProfile[] = profilesData?.map(profile => {
-        const authUser = authUsers?.find(user => user.id === profile.id);
+        const authUser = authUsers?.find((user: User) => user.id === profile.id);
         
         return {
           id: profile.id,
@@ -92,9 +94,9 @@ export const useAdminUsers = () => {
       // Also include auth users that might not have profiles yet
       if (authUsers) {
         const existingProfileIds = new Set(profilesData?.map(p => p.id) || []);
-        const usersWithoutProfiles = authUsers.filter(user => !existingProfileIds.has(user.id));
+        const usersWithoutProfiles = authUsers.filter((user: User) => !existingProfileIds.has(user.id));
         
-        const additionalUsers: UserProfile[] = usersWithoutProfiles.map(user => ({
+        const additionalUsers: UserProfile[] = usersWithoutProfiles.map((user: User) => ({
           id: user.id,
           full_name: user.user_metadata?.full_name || 'غير محدد',
           phone: user.user_metadata?.phone || null,
