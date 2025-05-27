@@ -29,15 +29,22 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
     e.stopPropagation();
     
     if (!user) {
-      toast.error(t('pleaseLogin'));
+      toast.error(t('pleaseLogin') || 'Please login to add favorites');
       return;
     }
     
     try {
       await toggleFavorite(productId);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error toggling favorite:', error);
-      toast.error(t('errorUpdatingFavorites'));
+      
+      // Handle specific error cases
+      if (error?.code === '23505') {
+        // Duplicate key error - item is already in favorites
+        toast.info(t('alreadyInFavorites') || 'Item is already in your favorites');
+      } else {
+        toast.error(t('errorUpdatingFavorites') || 'Error updating favorites');
+      }
     }
   };
 
@@ -49,6 +56,7 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
       variant={variant}
       className={`${className} ${isFav ? 'text-red-500' : ''}`}
       onClick={handleFavorite}
+      aria-label={isFav ? t('removeFromFavorites') : t('addToFavorites')}
     >
       <Heart className={`h-4 w-4 ${isFav ? 'fill-current' : ''}`} />
     </Button>
