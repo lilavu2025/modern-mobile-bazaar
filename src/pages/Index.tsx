@@ -16,8 +16,13 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
 
   const { data: banners = [], isLoading: bannersLoading } = useBanners();
-  const { data: categories = [], isLoading: categoriesLoading } = useCategories();
+  const { data: categories = [], isLoading: categoriesLoading, error: categoriesError } = useCategories();
   const { data: products = [], isLoading: productsLoading } = useProducts();
+
+  // إضافة console logs للتشخيص
+  console.log('Categories data:', categories);
+  console.log('Categories loading:', categoriesLoading);
+  console.log('Categories error:', categoriesError);
 
   const featuredProducts = products.filter(product => product.featured).slice(0, 8);
   const filteredProducts = products.filter(product => 
@@ -80,6 +85,14 @@ const Index = () => {
                     <div className="h-4 bg-gray-200 rounded"></div>
                   </div>
                 ))}
+              </div>
+            ) : categoriesError ? (
+              <div className="text-center py-8">
+                <p className="text-red-500">خطأ في تحميل الفئات: {categoriesError.message}</p>
+              </div>
+            ) : categories.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-gray-500">لا توجد فئات متاحة</p>
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">

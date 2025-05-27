@@ -11,7 +11,11 @@ const Categories: React.FC = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { data: categories = [], isLoading } = useCategories();
+  const { data: categories = [], isLoading, error } = useCategories();
+
+  console.log('Categories page - data:', categories);
+  console.log('Categories page - loading:', isLoading);
+  console.log('Categories page - error:', error);
 
   const filteredCategories = categories.filter(category =>
     category.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -23,6 +27,29 @@ const Categories: React.FC = () => {
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
           <p className="mt-2">{t('loading')}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header 
+          onSearchChange={setSearchQuery}
+          onCartClick={() => setIsCartOpen(true)}
+          onMenuClick={() => {}}
+        />
+        <div className="container mx-auto px-4 py-6">
+          <div className="text-center py-12">
+            <p className="text-red-500 text-lg">خطأ في تحميل الفئات: {error.message}</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="mt-4 bg-primary text-white px-4 py-2 rounded"
+            >
+              إعادة المحاولة
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -46,7 +73,9 @@ const Categories: React.FC = () => {
 
         {filteredCategories.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">{t('noCategoriesFound')}</p>
+            <p className="text-gray-500 text-lg">
+              {searchQuery ? t('noCategoriesFound') : 'لا توجد فئات متاحة'}
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

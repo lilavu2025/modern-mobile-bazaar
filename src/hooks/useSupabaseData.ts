@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -20,7 +21,7 @@ export const useCategories = () => {
       
       // جلب عدد المنتجات لكل فئة
       const categoriesWithCounts = await Promise.all(
-        categories.map(async (category) => {
+        (categories || []).map(async (category) => {
           const { count, error: countError } = await supabase
             .from('products')
             .select('*', { count: 'exact', head: true })
@@ -66,7 +67,7 @@ export const useProducts = (categoryId?: string) => {
 
       if (error) throw error;
 
-      return data.map(product => {
+      return (data || []).map(product => {
         // تحديد السعر حسب نوع المستخدم
         const isWholesale = profile?.user_type === 'wholesale';
         const displayPrice = isWholesale && product.wholesale_price 
@@ -111,7 +112,7 @@ export const useBanners = () => {
 
       if (error) throw error;
 
-      return data.map(banner => ({
+      return (data || []).map(banner => ({
         id: banner.id,
         title: banner[`title_${language}` as keyof typeof banner] as string,
         subtitle: banner[`subtitle_${language}` as keyof typeof banner] as string,
