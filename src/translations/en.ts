@@ -212,6 +212,22 @@ export const enTranslations = {
   limitedTimeOffers: 'Limited Time Offers',
   dontMissOut: 'Don\'t miss out on these amazing deals!',
   noOffersAvailable: 'No offers available',
+  
+  // Admin Offers
+  manageOffers: 'Manage Offers',
+  noOffers: 'No Offers',
+  noOffersDesc: 'No offers have been created yet',
+  errorLoadingOffers: 'Error loading offers',
+  noOfferSelected: 'No offer selected',
+  pleaseCompleteRequiredFields: 'Please complete required fields',
+  invalidDiscountPercent: 'Discount percentage must be between 1 and 100',
+  endDateMustBeAfterStartDate: 'End date must be after start date',
+  errorAddingOffer: 'Error adding offer',
+  errorUpdatingOffer: 'Error updating offer',
+  errorDeletingOffer: 'Error deleting offer',
+  offerAddedSuccessfully: 'Offer added successfully',
+  offerUpdatedSuccessfully: 'Offer updated successfully',
+  offerDeletedSuccessfully: 'Offer deleted successfully',
   checkBackLater: 'Check back later for new deals',
   
   // Contact
@@ -282,7 +298,7 @@ export const enTranslations = {
   featured: 'Featured',
   discount: 'Discount',
   reviews: 'reviews',
-  currency: 'ILS',
+  currency: '₪',
   
   // Admin Products
   productImage: 'Product Image',

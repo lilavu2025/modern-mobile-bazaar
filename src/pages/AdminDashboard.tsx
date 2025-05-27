@@ -1,6 +1,5 @@
-
-import React, { useState } from 'react';
-import { Routes, Route, Link, useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
@@ -21,11 +20,13 @@ import AdminCategories from '@/components/admin/AdminCategories';
 import AdminOrders from '@/components/admin/AdminOrders';
 import AdminUsers from '@/components/admin/AdminUsers';
 import AdminDashboardStats from '@/components/admin/AdminDashboardStats';
+import AdminOffers from '@/components/admin/AdminOffers';
 
 const AdminDashboard: React.FC = () => {
   const { profile, signOut } = useAuth();
   const { t, isRTL } = useLanguage();
   const location = useLocation();
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
@@ -35,6 +36,7 @@ const AdminDashboard: React.FC = () => {
     { path: '/admin/categories', label: t('manageCategories'), icon: FolderOpen },
     { path: '/admin/orders', label: t('manageOrders'), icon: ShoppingCart },
     { path: '/admin/users', label: t('manageUsers'), icon: Users },
+    { path: '/admin/offers', label: t('manageOffers'), icon: Package }, // أيقونة مؤقتة
   ];
 
   const isActive = (path: string) => {
@@ -42,6 +44,13 @@ const AdminDashboard: React.FC = () => {
     if (path !== '/admin' && location.pathname.startsWith(path)) return true;
     return false;
   };
+
+  // توجيه تلقائي للأدمن فقط
+  useEffect(() => {
+    if (profile && profile.user_type !== 'admin') {
+      navigate('/');
+    }
+  }, [profile, navigate]);
 
   return (
     <div className={`min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
@@ -197,6 +206,7 @@ const AdminDashboard: React.FC = () => {
                 <Route path="/categories" element={<AdminCategories />} />
                 <Route path="/orders" element={<AdminOrders />} />
                 <Route path="/users" element={<AdminUsers />} />
+                <Route path="/offers" element={<AdminOffers />} />
               </Routes>
             </div>
           </div>

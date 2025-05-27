@@ -16,6 +16,8 @@ interface ProductCardContentProps {
   onQuantityChange: (quantity: number) => void;
   onAddToCart: () => void;
   onBuyNow: () => void;
+  isLoading?: boolean;
+  onProductClick?: () => void;
 }
 
 const ProductCardContent = ({ 
@@ -24,7 +26,9 @@ const ProductCardContent = ({
   cartQuantity, 
   onQuantityChange, 
   onAddToCart, 
-  onBuyNow 
+  onBuyNow,
+  isLoading = false,
+  onProductClick
 }: ProductCardContentProps) => {
   const { t, isRTL } = useLanguage();
   const { profile } = useAuth();

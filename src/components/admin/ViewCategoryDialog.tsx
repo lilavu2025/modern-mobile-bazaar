@@ -49,7 +49,7 @@ const ViewCategoryDialog: React.FC<ViewCategoryDialogProps> = ({
               alt={category.name}
               className="w-32 h-32 object-cover rounded-lg mx-auto mb-4"
             />
-            <div className="text-4xl mb-2">{category.icon}</div>
+            <h2 className="text-2xl font-bold">{category.name}</h2>
           </div>
 
           <div>

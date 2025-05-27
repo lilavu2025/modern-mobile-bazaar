@@ -44,7 +44,6 @@ const EditCategoryDialog: React.FC<EditCategoryDialogProps> = ({
     name_en: '',
     name_he: '',
     image: '',
-    icon: '',
   });
 
   useEffect(() => {
@@ -54,7 +53,7 @@ const EditCategoryDialog: React.FC<EditCategoryDialogProps> = ({
         name_en: category.nameEn || '',
         name_he: category.name || '', // fallback to name for Hebrew
         image: category.image || '',
-        icon: category.icon || '',
+
       });
     }
   }, [category]);
@@ -71,7 +70,6 @@ const EditCategoryDialog: React.FC<EditCategoryDialogProps> = ({
           name_en: formData.name_en,
           name_he: formData.name_he,
           image: formData.image,
-          icon: formData.icon,
         })
         .eq('id', category.id);
 
@@ -146,15 +144,7 @@ const EditCategoryDialog: React.FC<EditCategoryDialogProps> = ({
             label={t('categoryImage')}
           />
 
-          <div>
-            <Label htmlFor="icon">{t('categoryIcon')}</Label>
-            <Input
-              id="icon"
-              value={formData.icon}
-              onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-              placeholder="📱"
-            />
-          </div>
+
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -7,26 +6,42 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export const useCategories = () => {
   const { language } = useLanguage();
-  
   return useQuery({
     queryKey: ['categories', language],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // جلب الفئات
+      const { data: categories, error: categoriesError } = await supabase
         .from('categories')
         .select('*')
         .eq('active', true)
         .order('created_at');
-
-      if (error) throw error;
-
-      return data.map(category => ({
-        id: category.id,
-        name: category[`name_${language}` as keyof typeof category] as string,
-        nameEn: category.name_en,
-        image: category.image,
-        icon: category.icon,
-        count: 0, // This would be calculated from products count
-      }));
+      
+      if (categoriesError) throw categoriesError;
+      
+      // جلب عدد المنتجات لكل فئة
+      const categoriesWithCounts = await Promise.all(
+        categories.map(async (category) => {
+          const { count, error: countError } = await supabase
+            .from('products')
+            .select('*', { count: 'exact', head: true })
+            .eq('category_id', category.id)
+            .eq('active', true);
+          
+          if (countError) {
+            console.error('Error counting products for category:', category.id, countError);
+          }
+          
+          return {
+            id: category.id,
+            name: category[`name_${language}` as keyof typeof category] as string,
+            nameEn: category.name_en,
+            image: category.image,
+            count: count || 0,
+          };
+        })
+      );
+      
+      return categoriesWithCounts;
     },
   });
 };
@@ -43,7 +58,7 @@ export const useProducts = (categoryId?: string) => {
         .select('*, categories!inner(*)')
         .eq('active', true);
 
-      if (categoryId) {
+      if (categoryId && categoryId !== 'all') {
         query = query.eq('category_id', categoryId);
       }
 

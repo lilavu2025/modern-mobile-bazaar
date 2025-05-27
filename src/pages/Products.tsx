@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useProducts, useCategories } from '@/hooks/useSupabaseData';
 import { useLanguage } from '@/contexts/LanguageContext';
 import Header from '@/components/Header';
@@ -10,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Filter, X } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 
 const Products: React.FC = () => {
   const { t } = useLanguage();
@@ -19,9 +19,18 @@ const Products: React.FC = () => {
   const [sortBy, setSortBy] = useState<string>('default');
   const [priceRange, setPriceRange] = useState<{ min: string; max: string }>({ min: '', max: '' });
   const [showFilters, setShowFilters] = useState(false);
+  const location = useLocation();
 
   const { data: categories = [], isLoading: categoriesLoading } = useCategories();
   const { data: products = [], isLoading: productsLoading } = useProducts(selectedCategory === 'all' ? undefined : selectedCategory);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const cat = params.get('category');
+    if (cat && cat !== selectedCategory) {
+      setSelectedCategory(cat);
+    }
+  }, [location.search]);
 
   // Filter and sort products
   const filteredProducts = products

@@ -37,6 +37,7 @@ export interface ProductFormData {
   active: boolean;
   discount: number;
   tags: string[];
+  stock_quantity: number;
 }
 
 export interface CartItem {

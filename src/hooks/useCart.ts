@@ -1,83 +1,131 @@
-
 import { useState, useEffect } from 'react';
 import { CartItem, Product } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const useCart = () => {
   const { t } = useLanguage();
+  const { user } = useAuth();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Load cart from localStorage on mount
+  // جلب السلة من Supabase عند تحميل الصفحة
+  const fetchCartItems = async () => {
+    if (!user) return;
+    setIsLoading(true);
+    const { data, error } = await supabase
+      .from('cart')
+      .select('*, product:products(*)')
+      .eq('user_id', user.id);
+    setIsLoading(false);
+    if (error) {
+      console.error('Error fetching cart from Supabase:', error);
+      return;
+    }
+    if (Array.isArray(data)) {
+      setCartItems(
+        data.map((row: any) => ({
+          id: row.id,
+          product: row.product,
+          quantity: row.quantity,
+        }))
+      );
+    }
+  };
+
   useEffect(() => {
-    try {
-      const savedCart = localStorage.getItem('cart');
-      if (savedCart) {
-        const parsedCart = JSON.parse(savedCart);
-        console.log('Loading cart from localStorage:', parsedCart);
-        if (Array.isArray(parsedCart)) {
-          setCartItems(parsedCart);
-        } else {
-          console.error('Invalid cart data in localStorage');
-          localStorage.removeItem('cart');
-          setCartItems([]);
-        }
-      }
-    } catch (error) {
-      console.error('Error loading cart:', error);
-      localStorage.removeItem('cart');
+    if (user) {
+      fetchCartItems();
+      
+      // Set up real-time subscription for cart updates
+      const subscription = supabase
+        .channel('cart_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'cart',
+            filter: `user_id=eq.${user.id}`
+          },
+          () => {
+            // Refetch cart items when changes occur
+            fetchCartItems();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        subscription.unsubscribe();
+      };
+    } else {
       setCartItems([]);
     }
-  }, []);
+  }, [user]);
 
-  // Save cart to localStorage whenever it changes
+  // حفظ السلة في localStorage (اختياري)
   useEffect(() => {
     try {
-      console.log('Saving cart to localStorage:', cartItems);
       localStorage.setItem('cart', JSON.stringify(cartItems));
     } catch (error) {
       console.error('Error saving cart:', error);
     }
   }, [cartItems]);
 
+  // إضافة منتج للسلة في Supabase
   const addToCart = async (product: Product, quantity: number = 1) => {
-    console.log('Adding to cart:', product, 'quantity:', quantity);
-    
-    if (!product || !product.id) {
-      console.error('Invalid product data');
+    if (!user || !product || !product.id) {
       toast.error(t('invalidProduct'));
       return;
     }
-
     setIsLoading(true);
-    
     try {
-      setCartItems(prevItems => {
-        const currentItems = Array.isArray(prevItems) ? prevItems : [];
-        const existingItem = currentItems.find(item => item.id === product.id);
-        
-        if (existingItem) {
-          const updatedItems = currentItems.map(item =>
-            item.id === product.id
-              ? { ...item, quantity: item.quantity + quantity }
-              : item
-          );
-          console.log('Updated existing item in cart:', updatedItems);
-          toast.success(`${product.name} ${t('addedToCart')}`);
-          return updatedItems;
-        } else {
-          const newItem: CartItem = {
-            id: product.id,
-            product,
-            quantity
-          };
-          const newItems = [...currentItems, newItem];
-          console.log('Added new item to cart:', newItems);
-          toast.success(`${product.name} ${t('addedToCart')}`);
-          return newItems;
-        }
-      });
+      // تحقق إذا المنتج موجود مسبقاً
+      const { data: existing, error: fetchError } = await supabase
+        .from('cart')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('product_id', product.id)
+        .single();
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        throw fetchError;
+      }
+      if (existing) {
+        // تحديث الكمية
+        const { error: updateError } = await supabase
+          .from('cart')
+          .update({ quantity: existing.quantity + quantity })
+          .eq('id', existing.id);
+        if (updateError) throw updateError;
+      } else {
+        // إضافة جديد
+        const { error: insertError } = await supabase
+          .from('cart')
+          .insert({
+            user_id: user.id,
+            product_id: product.id,
+            quantity,
+            added_at: new Date().toISOString(),
+          });
+        if (insertError) throw insertError;
+      }
+      toast.success(`${product.name} ${t('addedToCart')}`);
+      // إعادة جلب السلة
+      const { data, error } = await supabase
+        .from('cart')
+        .select('*, product:products(*)')
+        .eq('user_id', user.id);
+      if (!error && Array.isArray(data)) {
+        setCartItems(
+          data.map((row: any) => ({
+            id: row.id,
+            product: row.product,
+            quantity: row.quantity,
+          }))
+        );
+      }
     } catch (error) {
       console.error('Error adding to cart:', error);
       toast.error(t('errorAddingToCart'));
@@ -86,75 +134,69 @@ export const useCart = () => {
     }
   };
 
-  const buyNow = async (product: Product, quantity: number = 1) => {
-    console.log('Buy now called with:', product, 'quantity:', quantity);
-    
-    if (!product || !product.id) {
-      console.error('Invalid product data');
-      toast.error(t('invalidProduct'));
-      return Promise.reject('Invalid product');
-    }
-    
+  // حذف منتج من السلة في Supabase
+  const removeFromCart = async (productId: string) => {
+    if (!user) return;
+    setIsLoading(true);
     try {
-      // مسح السلة وإضافة هذا المنتج فقط
-      const newItem: CartItem = {
-        id: product.id,
-        product,
-        quantity
-      };
-      
-      setCartItems([newItem]);
-      toast.success(`${product.name} ${t('addedToCart')}`);
-      console.log('Cart updated for buy now:', [newItem]);
-      
-      return Promise.resolve();
-    } catch (error) {
-      console.error('Error in buy now:', error);
-      toast.error(t('errorBuyingNow'));
-      return Promise.reject(error);
-    }
-  };
-
-  const removeFromCart = (productId: string) => {
-    if (!productId) {
-      console.error('Product ID is required');
-      return;
-    }
-
-    setCartItems(prevItems => {
-      const currentItems = Array.isArray(prevItems) ? prevItems : [];
-      const updatedItems = currentItems.filter(item => item.id !== productId);
+      const { error } = await supabase
+        .from('cart')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('product_id', productId);
+      if (error) throw error;
       toast.success(t('productRemovedFromCart'));
-      console.log('Removed item from cart, new items:', updatedItems);
-      return updatedItems;
-    });
+      setCartItems(items => items.filter(item => item.product.id !== productId));
+    } catch (error) {
+      console.error('Error removing from cart:', error);
+      toast.error(t('errorRemovingFromCart'));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const updateQuantity = (productId: string, quantity: number) => {
-    if (!productId) {
-      console.error('Product ID is required');
-      return;
-    }
-
+  // تحديث الكمية في Supabase
+  const updateQuantity = async (productId: string, quantity: number) => {
+    if (!user) return;
     if (quantity <= 0) {
-      removeFromCart(productId);
+      await removeFromCart(productId);
       return;
     }
-
-    setCartItems(prevItems => {
-      const currentItems = Array.isArray(prevItems) ? prevItems : [];
-      return currentItems.map(item =>
-        item.id === productId
-          ? { ...item, quantity }
-          : item
-      );
-    });
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from('cart')
+        .update({ quantity })
+        .eq('user_id', user.id)
+        .eq('product_id', productId);
+      if (error) throw error;
+      setCartItems(items => items.map(item => item.product.id === productId ? { ...item, quantity } : item));
+    } catch (error) {
+      console.error('Error updating quantity:', error);
+      toast.error(t('errorUpdatingCart'));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const clearCart = () => {
-    setCartItems([]);
-    toast.success(t('allProductsRemoved'));
-    console.log('Cart cleared');
+  // مسح السلة بالكامل من Supabase
+  const clearCart = async () => {
+    if (!user) return;
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from('cart')
+        .delete()
+        .eq('user_id', user.id);
+      if (error) throw error;
+      setCartItems([]);
+      toast.success(t('allProductsRemoved'));
+    } catch (error) {
+      console.error('Error clearing cart:', error);
+      toast.error(t('errorClearingCart'));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const getTotalItems = () => {
@@ -173,25 +215,43 @@ export const useCart = () => {
     }, 0);
   };
 
+  // الحصول على كمية المنتج في السلة
   const getItemQuantity = (productId: string) => {
     if (!productId) return 0;
     const currentItems = Array.isArray(cartItems) ? cartItems : [];
-    const item = currentItems.find(item => item.id === productId);
+    const item = currentItems.find(item => item.product.id === productId);
     const quantity = item ? item.quantity : 0;
     console.log('Getting quantity for product', productId, ':', quantity);
     return quantity;
+  };
+
+  // شراء فوري - إضافة للسلة والانتقال للدفع
+  const buyNow = async (product: Product, quantity: number = 1) => {
+    if (!user || !product || !product.id) {
+      toast.error(t('invalidProduct'));
+      return;
+    }
+    
+    try {
+      await addToCart(product, quantity);
+      return true;
+    } catch (error) {
+      console.error('Error in buy now:', error);
+      toast.error(t('errorBuyingNow'));
+      return false;
+    }
   };
 
   return {
     cartItems: Array.isArray(cartItems) ? cartItems : [],
     isLoading,
     addToCart,
-    buyNow,
     removeFromCart,
     updateQuantity,
     clearCart,
     getTotalItems,
     getTotalPrice,
-    getItemQuantity
+    getItemQuantity,
+    buyNow
   };
 };

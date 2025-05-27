@@ -7,6 +7,7 @@ interface Profile {
   id: string;
   full_name: string;
   phone: string | null;
+  email?: string;
   user_type: 'admin' | 'wholesale' | 'retail';
 }
 
@@ -38,6 +39,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .single();
 
       if (error) {
+        // If profile doesn't exist, create it
+        if (error.code === 'PGRST116') {
+          await createProfile(userId);
+          return;
+        }
         console.error('Error fetching profile:', error);
         return;
       }
@@ -45,6 +51,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setProfile(data);
     } catch (error) {
       console.error('Error fetching profile:', error);
+    }
+  };
+
+  const createProfile = async (userId: string) => {
+    try {
+      // Get user data from auth
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) return;
+
+      const profileData = {
+        id: userId,
+        full_name: user.user_metadata?.full_name || '',
+        phone: user.user_metadata?.phone || null,
+        user_type: 'retail' as const,
+        email: user.email || ''
+      };
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .insert([profileData])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating profile:', error);
+        return;
+      }
+
+      setProfile(data);
+    } catch (error) {
+      console.error('Error creating profile:', error);
     }
   };
 

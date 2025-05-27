@@ -6,9 +6,19 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BarChart, Bar, XAxis, YAxis, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { Package, ShoppingCart, Users, BarChart3 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
-const AdminDashboardStats: React.FC = () => {
+interface AdminDashboardStatsProps {
+  onFilterUsers?: (userType: string) => void;
+  onFilterOrders?: (status: string) => void;
+}
+
+const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({ 
+  onFilterUsers, 
+  onFilterOrders 
+}) => {
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const [isUsersExpanded, setIsUsersExpanded] = useState(false);
   const [isOrdersExpanded, setIsOrdersExpanded] = useState(false);
 
@@ -76,6 +86,50 @@ const AdminDashboardStats: React.FC = () => {
     },
   });
 
+  // Fetch orders statistics
+  const { data: ordersStats = { statusStats: [], totalOrders: 0, totalRevenue: 0 } } = useQuery({
+    queryKey: ['admin-orders-stats'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('status, total, created_at');
+
+      if (error) throw error;
+
+      const ordersByStatus = data.reduce((acc: any, order) => {
+        acc[order.status] = (acc[order.status] || 0) + 1;
+        return acc;
+      }, {});
+
+      const totalRevenue = data.reduce((sum, order) => sum + (order.total || 0), 0);
+
+      return {
+        statusStats: [
+          { status: 'open', label: t('openOrders'), value: ordersByStatus.open || 0, color: '#3b82f6' },
+          { status: 'processing', label: t('processingOrders'), value: ordersByStatus.processing || 0, color: '#f59e0b' },
+          { status: 'ready', label: t('readyOrders'), value: ordersByStatus.ready || 0, color: '#10b981' },
+          { status: 'cancelled', label: t('cancelledOrders'), value: ordersByStatus.cancelled || 0, color: '#ef4444' },
+        ],
+        totalOrders: data.length,
+        totalRevenue
+      };
+    },
+  });
+
+  const handleUserTypeClick = (userType: string) => {
+    if (onFilterUsers) {
+      onFilterUsers(userType);
+    }
+    navigate('/admin/users', { state: { filterType: userType } });
+  };
+
+  const handleOrderStatusClick = (status: string) => {
+    if (onFilterOrders) {
+      onFilterOrders(status);
+    }
+    navigate('/admin/orders', { state: { filterStatus: status } });
+  };
+
   // Mock orders data
   const ordersData = [
     { month: 'يناير', orders: 45, revenue: 12000 },
@@ -84,14 +138,6 @@ const AdminDashboardStats: React.FC = () => {
     { month: 'أبريل', orders: 61, revenue: 18000 },
     { month: 'مايو', orders: 55, revenue: 16500 },
     { month: 'يونيو', orders: 67, revenue: 20000 },
-  ];
-
-  // Order status statistics
-  const orderStatusStats = [
-    { status: 'open', label: t('openOrders'), value: 12, color: '#3b82f6' },
-    { status: 'processing', label: t('processingOrders'), value: 8, color: '#f59e0b' },
-    { status: 'ready', label: t('readyOrders'), value: 4, color: '#10b981' },
-    { status: 'cancelled', label: t('cancelledOrders'), value: 2, color: '#ef4444' },
   ];
 
   const chartConfig = {
@@ -133,7 +179,8 @@ const AdminDashboardStats: React.FC = () => {
                 {usersStats.map((stat) => (
                   <div 
                     key={stat.name} 
-                    className="rounded-lg border bg-card p-2 text-center hover:bg-muted/50 transition-colors"
+                    className="rounded-lg border bg-card p-2 text-center hover:bg-muted/50 transition-colors cursor-pointer"
+                    onClick={() => handleUserTypeClick(stat.name)}
                   >
                     <div className="text-[0.9rem] font-medium">{stat.name}</div>
                     <div className="text-xl font-bold mt-1">{stat.value}</div>
@@ -171,25 +218,26 @@ const AdminDashboardStats: React.FC = () => {
             {!isOrdersExpanded ? (
               <>
                 <div className="text-2xl font-bold">
-                  {ordersData[ordersData.length - 1]?.orders || 0}
+                  {ordersStats?.totalOrders || 0}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {t('thisMonth')}
+                  {t('totalOrders')}
                 </p>
               </>
             ) : (
               <div className="grid grid-cols-2 gap-2">
-                {orderStatusStats.map((stat) => (
+                {ordersStats?.statusStats?.map((stat) => (
                   <div 
                     key={stat.status} 
-                    className="rounded-lg border bg-card p-2 text-center hover:bg-muted/50 transition-colors"
+                    className="rounded-lg border bg-card p-2 text-center hover:bg-muted/50 transition-colors cursor-pointer"
+                    onClick={() => handleOrderStatusClick(stat.status)}
                   >
                     <div className="text-[0.9rem] font-medium">{stat.label}</div>
                     <div className="text-xl font-bold mt-1" style={{ color: stat.color }}>
                       {stat.value}
                     </div>
                   </div>
-                ))}
+                )) || []}
               </div>
             )}
           </CardContent>
@@ -202,7 +250,7 @@ const AdminDashboardStats: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {ordersData[ordersData.length - 1]?.revenue.toLocaleString() || 0} {t('currency')}
+              {ordersStats?.totalRevenue?.toLocaleString() || 0} {t('currency')}
             </div>
             <p className="text-xs text-muted-foreground">
               {t('thisMonth')}

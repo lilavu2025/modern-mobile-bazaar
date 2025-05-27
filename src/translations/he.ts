@@ -212,6 +212,22 @@ export const heTranslations = {
   limitedTimeOffers: 'מבצעים לזמן מוגבל',
   dontMissOut: 'אל תפספסו את העסקאות המדהימות האלה!',
   noOffersAvailable: 'אין מבצעים זמינים',
+  
+  // Admin Offers
+  manageOffers: 'ניהול מבצעים',
+  noOffers: 'אין מבצעים',
+  noOffersDesc: 'עדיין לא נוצרו מבצעים',
+  errorLoadingOffers: 'שגיאה בטעינת מבצעים',
+  noOfferSelected: 'לא נבחר מבצע',
+  pleaseCompleteRequiredFields: 'אנא השלם שדות חובה',
+  invalidDiscountPercent: 'אחוז הנחה חייב להיות בין 1 ל-100',
+  endDateMustBeAfterStartDate: 'תאריך סיום חייב להיות אחרי תאריך התחלה',
+  errorAddingOffer: 'שגיאה בהוספת מבצע',
+  errorUpdatingOffer: 'שגיאה בעדכון מבצע',
+  errorDeletingOffer: 'שגיאה במחיקת מבצע',
+  offerAddedSuccessfully: 'מבצע נוסף בהצלחה',
+  offerUpdatedSuccessfully: 'מבצע עודכן בהצלחה',
+  offerDeletedSuccessfully: 'מבצע נמחק בהצלחה',
   checkBackLater: 'בדקו שוב מאוחר יותר למבצעים חדשים',
   
   // Contact
@@ -282,7 +298,7 @@ export const heTranslations = {
   featured: 'מומלץ',
   discount: 'הנחה',
   reviews: 'ביקורות',
-  currency: 'ש"ח',
+  currency: '₪',
   
   // Admin Products
   productImage: 'תמונת מוצר',

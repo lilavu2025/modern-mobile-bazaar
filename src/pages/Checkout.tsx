@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+// صفحة الدفع والشراء - تتيح للمستخدم إتمام عملية الشراء
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCart } from '@/hooks/useCart';
@@ -13,15 +14,31 @@ import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { ShoppingCart, CreditCard, Banknote } from 'lucide-react';
+import { ShoppingCart, CreditCard, Banknote, ArrowLeft } from 'lucide-react';
+import { Product } from '@/types';
+
+// واجهة بيانات الشراء المباشر
+interface DirectBuyState {
+  directBuy?: boolean;
+  product?: Product;
+  quantity?: number;
+}
 
 const Checkout: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
   const { cartItems, getTotalPrice, clearCart } = useCart();
   const { toast } = useToast();
 
+  // الحصول على بيانات الشراء المباشر من التنقل
+  const directBuyState = location.state as DirectBuyState;
+  const isDirectBuy = directBuyState?.directBuy || false;
+  const directProduct = directBuyState?.product;
+  const directQuantity = directBuyState?.quantity || 1;
+
+  // حالات المكون
   const [isLoading, setIsLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card'>('cash');
   const [shippingAddress, setShippingAddress] = useState({
@@ -36,7 +53,19 @@ const Checkout: React.FC = () => {
   });
   const [notes, setNotes] = useState('');
 
+  // تحديد العناصر المراد شراؤها (من السلة أو الشراء المباشر)
+  const itemsToCheckout = isDirectBuy && directProduct 
+    ? [{ product: directProduct, quantity: directQuantity }]
+    : cartItems;
+
+  // حساب السعر الإجمالي
+  const totalPrice = isDirectBuy && directProduct
+    ? directProduct.price * directQuantity
+    : getTotalPrice();
+
+  // وظيفة إتمام الطلب
   const handlePlaceOrder = async () => {
+    // التحقق من تسجيل الدخول
     if (!user) {
       toast({
         title: t('error'),
@@ -46,7 +75,8 @@ const Checkout: React.FC = () => {
       return;
     }
 
-    if (cartItems.length === 0) {
+    // التحقق من وجود عناصر للشراء
+    if (itemsToCheckout.length === 0) {
       toast({
         title: t('error'),
         description: t('cartIsEmpty'),
@@ -55,7 +85,7 @@ const Checkout: React.FC = () => {
       return;
     }
 
-    // Validate shipping address
+    // التحقق من صحة عنوان الشحن
     if (!shippingAddress.fullName || !shippingAddress.phone || !shippingAddress.city || 
         !shippingAddress.area || !shippingAddress.street || !shippingAddress.building) {
       toast({
@@ -69,23 +99,27 @@ const Checkout: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // Create order
+      // إنشاء الطلب في قاعدة البيانات
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
           user_id: user.id,
-          total: getTotalPrice(),
+          total: totalPrice,
           payment_method: paymentMethod,
           shipping_address: shippingAddress,
           notes: notes || null,
+          status: 'pending', // حالة الطلب: في الانتظار
         })
         .select()
         .single();
 
-      if (orderError) throw orderError;
+      if (orderError) {
+        console.error('خطأ في إنشاء الطلب:', orderError);
+        throw orderError;
+      }
 
-      // Create order items
-      const orderItems = cartItems.map(item => ({
+      // إنشاء عناصر الطلب
+      const orderItems = itemsToCheckout.map(item => ({
         order_id: order.id,
         product_id: item.product.id,
         quantity: item.quantity,
@@ -96,19 +130,25 @@ const Checkout: React.FC = () => {
         .from('order_items')
         .insert(orderItems);
 
-      if (itemsError) throw itemsError;
+      if (itemsError) {
+        console.error('خطأ في إنشاء عناصر الطلب:', itemsError);
+        throw itemsError;
+      }
 
-      // Clear cart and redirect
-      clearCart();
+      // مسح السلة والتوجه لصفحة الطلبات (فقط إذا لم يكن شراء مباشر)
+      if (!isDirectBuy) {
+        clearCart();
+      }
       
       toast({
         title: t('success'),
         description: t('orderPlaced'),
       });
 
+      // التوجه لصفحة الطلبات
       navigate('/orders');
     } catch (error: any) {
-      console.error('Error placing order:', error);
+      console.error('خطأ في إتمام الطلب:', error);
       toast({
         title: t('error'),
         description: error.message || t('orderFailed'),
@@ -119,7 +159,17 @@ const Checkout: React.FC = () => {
     }
   };
 
-  if (cartItems.length === 0) {
+  // وظيفة العودة للصفحة السابقة
+  const handleGoBack = () => {
+    if (isDirectBuy) {
+      navigate(-1); // العودة للصفحة السابقة
+    } else {
+      navigate('/cart'); // العودة للسلة
+    }
+  };
+
+  // عرض رسالة السلة الفارغة (فقط إذا لم يكن شراء مباشر)
+  if (!isDirectBuy && cartItems.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header 
@@ -151,18 +201,43 @@ const Checkout: React.FC = () => {
       />
 
       <div className="container mx-auto px-4 py-6">
+        {/* رأس الصفحة مع زر العودة */}
         <div className="mb-8">
+          <div className="flex items-center gap-4 mb-4">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleGoBack}
+              className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}
+            >
+              <ArrowLeft className={`h-4 w-4 ${isRTL ? 'rotate-180' : ''}`} />
+              {t('back')}
+            </Button>
+            {isDirectBuy && (
+              <span className="text-sm text-orange-600 bg-orange-50 px-3 py-1 rounded-full">
+                {t('directPurchase')}
+              </span>
+            )}
+          </div>
           <h1 className="text-3xl font-bold mb-2">{t('checkout')}</h1>
-          <p className="text-gray-600">{t('completeYourOrder')}</p>
+          <p className="text-gray-600">
+            {isDirectBuy 
+              ? t('completeDirectPurchase') 
+              : t('completeYourOrder')
+            }
+          </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Shipping & Payment */}
+          {/* قسم الشحن والدفع */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Shipping Address */}
+            {/* عنوان الشحن */}
             <Card>
               <CardHeader>
-                <CardTitle>{t('shippingAddress')}</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <span>{t('shippingAddress')}</span>
+                  <span className="text-red-500">*</span>
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -260,25 +335,34 @@ const Checkout: React.FC = () => {
               </CardContent>
             </Card>
 
-            {/* Payment Method */}
+            {/* طريقة الدفع */}
             <Card>
               <CardHeader>
-                <CardTitle>{t('paymentMethod')}</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <span>{t('paymentMethod')}</span>
+                  <span className="text-red-500">*</span>
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <RadioGroup value={paymentMethod} onValueChange={(value: 'cash' | 'card') => setPaymentMethod(value)}>
-                  <div className="flex items-center space-x-2 p-4 border rounded-lg">
+                  <div className="flex items-center space-x-2 p-4 border rounded-lg hover:bg-gray-50 transition-colors">
                     <RadioGroupItem value="cash" id="cash" />
                     <Label htmlFor="cash" className="flex items-center gap-2 cursor-pointer flex-1">
-                      <Banknote className="h-5 w-5" />
-                      <span>{t('cashOnDelivery')}</span>
+                      <Banknote className="h-5 w-5 text-green-600" />
+                      <div>
+                        <span className="font-medium">{t('cashOnDelivery')}</span>
+                        <p className="text-sm text-gray-500">{t('payOnDeliveryDescription')}</p>
+                      </div>
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2 p-4 border rounded-lg opacity-50">
                     <RadioGroupItem value="card" id="card" disabled />
                     <Label htmlFor="card" className="flex items-center gap-2 cursor-not-allowed flex-1">
                       <CreditCard className="h-5 w-5" />
-                      <span>{t('creditCard')} ({t('comingSoon')})</span>
+                      <div>
+                        <span>{t('creditCard')}</span>
+                        <p className="text-sm text-gray-500">({t('comingSoon')})</p>
+                      </div>
                     </Label>
                   </div>
                 </RadioGroup>
@@ -286,43 +370,64 @@ const Checkout: React.FC = () => {
             </Card>
           </div>
 
-          {/* Order Summary */}
-          <Card className="h-fit">
+          {/* ملخص الطلب */}
+          <Card className="h-fit sticky top-4">
             <CardHeader>
-              <CardTitle>{t('orderSummary')}</CardTitle>
+              <CardTitle className="flex items-center justify-between">
+                <span>{t('orderSummary')}</span>
+                <span className="text-sm font-normal text-gray-500">
+                  ({itemsToCheckout.length} {t('items')})
+                </span>
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {cartItems.map((item) => (
-                <div key={item.id} className="flex items-center gap-3">
-                  <img
-                    src={item.product.image}
-                    alt={item.product.name}
-                    className="w-16 h-16 object-cover rounded"
-                  />
-                  <div className="flex-1">
-                    <h4 className="font-medium text-sm">{item.product.name}</h4>
-                    <p className="text-sm text-gray-600">
-                      {item.quantity} × {item.product.price} {t('currency')}
+              {/* عرض المنتجات */}
+              <div className="space-y-3 max-h-64 overflow-y-auto">
+                {itemsToCheckout.map((item) => (
+                  <div key={item.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50">
+                    <img
+                      src={item.product.image}
+                      alt={item.product.name}
+                      className="w-12 h-12 object-cover rounded"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-sm truncate">{item.product.name}</h4>
+                      <p className="text-xs text-gray-600">
+                        {item.quantity} × {item.product.price} {t('currency')}
+                      </p>
+                    </div>
+                    <p className="font-medium text-sm">
+                      {item.quantity * item.product.price} {t('currency')}
                     </p>
                   </div>
-                  <p className="font-medium">
-                    {item.quantity * item.product.price} {t('currency')}
-                  </p>
-                </div>
-              ))}
+                ))}
+              </div>
               
               <Separator />
               
-              <div className="flex justify-between items-center text-lg font-bold">
-                <span>{t('total')}</span>
-                <span>{getTotalPrice()} {t('currency')}</span>
+              {/* تفاصيل التكلفة */}
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>{t('subtotal')}</span>
+                  <span>{totalPrice} {t('currency')}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>{t('shipping')}</span>
+                  <span className="text-green-600">{t('free')}</span>
+                </div>
+                <Separator />
+                <div className="flex justify-between items-center text-lg font-bold">
+                  <span>{t('total')}</span>
+                  <span className="text-primary">{totalPrice} {t('currency')}</span>
+                </div>
               </div>
               
+              {/* زر إتمام الطلب */}
               <Button 
                 onClick={handlePlaceOrder} 
-                className="w-full" 
+                className="w-full bg-primary hover:bg-primary/90" 
                 size="lg"
-                disabled={isLoading}
+                disabled={isLoading || itemsToCheckout.length === 0}
               >
                 {isLoading ? t('placingOrder') : t('placeOrder')}
               </Button>

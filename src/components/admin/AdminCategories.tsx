@@ -128,7 +128,7 @@ const AdminCategories: React.FC = () => {
                 <TableRow>
                   <TableHead>{t('categoryImage')}</TableHead>
                   <TableHead>{t('categoryName')}</TableHead>
-                  <TableHead>{t('categoryIcon')}</TableHead>
+      
                   <TableHead>{t('productCount')}</TableHead>
                   <TableHead className="text-right">{t('actions')}</TableHead>
                 </TableRow>
@@ -144,9 +144,6 @@ const AdminCategories: React.FC = () => {
                       />
                     </TableCell>
                     <TableCell className="font-medium">{category.name}</TableCell>
-                    <TableCell>
-                      <span className="text-2xl">{category.icon}</span>
-                    </TableCell>
                     <TableCell>
                       <Badge variant="secondary">{category.count}</Badge>
                     </TableCell>

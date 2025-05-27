@@ -11,6 +11,7 @@ interface ProductCardImageProps {
   onQuickView: () => void;
   onFavorite: () => void;
   onShare: () => void;
+  isLoading?: boolean;
 }
 
 const ProductCardImage = ({ 
@@ -18,16 +19,19 @@ const ProductCardImage = ({
   isFavorite, 
   onQuickView, 
   onFavorite, 
-  onShare 
+  onShare,
+  isLoading = false
 }: ProductCardImageProps) => {
   return (
     <div className="relative overflow-hidden">
-      <Link to={`/product/${product.id}`}>
+      <Link to={`/product/${product.id}`} className="block">
         <img
           src={product.image}
           alt={product.name}
           className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-110"
         />
+        {/* Overlay for clickable area */}
+        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity" />
       </Link>
       
       <ProductCardBadges product={product} />
@@ -38,9 +42,6 @@ const ProductCardImage = ({
         onFavorite={onFavorite}
         onShare={onShare}
       />
-
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity" />
     </div>
   );
 };

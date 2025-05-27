@@ -64,6 +64,7 @@ interface ProductFormData {
   featured: boolean;
   active: boolean;
   tags: string[];
+  stock_quantity: number;
 }
 
 interface EditProductDialogProps {
@@ -101,6 +102,7 @@ const EditProductDialog: React.FC<EditProductDialogProps> = ({
     featured: false,
     active: true,
     tags: [],
+    stock_quantity: 0,
   });
 
   useEffect(() => {
@@ -116,17 +118,18 @@ const EditProductDialog: React.FC<EditProductDialogProps> = ({
         description_ar: product.description_ar || '',
         description_en: product.description_en || '',
         description_he: product.description_he || '',
-        price: Number(product.price) || 0,
-        original_price: Number(product.original_price) || 0,
-        wholesale_price: Number(product.wholesale_price) || 0,
+        price: product.price || 0,
+        original_price: product.original_price || 0,
+        wholesale_price: product.wholesale_price || 0,
         image: product.image || '',
-        images: allImages,
+        images: product.images || [product.image].filter(Boolean),
         category_id: product.category_id || '',
         in_stock: product.in_stock || false,
-        discount: Number(product.discount) || 0,
+        discount: product.discount || 0,
         featured: product.featured || false,
         active: true,
         tags: [],
+        stock_quantity: (product as any).stock_quantity || 0,
       });
     }
   }, [product]);

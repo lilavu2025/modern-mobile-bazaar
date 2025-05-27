@@ -1,7 +1,8 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAdminUsers } from '@/hooks/useAdminUsers';
+import { useLocation } from 'react-router-dom';
 import AdminUsersHeader from './users/AdminUsersHeader';
 import UserStatsCards from './users/UserStatsCards';
 import UserFilters from './users/UserFilters';
@@ -10,6 +11,7 @@ import UserErrorDisplay from './users/UserErrorDisplay';
 
 const AdminUsers: React.FC = () => {
   const { isRTL } = useLanguage();
+  const location = useLocation();
   
   const {
     users,
@@ -27,6 +29,24 @@ const AdminUsers: React.FC = () => {
     sortOrder,
     setSortOrder
   } = useAdminUsers();
+
+  // Handle filter from dashboard navigation
+  useEffect(() => {
+    if (location.state?.filterType) {
+      const filterType = location.state.filterType;
+      // Map Arabic names to English for filtering
+      const typeMapping: { [key: string]: string } = {
+        'مدير': 'admin',
+        'جملة': 'wholesale', 
+        'تجزئة': 'retail',
+        'admin': 'admin',
+        'wholesale': 'wholesale',
+        'retail': 'retail'
+      };
+      const mappedType = typeMapping[filterType] || filterType;
+      setUserTypeFilter(mappedType);
+    }
+  }, [location.state, setUserTypeFilter]);
 
   if (error) {
     return <UserErrorDisplay error={error} />;
