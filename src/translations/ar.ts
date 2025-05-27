@@ -259,6 +259,10 @@ export const arTranslations = {
   
   // Product Actions
   linkCopied: 'تم نسخ الرابط',
+  addedToCart: 'تم إضافة المنتج للسلة',
+  addedToFavorites: 'تم إضافة المنتج للمفضلة',
+  removedFromFavorites: 'تم إزالة المنتج من المفضلة',
+  openMenu: 'فتح القائمة',
   errorAddingToCart: 'خطأ في الإضافة للسلة',
   errorTogglingFavorite: 'خطأ في تحديث المفضلة',
   sharedSuccessfully: 'تمت المشاركة بنجاح',

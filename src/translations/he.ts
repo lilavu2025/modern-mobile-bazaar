@@ -259,6 +259,10 @@ export const heTranslations = {
   
   // Product Actions
   linkCopied: 'הקישור הועתק',
+  addedToCart: 'נוסף לעגלה',
+  addedToFavorites: 'נוסף למועדפים',
+  removedFromFavorites: 'הוסר מהמועדפים',
+  openMenu: 'פתח תפריט',
   errorAddingToCart: 'שגיאה בהוספה לעגלה',
   errorTogglingFavorite: 'שגיאה בעדכון המועדפים',
   sharedSuccessfully: 'שותף בהצלחה',

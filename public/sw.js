@@ -1,157 +1,318 @@
-const CACHE_NAME = 'modern-bazaar-v1';
-const urlsToCache = [
+const CACHE_NAME = 'modern-bazaar-v1.0.0';
+const STATIC_CACHE = 'static-v1';
+const DYNAMIC_CACHE = 'dynamic-v1';
+const IMAGE_CACHE = 'images-v1';
+const API_CACHE = 'api-v1';
+
+// Assets to cache immediately
+const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
   '/favicon.ico',
   '/placeholder.svg',
+  // Add critical CSS and JS files here
 ];
 
-// Install event - cache assets
+// API endpoints to cache
+const API_ENDPOINTS = [
+  '/api/products',
+  '/api/categories',
+  '/api/banners'
+];
+
+// Install event - cache static assets
 self.addEventListener('install', (event) => {
+  console.log('Service Worker: Installing...');
+  
   event.waitUntil(
-    caches.open(CACHE_NAME)
+    caches.open(STATIC_CACHE)
       .then((cache) => {
-        console.log('Opened cache');
-        return cache.addAll(urlsToCache);
+        console.log('Service Worker: Caching static assets');
+        return cache.addAll(STATIC_ASSETS);
       })
-      .then(() => self.skipWaiting())
+      .then(() => {
+        console.log('Service Worker: Static assets cached');
+        return self.skipWaiting();
+      })
+      .catch((error) => {
+        console.error('Service Worker: Error caching static assets:', error);
+      })
   );
 });
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
+  console.log('Service Worker: Activating...');
+  
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            console.log('Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    }).then(() => self.clients.claim())
+    caches.keys()
+      .then((cacheNames) => {
+        return Promise.all(
+          cacheNames.map((cacheName) => {
+            if (cacheName !== STATIC_CACHE && 
+                cacheName !== DYNAMIC_CACHE && 
+                cacheName !== IMAGE_CACHE && 
+                cacheName !== API_CACHE) {
+              console.log('Service Worker: Deleting old cache:', cacheName);
+              return caches.delete(cacheName);
+            }
+          })
+        );
+      })
+      .then(() => {
+        console.log('Service Worker: Activated');
+        return self.clients.claim();
+      })
   );
 });
 
-// Fetch event - serve from cache, fallback to network
+// Fetch event - implement caching strategies
 self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
+  
   // Skip non-GET requests
-  if (event.request.method !== 'GET') return;
-
-  // Skip cross-origin requests
-  if (!event.request.url.startsWith(self.location.origin)) return;
-
-  // Skip API requests
-  if (event.request.url.includes('/api/') || event.request.url.includes('supabase')) return;
-
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        // Cache hit - return response
-        if (response) {
-          return response;
-        }
-
-        // Clone the request
-        const fetchRequest = event.request.clone();
-
-        return fetch(fetchRequest).then((response) => {
-          // Check if valid response
-          if (!response || response.status !== 200 || response.type !== 'basic') {
-            return response;
-          }
-
-          // Clone the response
-          const responseToCache = response.clone();
-
-          // Cache the response for future use
-          caches.open(CACHE_NAME)
-            .then((cache) => {
-              // Only cache successful responses
-              if (event.request.url.startsWith('http')) {
-                cache.put(event.request, responseToCache);
-              }
-            });
-
-          return response;
-        });
-      })
-      .catch(() => {
-        // Offline fallback for navigation requests
-        if (event.request.mode === 'navigate') {
-          return caches.match('/index.html');
-        }
-        
-        // Return placeholder for images
-        if (event.request.destination === 'image') {
-          return caches.match('/placeholder.svg');
-        }
-      })
-  );
+  if (request.method !== 'GET') {
+    return;
+  }
+  
+  // Handle different types of requests
+  if (url.pathname.startsWith('/api/')) {
+    // API requests - Network First with fallback to cache
+    event.respondWith(handleApiRequest(request));
+  } else if (request.destination === 'image') {
+    // Images - Cache First with network fallback
+    event.respondWith(handleImageRequest(request));
+  } else if (url.pathname.endsWith('.js') || url.pathname.endsWith('.css')) {
+    // Static assets - Cache First
+    event.respondWith(handleStaticAssets(request));
+  } else {
+    // HTML pages - Network First with cache fallback
+    event.respondWith(handlePageRequest(request));
+  }
 });
+
+// Handle API requests with Network First strategy
+async function handleApiRequest(request) {
+  try {
+    // Try network first
+    const networkResponse = await fetch(request);
+    
+    if (networkResponse.ok) {
+      // Cache successful responses
+      const cache = await caches.open(API_CACHE);
+      cache.put(request, networkResponse.clone());
+      return networkResponse;
+    }
+    
+    // If network fails, try cache
+    return await getCachedResponse(request, API_CACHE);
+  } catch (error) {
+    console.log('Service Worker: Network failed, trying cache for API request');
+    return await getCachedResponse(request, API_CACHE);
+  }
+}
+
+// Handle image requests with Cache First strategy
+async function handleImageRequest(request) {
+  try {
+    // Try cache first
+    const cachedResponse = await getCachedResponse(request, IMAGE_CACHE);
+    if (cachedResponse) {
+      return cachedResponse;
+    }
+    
+    // If not in cache, fetch from network
+    const networkResponse = await fetch(request);
+    
+    if (networkResponse.ok) {
+      // Cache the image
+      const cache = await caches.open(IMAGE_CACHE);
+      cache.put(request, networkResponse.clone());
+    }
+    
+    return networkResponse;
+  } catch (error) {
+    console.log('Service Worker: Failed to load image:', error);
+    // Return placeholder image or error response
+    return new Response('Image not available', { status: 404 });
+  }
+}
+
+// Handle static assets with Cache First strategy
+async function handleStaticAssets(request) {
+  try {
+    // Try cache first
+    const cachedResponse = await getCachedResponse(request, STATIC_CACHE);
+    if (cachedResponse) {
+      return cachedResponse;
+    }
+    
+    // If not in cache, fetch from network
+    const networkResponse = await fetch(request);
+    
+    if (networkResponse.ok) {
+      // Cache the asset
+      const cache = await caches.open(STATIC_CACHE);
+      cache.put(request, networkResponse.clone());
+    }
+    
+    return networkResponse;
+  } catch (error) {
+    console.log('Service Worker: Failed to load static asset:', error);
+    return new Response('Asset not available', { status: 404 });
+  }
+}
+
+// Handle page requests with Network First strategy
+async function handlePageRequest(request) {
+  try {
+    // Try network first
+    const networkResponse = await fetch(request);
+    
+    if (networkResponse.ok) {
+      // Cache successful responses
+      const cache = await caches.open(DYNAMIC_CACHE);
+      cache.put(request, networkResponse.clone());
+      return networkResponse;
+    }
+    
+    // If network fails, try cache
+    return await getCachedResponse(request, DYNAMIC_CACHE) || 
+           await getCachedResponse(new Request('/'), STATIC_CACHE);
+  } catch (error) {
+    console.log('Service Worker: Network failed, trying cache for page request');
+    // Try to return cached version or fallback to index.html
+    return await getCachedResponse(request, DYNAMIC_CACHE) || 
+           await getCachedResponse(new Request('/'), STATIC_CACHE) ||
+           new Response('Offline - Page not available', { 
+             status: 503,
+             headers: { 'Content-Type': 'text/html' }
+           });
+  }
+}
+
+// Helper function to get cached response
+async function getCachedResponse(request, cacheName) {
+  const cache = await caches.open(cacheName);
+  return await cache.match(request);
+}
 
 // Background sync for offline actions
 self.addEventListener('sync', (event) => {
-  if (event.tag === 'sync-cart') {
-    event.waitUntil(syncCart());
+  console.log('Service Worker: Background sync triggered');
+  
+  if (event.tag === 'background-sync') {
+    event.waitUntil(doBackgroundSync());
   }
 });
 
-async function syncCart() {
+// Handle background sync
+async function doBackgroundSync() {
   try {
-    // Get pending cart updates from IndexedDB
-    const pendingUpdates = await getPendingCartUpdates();
-    
-    // Send updates to server
-    for (const update of pendingUpdates) {
-      await fetch('/api/cart/sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(update),
-      });
-    }
-    
-    // Clear pending updates
-    await clearPendingCartUpdates();
+    // Implement background sync logic here
+    // For example, sync offline cart actions, favorites, etc.
+    console.log('Service Worker: Performing background sync');
   } catch (error) {
-    console.error('Cart sync failed:', error);
+    console.error('Service Worker: Background sync failed:', error);
   }
 }
 
-// Helper functions for IndexedDB (simplified)
-async function getPendingCartUpdates() {
-  // Implementation would use IndexedDB
-  return [];
-}
-
-async function clearPendingCartUpdates() {
-  // Implementation would use IndexedDB
-}
-
-// Push notifications
+// Push notification handling
 self.addEventListener('push', (event) => {
+  console.log('Service Worker: Push notification received');
+  
   const options = {
-    body: event.data ? event.data.text() : 'New notification',
-    icon: '/icon-192x192.png',
-    badge: '/badge-72x72.png',
+    body: event.data ? event.data.text() : 'New notification from Modern Bazaar',
+    icon: '/icons/icon-192x192.png',
+    badge: '/icons/icon-72x72.png',
     vibrate: [100, 50, 100],
     data: {
       dateOfArrival: Date.now(),
-      primaryKey: 1,
+      primaryKey: 1
     },
+    actions: [
+      {
+        action: 'explore',
+        title: 'Explore',
+        icon: '/icons/checkmark.png'
+      },
+      {
+        action: 'close',
+        title: 'Close',
+        icon: '/icons/xmark.png'
+      }
+    ]
   };
-
+  
   event.waitUntil(
     self.registration.showNotification('Modern Bazaar', options)
   );
 });
 
-// Notification click
+// Handle notification clicks
 self.addEventListener('notificationclick', (event) => {
+  console.log('Service Worker: Notification clicked');
+  
   event.notification.close();
-  event.waitUntil(
-    clients.openWindow('/')
-  );
+  
+  if (event.action === 'explore') {
+    // Open the app
+    event.waitUntil(
+      clients.openWindow('/')
+    );
+  }
 });
+
+// Cache size management
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+  
+  if (event.data && event.data.type === 'CACHE_URLS') {
+    event.waitUntil(
+      caches.open(DYNAMIC_CACHE)
+        .then((cache) => {
+          return cache.addAll(event.data.payload);
+        })
+    );
+  }
+});
+
+// Periodic cache cleanup
+setInterval(async () => {
+  try {
+    await cleanupCaches();
+  } catch (error) {
+    console.error('Service Worker: Cache cleanup failed:', error);
+  }
+}, 24 * 60 * 60 * 1000); // Run daily
+
+// Clean up old cache entries
+async function cleanupCaches() {
+  const cacheNames = [IMAGE_CACHE, API_CACHE, DYNAMIC_CACHE];
+  const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 days
+  const now = Date.now();
+  
+  for (const cacheName of cacheNames) {
+    const cache = await caches.open(cacheName);
+    const requests = await cache.keys();
+    
+    for (const request of requests) {
+      const response = await cache.match(request);
+      const dateHeader = response?.headers.get('date');
+      
+      if (dateHeader) {
+        const cacheDate = new Date(dateHeader).getTime();
+        if (now - cacheDate > maxAge) {
+          await cache.delete(request);
+          console.log('Service Worker: Deleted old cache entry:', request.url);
+        }
+      }
+    }
+  }
+}
+
+console.log('Service Worker: Loaded and ready');

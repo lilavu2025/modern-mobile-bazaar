@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, memo, useCallback, useMemo } from 'react';
 import { Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetTrigger } from '@/components/ui/sheet';
@@ -18,30 +18,38 @@ interface HeaderProps {
   onMenuClick: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ onSearchChange, onCartClick, onMenuClick }) => {
+const Header: React.FC<HeaderProps> = memo(({ onSearchChange, onCartClick, onMenuClick }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const { user } = useAuth();
   const { t } = useLanguage();
 
-  const handleSearchChange = (query: string) => {
+  const handleSearchChange = useCallback((query: string) => {
     setSearchQuery(query);
     onSearchChange(query);
-  };
+  }, [onSearchChange]);
 
-  const navigationItems = [
+  const handleMobileMenuToggle = useCallback(() => {
+    setMobileMenuOpen(prev => !prev);
+  }, []);
+
+  const handleMobileSearchToggle = useCallback(() => {
+    setShowMobileSearch(prev => !prev);
+  }, []);
+
+  const navigationItems = useMemo(() => [
     { path: '/', label: t('home'), icon: Home },
     { path: '/products', label: t('products') },
     { path: '/categories', label: t('categories') },
     { path: '/offers', label: t('offers') },
     ...(user ? [{ path: '/orders', label: t('orders') }] : []),
     { path: '/contact', label: t('contact') },
-  ];
+  ], [t, user]);
 
   return (
-    <header className="bg-white shadow-lg border-b border-gray-100 sticky top-0 z-50">
-      <div className="container mx-auto px-3 sm:px-4">
+    <header className="bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-100 sticky top-0 z-50 transition-all duration-300">
+      <div className="container mx-auto px-3 sm:px-4 lg:px-6">
         {/* Top bar */}
         <div className="flex items-center justify-between py-3 sm:py-4 gap-2">
           {/* Mobile Menu Button */}
@@ -50,7 +58,8 @@ const Header: React.FC<HeaderProps> = ({ onSearchChange, onCartClick, onMenuClic
               <Button
                 variant="ghost"
                 size="icon"
-                className="md:hidden h-10 w-10"
+                className="md:hidden h-10 w-10 hover:bg-gray-100 focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-all duration-200"
+                aria-label={t('openMenu')}
               >
                 <Menu className="h-6 w-6" />
               </Button>
@@ -70,7 +79,7 @@ const Header: React.FC<HeaderProps> = ({ onSearchChange, onCartClick, onMenuClic
             searchQuery={searchQuery}
             onSearchChange={handleSearchChange}
             showMobileSearch={showMobileSearch}
-            setShowMobileSearch={setShowMobileSearch}
+            setShowMobileSearch={handleMobileSearchToggle}
           />
 
           {/* Actions */}
@@ -93,6 +102,9 @@ const Header: React.FC<HeaderProps> = ({ onSearchChange, onCartClick, onMenuClic
       </div>
     </header>
   );
-};
+});
 
 export default Header;
+
+// Add display name for debugging
+Header.displayName = 'Header';

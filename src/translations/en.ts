@@ -259,6 +259,10 @@ export const enTranslations = {
   
   // Product Actions
   linkCopied: 'Link copied to clipboard',
+  addedToCart: 'Added to cart',
+  addedToFavorites: 'Added to favorites',
+  removedFromFavorites: 'Removed from favorites',
+  openMenu: 'Open menu',
   errorAddingToCart: 'Error adding to cart',
   errorTogglingFavorite: 'Error updating favorites',
   sharedSuccessfully: 'Shared successfully',
