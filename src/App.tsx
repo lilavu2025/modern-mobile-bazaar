@@ -23,6 +23,7 @@ import Products from "./pages/Products";
 import Categories from "./pages/Categories";
 import ProductDetails from "./pages/ProductDetails";
 import NotFound from "./pages/NotFound";
+import Favorites from "./pages/Favorites";
 
 // Lazy load less frequently accessed pages with preload hints
 const Orders = lazy(() => 
@@ -92,6 +93,7 @@ const App = () => (
                       <Route path="/products" element={<Products />} />
                       <Route path="/categories" element={<Categories />} />
                       <Route path="/product/:id" element={<ProductDetails />} />
+                      <Route path="/favorites" element={<Favorites />} />
                       <Route path="/offers" element={
                         <Suspense fallback={<PageLoader />}>
                           <Offers />
