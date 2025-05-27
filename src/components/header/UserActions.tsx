@@ -12,6 +12,7 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { useCart } from '@/hooks/useCart';
+import { useFavorites } from '@/hooks/useFavorites';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
@@ -22,6 +23,7 @@ interface UserActionsProps {
 
 const UserActions: React.FC<UserActionsProps> = ({ onCartClick }) => {
   const { getTotalItems } = useCart();
+  const { getFavoritesCount } = useFavorites();
   const { user, profile, signOut } = useAuth();
   const { t } = useLanguage();
 
@@ -33,14 +35,31 @@ const UserActions: React.FC<UserActionsProps> = ({ onCartClick }) => {
     }
   };
 
+  const favoritesCount = getFavoritesCount();
+
   return (
     <div className="flex items-center gap-1 sm:gap-2">
       <div className="hidden md:block">
         <LanguageSwitcher />
       </div>
       
-      <Button variant="ghost" size="icon" className="relative h-10 w-10 hidden sm:flex">
-        <Heart className="h-5 w-5" />
+      <Button 
+        asChild
+        variant="ghost" 
+        size="icon" 
+        className="relative h-10 w-10 hidden sm:flex"
+      >
+        <Link to="/favorites">
+          <Heart className="h-5 w-5" />
+          {favoritesCount > 0 && (
+            <Badge 
+              variant="destructive" 
+              className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+            >
+              {favoritesCount}
+            </Badge>
+          )}
+        </Link>
       </Button>
       
       <Button 
@@ -77,6 +96,12 @@ const UserActions: React.FC<UserActionsProps> = ({ onCartClick }) => {
             <DropdownMenuItem asChild>
               <Link to="/orders" className="cursor-pointer">
                 {t('orders')}
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/favorites" className="cursor-pointer">
+                <Heart className="h-4 w-4 mr-2" />
+                {t('favorites')}
               </Link>
             </DropdownMenuItem>
             {profile?.user_type === 'admin' && (

@@ -1,23 +1,20 @@
 
 import React from 'react';
-import { Eye, Heart, Share2 } from 'lucide-react';
+import { Eye, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Product } from '@/types';
+import FavoriteButton from './FavoriteButton';
 
 interface ProductCardActionsProps {
   product: Product;
-  isFavorite: boolean;
   onQuickView: () => void;
-  onFavorite: () => void;
   onShare: () => void;
 }
 
 const ProductCardActions = ({ 
   product, 
-  isFavorite, 
   onQuickView, 
-  onFavorite, 
   onShare 
 }: ProductCardActionsProps) => {
   const { isRTL } = useLanguage();
@@ -32,14 +29,11 @@ const ProductCardActions = ({
       >
         <Eye className="h-4 w-4" />
       </Button>
-      <Button
-        size="icon"
+      <FavoriteButton
+        productId={product.id}
         variant="secondary"
-        className={`h-8 w-8 bg-white/90 hover:bg-white shadow-md ${isFavorite ? 'text-red-500' : ''}`}
-        onClick={onFavorite}
-      >
-        <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
-      </Button>
+        className="h-8 w-8 bg-white/90 hover:bg-white shadow-md"
+      />
       <Button
         size="icon"
         variant="secondary"

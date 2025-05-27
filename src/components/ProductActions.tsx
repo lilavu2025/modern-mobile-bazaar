@@ -1,14 +1,14 @@
 
 import React, { useState } from 'react';
-import { Heart, Share2, ShoppingCart } from 'lucide-react';
+import { Share2, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCart } from '@/hooks/useCart';
-import { useFavorites } from '@/hooks/useFavorites';
 import { toast } from 'sonner';
 import { Product } from '@/types';
 import QuantitySelector from '@/components/QuantitySelector';
+import FavoriteButton from '@/components/ProductCard/FavoriteButton';
 
 interface ProductActionsProps {
   product: Product;
@@ -19,10 +19,8 @@ const ProductActions = ({ product, onBuyNow }: ProductActionsProps) => {
   const { t } = useLanguage();
   const [quantity, setQuantity] = useState(1);
   const { addToCart, getItemQuantity } = useCart();
-  const { toggleFavorite, isFavorite } = useFavorites();
 
   const cartQuantity = getItemQuantity(product.id);
-  const isFav = isFavorite(product.id);
 
   const handleAddToCart = async () => {
     console.log('Add to cart clicked with quantity:', quantity);
@@ -38,16 +36,6 @@ const ProductActions = ({ product, onBuyNow }: ProductActionsProps) => {
     } catch (error) {
       console.error('Error adding to cart:', error);
       toast.error(t('errorAddingToCart'));
-    }
-  };
-
-  const handleFavorite = () => {
-    console.log('Toggle favorite for product:', product.id);
-    try {
-      toggleFavorite(product.id);
-    } catch (error) {
-      console.error('Error toggling favorite:', error);
-      toast.error(t('errorTogglingFavorite'));
     }
   };
 
@@ -124,14 +112,12 @@ const ProductActions = ({ product, onBuyNow }: ProductActionsProps) => {
 
       {/* Action Buttons */}
       <div className="flex gap-3">
-        <Button 
-          variant="outline" 
-          size="icon" 
-          className={`flex-1 ${isFav ? 'text-red-500 border-red-500' : ''}`}
-          onClick={handleFavorite}
-        >
-          <Heart className={`h-5 w-5 ${isFav ? 'fill-current' : ''}`} />
-        </Button>
+        <FavoriteButton
+          productId={product.id}
+          variant="outline"
+          size="default"
+          className="flex-1"
+        />
         <Button 
           variant="outline" 
           size="icon" 
