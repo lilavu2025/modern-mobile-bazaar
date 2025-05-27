@@ -7,18 +7,14 @@ import ProductCardActions from './ProductCardActions';
 
 interface ProductCardImageProps {
   product: Product;
-  isFavorite: boolean;
   onQuickView: () => void;
-  onFavorite: () => void;
   onShare: () => void;
   isLoading?: boolean;
 }
 
 const ProductCardImage = ({ 
   product, 
-  isFavorite, 
   onQuickView, 
-  onFavorite, 
   onShare,
   isLoading = false
 }: ProductCardImageProps) => {
@@ -37,9 +33,7 @@ const ProductCardImage = ({
       <ProductCardBadges product={product} />
       <ProductCardActions 
         product={product}
-        isFavorite={isFavorite}
         onQuickView={onQuickView}
-        onFavorite={onFavorite}
         onShare={onShare}
       />
     </div>

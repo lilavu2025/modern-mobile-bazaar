@@ -1,12 +1,13 @@
 
 import React from 'react';
-import { Star, ShoppingCart, Heart, Share2 } from 'lucide-react';
+import { Star, ShoppingCart, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Product } from '@/types';
 import QuantitySelector from '@/components/QuantitySelector';
+import FavoriteButton from '@/components/ProductCard/FavoriteButton';
 
 interface ProductCardQuickViewProps {
   product: Product;
@@ -14,11 +15,9 @@ interface ProductCardQuickViewProps {
   onClose: () => void;
   quantity: number;
   cartQuantity: number;
-  isFavorite: boolean;
   onQuantityChange: (quantity: number) => void;
   onAddToCart: () => void;
   onBuyNow: () => void;
-  onFavorite: () => void;
   onShare: () => void;
 }
 
@@ -28,11 +27,9 @@ const ProductCardQuickView = ({
   onClose, 
   quantity, 
   cartQuantity, 
-  isFavorite, 
   onQuantityChange, 
   onAddToCart, 
   onBuyNow, 
-  onFavorite, 
   onShare 
 }: ProductCardQuickViewProps) => {
   const { t, isRTL } = useLanguage();
@@ -116,19 +113,16 @@ const ProductCardQuickView = ({
             </div>
 
             <div className="flex gap-2">
+              <FavoriteButton
+                productId={product.id}
+                variant="outline"
+                size="default"
+                className="flex-1"
+              />
               <Button
                 size="sm"
                 variant="outline"
-                className={`gap-2 ${isFavorite ? 'text-red-500' : ''}`}
-                onClick={onFavorite}
-              >
-                <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
-                {isFavorite ? t('removeFromFavorites') : t('addToFavorites')}
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                className="gap-2"
+                className="gap-2 flex-1"
                 onClick={onShare}
               >
                 <Share2 className="h-4 w-4" />
