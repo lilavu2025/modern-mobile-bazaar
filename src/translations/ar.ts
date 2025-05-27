@@ -341,7 +341,10 @@ export const arTranslations = {
   // Admin Orders
   noOrdersWillAppearHere: 'ستظهر الطلبات هنا',
   ordersWillAppearHere: 'ستظهر الطلبات هنا عندما يقوم العملاء بتقديمها',
-  
+  openOrders: "الطلبات المفتوحة",
+  processingOrders: "طلبات قيد التنفيذ",
+  readyOrders: "طلبات جاهزة",
+  cancelledOrders: "طلبات ملغية",
   // Admin Dashboard
   totalProducts: 'إجمالي المنتجات',
   totalOrders: 'إجمالي الطلبات',
