@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,6 +9,8 @@ export const useCategories = () => {
   return useQuery({
     queryKey: ['categories', language],
     queryFn: async () => {
+      console.log('Fetching categories from database...');
+      
       // جلب الفئات
       const { data: categories, error: categoriesError } = await supabase
         .from('categories')
@@ -17,7 +18,12 @@ export const useCategories = () => {
         .eq('active', true)
         .order('created_at');
       
-      if (categoriesError) throw categoriesError;
+      if (categoriesError) {
+        console.error('Error fetching categories:', categoriesError);
+        throw categoriesError;
+      }
+      
+      console.log('Raw categories data:', categories);
       
       // جلب عدد المنتجات لكل فئة
       const categoriesWithCounts = await Promise.all(
@@ -37,11 +43,13 @@ export const useCategories = () => {
             name: category[`name_${language}` as keyof typeof category] as string,
             nameEn: category.name_en,
             image: category.image,
+            icon: category.icon,
             count: count || 0,
           };
         })
       );
       
+      console.log('Processed categories with counts:', categoriesWithCounts);
       return categoriesWithCounts;
     },
   });
