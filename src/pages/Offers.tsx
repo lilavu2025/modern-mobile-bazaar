@@ -165,20 +165,18 @@ const Offers: React.FC = () => {
                 </p>
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-lg font-bold text-primary">
-                    {t('discount')}: {offer.discount_percentage}%
+                    {t('discount')}: {offer.discount_percent}%
                   </span>
                 </div>
                 <div className="text-sm text-gray-500 mb-4">
                   {t('validUntil')}: {new Date(offer.end_date).toLocaleDateString()}
                 </div>
-                <a
-                  href={offer.external_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  onClick={() => window.open('#', '_blank')}
                   className="mt-auto w-full bg-primary text-white rounded-lg py-2 font-bold hover:bg-primary/90 transition text-center block"
                 >
                   {t('viewOffer')}
-                </a>
+                </button>
               </div>
             ))}
           </div>
