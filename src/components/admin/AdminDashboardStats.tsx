@@ -179,15 +179,116 @@ const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
     navigate('/admin/orders', { state: { filterStatus: status } });
   };
 
-  // Mock orders data
-  const ordersData = [
-    { month: 'يناير', orders: 45, revenue: 12000 },
-    { month: 'فبراير', orders: 52, revenue: 15000 },
-    { month: 'مارس', orders: 48, revenue: 13500 },
-    { month: 'أبريل', orders: 61, revenue: 18000 },
-    { month: 'مايو', orders: 55, revenue: 16500 },
-    { month: 'يونيو', orders: 67, revenue: 20000 },
-  ];
+  // Fetch monthly orders and revenue data
+  const { data: monthlyData = [], isLoading: monthlyLoading } = useQuery({
+    queryKey: ['admin-monthly-stats'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('created_at, total, status')
+        .gte('created_at', new Date(new Date().getFullYear(), 0, 1).toISOString())
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      const monthlyStats = data.reduce((acc: any, order) => {
+        const date = new Date(order.created_at);
+        const monthKey = date.getMonth();
+        const monthNames = [
+          'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
+          'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
+        ];
+        
+        if (!acc[monthKey]) {
+          acc[monthKey] = {
+            month: monthNames[monthKey],
+            orders: 0,
+            revenue: 0
+          };
+        }
+        
+        acc[monthKey].orders += 1;
+        if (order.status !== 'cancelled') {
+          acc[monthKey].revenue += order.total || 0;
+        }
+        
+        return acc;
+      }, {});
+
+      return Object.values(monthlyStats);
+    },
+    retry: 3,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  // Fetch recent activity data
+  const { data: recentActivity = [], isLoading: activityLoading } = useQuery({
+    queryKey: ['admin-recent-activity'],
+    queryFn: async () => {
+      const activities = [];
+      
+      // Get recent users
+      const { data: recentUsers } = await supabase
+        .from('profiles')
+        .select('created_at, full_name')
+        .order('created_at', { ascending: false })
+        .limit(2);
+      
+      // Get recent orders
+      const { data: recentOrders } = await supabase
+        .from('orders')
+        .select('created_at, status')
+        .order('created_at', { ascending: false })
+        .limit(2);
+      
+      // Get products with low stock
+      const { data: lowStockProducts } = await supabase
+        .from('products')
+        .select('name_ar, name_en, name_he, stock_quantity, updated_at')
+        .lte('stock_quantity', 5)
+        .order('updated_at', { ascending: false })
+        .limit(2);
+      
+      // Add user registrations
+      recentUsers?.forEach(user => {
+        activities.push({
+          type: 'user',
+          message: t('newUserRegistered'),
+          time: user.created_at,
+          color: 'green'
+        });
+      });
+      
+      // Add order activities
+      recentOrders?.forEach(order => {
+        const message = order.status === 'cancelled' ? t('orderCancelled') : t('newOrderReceived');
+        const color = order.status === 'cancelled' ? 'red' : 'blue';
+        activities.push({
+          type: 'order',
+          message,
+          time: order.created_at,
+          color
+        });
+      });
+      
+      // Add low stock alerts
+      lowStockProducts?.forEach(product => {
+        activities.push({
+          type: 'stock',
+          message: t('productOutOfStock'),
+          time: product.updated_at,
+          color: 'yellow'
+        });
+      });
+      
+      // Sort by time and return latest 4
+      return activities
+        .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
+        .slice(0, 4);
+    },
+    retry: 3,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+  });
 
   const chartConfig = {
     users: { label: t('users'), color: '#3b82f6' },
@@ -423,8 +524,13 @@ const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
             <CardTitle className="text-lg font-semibold">{t('ordersAndRevenueTrend')}</CardTitle>
           </CardHeader>
           <CardContent className="p-4">
-            <ChartContainer config={chartConfig} className="h-80 w-full">
-              <LineChart data={ordersData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+            {monthlyLoading ? (
+              <div className="flex justify-center items-center h-80">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+              </div>
+            ) : (
+              <ChartContainer config={chartConfig} className="h-80 w-full">
+                <LineChart data={monthlyData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                 <XAxis dataKey="month" tick={{ fontSize: 12 }} />
                 <YAxis yAxisId="left" tick={{ fontSize: 12 }} />
                 <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12 }} />
@@ -447,8 +553,9 @@ const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
                   dot={{ fill: '#ef4444', strokeWidth: 2, r: 4 }}
                 />
                 <ChartTooltip content={<ChartTooltipContent />} />
-              </LineChart>
-            </ChartContainer>
+                </LineChart>
+              </ChartContainer>
+            )}
           </CardContent>
         </Card>
 
@@ -458,34 +565,45 @@ const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
             <CardTitle className="text-lg font-semibold">{t('recentActivity')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6 p-4">
-            <div className="flex items-start space-x-4 rtl:space-x-reverse">
-              <div className="w-3 h-3 bg-green-500 rounded-full mt-1 flex-shrink-0"></div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{t('newUserRegistered')}</p>
-                <p className="text-xs text-muted-foreground">منذ 5 دقائق</p>
+            {activityLoading ? (
+              <div className="flex justify-center items-center h-32">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
               </div>
-            </div>
-            <div className="flex items-start space-x-4 rtl:space-x-reverse">
-              <div className="w-3 h-3 bg-blue-500 rounded-full mt-1 flex-shrink-0"></div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{t('newOrderReceived')}</p>
-                <p className="text-xs text-muted-foreground">منذ 15 دقيقة</p>
+            ) : recentActivity.length > 0 ? (
+              recentActivity.map((activity, index) => {
+                const getTimeAgo = (time: string) => {
+                  const now = new Date();
+                  const activityTime = new Date(time);
+                  const diffInMinutes = Math.floor((now.getTime() - activityTime.getTime()) / (1000 * 60));
+                  
+                  if (diffInMinutes < 1) return 'الآن';
+                  if (diffInMinutes < 60) return `منذ ${diffInMinutes} دقيقة`;
+                  if (diffInMinutes < 1440) return `منذ ${Math.floor(diffInMinutes / 60)} ساعة`;
+                  return `منذ ${Math.floor(diffInMinutes / 1440)} يوم`;
+                };
+                
+                const colorClasses = {
+                  green: 'bg-green-500',
+                  blue: 'bg-blue-500',
+                  yellow: 'bg-yellow-500',
+                  red: 'bg-red-500'
+                };
+                
+                return (
+                  <div key={index} className="flex items-start space-x-4 rtl:space-x-reverse">
+                    <div className={`w-3 h-3 ${colorClasses[activity.color as keyof typeof colorClasses]} rounded-full mt-1 flex-shrink-0`}></div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{activity.message}</p>
+                      <p className="text-xs text-muted-foreground">{getTimeAgo(activity.time)}</p>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="text-center text-muted-foreground py-8">
+                <p className="text-sm">{t('noRecentActivity')}</p>
               </div>
-            </div>
-            <div className="flex items-start space-x-4 rtl:space-x-reverse">
-              <div className="w-3 h-3 bg-yellow-500 rounded-full mt-1 flex-shrink-0"></div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{t('productOutOfStock')}</p>
-                <p className="text-xs text-muted-foreground">منذ ساعة</p>
-              </div>
-            </div>
-            <div className="flex items-start space-x-4 rtl:space-x-reverse">
-              <div className="w-3 h-3 bg-red-500 rounded-full mt-1 flex-shrink-0"></div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{t('orderCancelled')}</p>
-                <p className="text-xs text-muted-foreground">منذ ساعتين</p>
-              </div>
-            </div>
+            )}
           </CardContent>
         </Card>
       </div>
