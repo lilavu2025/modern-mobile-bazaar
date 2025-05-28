@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -151,25 +152,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('lastLoginTime', Date.now().toString());
   };
 
-  // SignUp function with email existence check
+  // SignUp function with comprehensive email existence check
   const signUp = async (email: string, password: string, fullName: string, phone?: string) => {
-    // Check if email already exists in 'profiles'
-    const { data: existingProfile, error: fetchError } = await supabase
+    // First check: profiles table
+    const { data: existingProfile, error: profileCheckError } = await supabase
       .from('profiles')
       .select('id')
       .eq('email', email)
-      .single();
+      .maybeSingle();
 
-    if (fetchError && fetchError.code !== 'PGRST116') {
-      // Unexpected error
-      throw fetchError;
+    if (profileCheckError && profileCheckError.code !== 'PGRST116') {
+      console.error('Error checking existing profile:', profileCheckError);
+      throw profileCheckError;
     }
 
     if (existingProfile) {
       throw new Error('هذا البريد الإلكتروني مسجل مسبقاً. الرجاء تسجيل الدخول أو استخدام بريد إلكتروني آخر.');
     }
 
-    const { error } = await supabase.auth.signUp({
+    // Attempt signup with Supabase Auth
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -181,11 +183,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     if (error) {
-      // بعض أخطاء التسجيل يمكن أن تكون عن البريد موجود أصلاً (مثلاً من Supabase Auth)
-      if (error.message.includes('duplicate') || error.message.includes('already registered')) {
+      console.error('Supabase signup error:', error);
+      
+      // Handle specific Supabase error messages
+      if (error.message.includes('duplicate') || 
+          error.message.includes('already registered') || 
+          error.message.includes('User already registered')) {
         throw new Error('هذا البريد الإلكتروني مسجل مسبقاً. الرجاء تسجيل الدخول أو استخدام بريد إلكتروني آخر.');
       }
+      
+      // Handle rate limiting
+      if (error.message.includes('Email rate limit exceeded')) {
+        throw new Error('تم إرسال عدد كبير من رسائل التأكيد. الرجاء المحاولة مرة أخرى بعد قليل.');
+      }
+      
+      // Handle weak password
+      if (error.message.includes('Password should be at least')) {
+        throw new Error('كلمة المرور ضعيفة جداً. يجب أن تحتوي على 6 أحرف على الأقل.');
+      }
+      
       throw error;
+    }
+
+    // Additional check: if user was created but email confirmation is pending
+    if (data.user && !data.user.email_confirmed_at) {
+      console.log('User created successfully, email confirmation pending');
     }
   };
 

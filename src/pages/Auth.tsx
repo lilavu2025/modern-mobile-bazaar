@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -65,6 +66,8 @@ const Auth: React.FC = () => {
         description: t('loginSuccess'),
       });
     } catch (error: any) {
+      console.error('Login error:', error);
+      
       // Check if it's an email not confirmed error
       if (error.message?.includes('Email not confirmed')) {
         toast({
@@ -86,48 +89,27 @@ const Auth: React.FC = () => {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-
-    if (!isValidEmail(signupData.email)) {
-      toast({
-        title: t('error'),
-        description: t('invalidEmail'),
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    if (signupData.password.length < 6) {
-      toast({
-        title: t('error'),
-        description: t('passwordTooShort'),
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    if (signupData.password !== signupData.confirmPassword) {
-      toast({
-        title: t('error'),
-        description: t('passwordMismatch'),
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    if (!isValidPhone(signupData.phone)) {
-      toast({
-        title: t('error'),
-        description: t('invalidPhone'),
-        variant: 'destructive',
-      });
-      return;
-    }
-
     setIsLoading(true);
 
     try {
+      if (!isValidEmail(signupData.email)) {
+        throw new Error(t('invalidEmail'));
+      }
+
+      if (signupData.password.length < 6) {
+        throw new Error(t('passwordTooShort'));
+      }
+
+      if (signupData.password !== signupData.confirmPassword) {
+        throw new Error(t('passwordMismatch'));
+      }
+
+      if (!isValidPhone(signupData.phone)) {
+        throw new Error(t('invalidPhone'));
+      }
+
       await signUp(signupData.email, signupData.password, signupData.fullName, signupData.phone);
+      
       // Show email confirmation screen
       setPendingEmail(signupData.email);
       setShowEmailConfirmation(true);
@@ -137,6 +119,8 @@ const Auth: React.FC = () => {
         description: t('signupSuccess'),
       });
     } catch (error: any) {
+      console.error('Signup error:', error);
+      
       toast({
         title: t('error'),
         description: error.message || t('signupError'),
