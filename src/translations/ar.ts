@@ -56,6 +56,15 @@ export const arTranslations = {
   redirectingToHome: 'جاري التوجه إلى الصفحة الرئيسية...',
   goToHome: 'الذهاب إلى الرئيسية',
   backToLogin: 'العودة إلى تسجيل الدخول',
+  waitingForConfirmation: 'في انتظار تأكيد البريد الإلكتروني',
+  checkYourEmailAndClickConfirmation: 'تحقق من بريدك الإلكتروني واضغط على رابط التأكيد',
+  autoCheckingEvery3Seconds: 'فحص تلقائي كل 3 ثوانٍ',
+  remaining: 'متبقي',
+  autoCheckTimeExpired: 'انتهت مدة الفحص التلقائي. يرجى إعادة إرسال رابط التأكيد',
+  confirmingEmail: 'جاري تأكيد البريد الإلكتروني',
+  pleaseWait: 'يرجى الانتظار',
+  confirmationExpired: 'انتهت صلاحية التأكيد',
+  confirmationLinkExpired: 'انتهت صلاحية رابط التأكيد',
   
   // Admin Panel
   adminDashboard: 'لوحة التحكم الإدارية',

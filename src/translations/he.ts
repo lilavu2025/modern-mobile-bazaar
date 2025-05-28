@@ -53,6 +53,15 @@ export const heTranslations = {
   redirectingToHome: 'מעביר לעמוד הבית...',
   goToHome: 'עבור לבית',
   backToLogin: 'חזור להתחברות',
+  waitingForConfirmation: 'ממתין לאימות אימייל',
+  checkYourEmailAndClickConfirmation: 'בדוק את האימייל שלך ולחץ על קישור האימות',
+  autoCheckingEvery3Seconds: 'בדיקה אוטומטית כל 3 שניות',
+  remaining: 'נותר',
+  autoCheckTimeExpired: 'זמן הבדיקה האוטומטית פג. אנא שלח שוב קישור אימות',
+  confirmingEmail: 'מאמת אימייל',
+  pleaseWait: 'אנא המתן',
+  confirmationExpired: 'האימות פג תוקף',
+  confirmationLinkExpired: 'קישור האימות פג תוקף',
   
   // Admin Panel
   adminDashboard: 'לוח בקרה מנהל',

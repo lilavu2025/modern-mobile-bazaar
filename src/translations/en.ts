@@ -53,6 +53,15 @@ export const enTranslations = {
   redirectingToHome: 'Redirecting to home page...',
   goToHome: 'Go to Home',
   backToLogin: 'Back to Login',
+  waitingForConfirmation: 'Waiting for Email Confirmation',
+  checkYourEmailAndClickConfirmation: 'Check your email and click the confirmation link',
+  autoCheckingEvery3Seconds: 'Auto-checking every 3 seconds',
+  remaining: 'remaining',
+  autoCheckTimeExpired: 'Auto-check time expired. Please resend confirmation link',
+  confirmingEmail: 'Confirming Email',
+  pleaseWait: 'Please wait',
+  confirmationExpired: 'Confirmation Expired',
+  confirmationLinkExpired: 'Confirmation link expired',
   
   // Admin Panel
   adminDashboard: 'Admin Dashboard',
