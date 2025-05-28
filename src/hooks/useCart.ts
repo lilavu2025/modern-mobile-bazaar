@@ -343,7 +343,7 @@ export const useCart = () => {
     getTotalItems,
     getTotalPrice,
     getItemQuantity,
-    buyNow
+    buyNow,
     isLoading,
   };
 };
