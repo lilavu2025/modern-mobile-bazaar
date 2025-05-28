@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -154,23 +153,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // SignUp function with comprehensive email existence check
   const signUp = async (email: string, password: string, fullName: string, phone?: string) => {
-    // First check: profiles table
-    const { data: existingProfile, error: profileCheckError } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('email', email)
-      .maybeSingle();
-
-    if (profileCheckError && profileCheckError.code !== 'PGRST116') {
-      console.error('Error checking existing profile:', profileCheckError);
-      throw profileCheckError;
-    }
-
-    if (existingProfile) {
-      throw new Error('هذا البريد الإلكتروني مسجل مسبقاً. الرجاء تسجيل الدخول أو استخدام بريد إلكتروني آخر.');
-    }
-
-    // Attempt signup with Supabase Auth
+    // Check if user already exists by attempting to sign up
+    // Supabase will return an error if the email is already registered
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -188,7 +172,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Handle specific Supabase error messages
       if (error.message.includes('duplicate') || 
           error.message.includes('already registered') || 
-          error.message.includes('User already registered')) {
+          error.message.includes('User already registered') ||
+          error.message.includes('email address is already confirmed')) {
         throw new Error('هذا البريد الإلكتروني مسجل مسبقاً. الرجاء تسجيل الدخول أو استخدام بريد إلكتروني آخر.');
       }
       
@@ -205,7 +190,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw error;
     }
 
-    // Additional check: if user was created but email confirmation is pending
+    // Check if this is a repeated signup attempt (user exists but email not confirmed)
+    if (data.user && !data.user.email_confirmed_at && data.user.identities && data.user.identities.length === 0) {
+      throw new Error('هذا البريد الإلكتروني مسجل مسبقاً. الرجاء تسجيل الدخول أو استخدام بريد إلكتروني آخر.');
+    }
+
+    // Additional check: verify user was actually created
     if (data.user && !data.user.email_confirmed_at) {
       console.log('User created successfully, email confirmation pending');
     }
