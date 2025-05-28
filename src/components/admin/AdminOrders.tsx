@@ -322,6 +322,14 @@ const AdminOrders: React.FC = () => {
     }
   };
   
+  // Filter orders based on status - moved before early returns to maintain hook order
+  const filteredOrders = useMemo(() => {
+    if (statusFilter === 'all') {
+      return orders;
+    }
+    return orders.filter(order => order.status === statusFilter);
+  }, [orders, statusFilter]);
+
   useEffect(() => {
     fetchOrders();
   }, []);
@@ -355,7 +363,7 @@ const AdminOrders: React.FC = () => {
       </div>
     );
   }
-  
+
   return (
     <div className={`space-y-6 ${isRTL ? 'text-right' : 'text-left'}`} dir={isRTL ? 'rtl' : 'ltr'}>
       <div className="flex justify-between items-center">
@@ -610,19 +618,46 @@ const AdminOrders: React.FC = () => {
         </div>
       </div>
       
-      {orders.length === 0 ? (
+      {/* Filter Section */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex gap-4 items-center">
+            <Label htmlFor="status-filter">فلترة حسب الحالة:</Label>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-48">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">جميع الطلبات</SelectItem>
+                <SelectItem value="pending">في الانتظار</SelectItem>
+                <SelectItem value="processing">قيد المعالجة</SelectItem>
+                <SelectItem value="shipped">تم الشحن</SelectItem>
+                <SelectItem value="delivered">تم التسليم</SelectItem>
+                <SelectItem value="cancelled">ملغية</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="text-sm text-muted-foreground">
+              عرض {filteredOrders.length} من {orders.length} طلب
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      
+      {filteredOrders.length === 0 ? (
         <Card>
           <CardContent className="p-12">
             <div className="text-center">
               <ShoppingCart className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">{t('noOrders')}</h3>
-              <p className="text-gray-500">{t('ordersWillAppearHere')}</p>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                {statusFilter === 'all' ? t('noOrders') : `لا توجد طلبات ${statusFilter === 'pending' ? 'في الانتظار' : statusFilter === 'processing' ? 'قيد المعالجة' : statusFilter === 'shipped' ? 'مشحونة' : statusFilter === 'delivered' ? 'مسلمة' : 'ملغية'}`}
+              </h3>
+              <p className="text-gray-500">{statusFilter === 'all' ? t('ordersWillAppearHere') : 'جرب تغيير الفلتر لعرض طلبات أخرى'}</p>
             </div>
           </CardContent>
         </Card>
       ) : (
         <div className="grid gap-6">
-          {orders.map((order) => (
+          {filteredOrders.map((order) => (
             <Card key={order.id}>
               <CardHeader>
                 <div className="flex justify-between items-start">
@@ -667,6 +702,14 @@ const AdminOrders: React.FC = () => {
                 </div>
                 
                 <div className="flex gap-2 mt-4">
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => updateOrderStatus(order.id, 'pending')}
+                    disabled={order.status === 'pending'}
+                  >
+                    في الانتظار
+                  </Button>
                   <Button 
                     size="sm" 
                     variant="outline"

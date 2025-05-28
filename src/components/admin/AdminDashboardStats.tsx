@@ -122,6 +122,13 @@ const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
       return {
         statusStats: [
           { 
+            status: 'pending', 
+            label: 'في الانتظار', 
+            value: ordersByStatus.pending || 0, 
+            revenue: revenueByStatus.pending || 0,
+            color: '#8b5cf6' 
+          },
+          { 
             status: 'processing', 
             label: 'قيد المعالجة', 
             value: ordersByStatus.processing || 0, 

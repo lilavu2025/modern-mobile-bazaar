@@ -213,18 +213,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // SignOut function
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
-
-    localStorage.removeItem('lastLoginTime');
-    
-    // Clear state immediately
-    setUser(null);
-    setSession(null);
-    setProfile(null);
-    
-    // Redirect to home page
-    navigate('/');
+    try {
+      // Clear state immediately for better UX
+      setUser(null);
+      setSession(null);
+      setProfile(null);
+      
+      // Clear localStorage
+      localStorage.removeItem('lastLoginTime');
+      
+      // Sign out from Supabase
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Supabase signOut error:', error);
+        // Don't throw error here to ensure logout completes
+      }
+      
+      // Redirect to home page
+      navigate('/');
+      
+      // Force page reload to ensure complete cleanup
+      setTimeout(() => {
+        window.location.reload();
+      }, 100);
+      
+    } catch (error) {
+      console.error('Error during signOut:', error);
+      // Even if there's an error, clear local state and redirect
+      setUser(null);
+      setSession(null);
+      setProfile(null);
+      localStorage.removeItem('lastLoginTime');
+      navigate('/');
+    }
   };
 
   // Update profile function
