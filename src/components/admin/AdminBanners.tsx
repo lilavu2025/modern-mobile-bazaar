@@ -4,6 +4,7 @@ import { supabase } from '../../integrations/supabase/client';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { toast } from 'sonner';
 
+// تعريف واجهة البانر (Banner) كما هو مخزن في قاعدة البيانات
 interface Banner {
   id: string;
   title_ar: string;
@@ -19,6 +20,7 @@ interface Banner {
   created_at: string;
 }
 
+// تعريف واجهة بيانات النموذج (BannerFormData) لإدارة حالة النموذج
 interface BannerFormData {
   title_ar: string;
   title_en: string;
@@ -34,7 +36,10 @@ interface BannerFormData {
 }
 
 const AdminBanners: React.FC = () => {
+  // استخدام الترجمة من الكونتكست
   const { t } = useLanguage();
+
+  // تعريف الحالات الرئيسية للصفحة
   const [banners, setBanners] = useState<Banner[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -54,11 +59,14 @@ const AdminBanners: React.FC = () => {
   });
   const [submitting, setSubmitting] = useState(false);
 
+  // جلب البانرات عند تحميل الصفحة
   useEffect(() => {
     fetchBanners();
   }, []);
 
+  // دالة لجلب البانرات من قاعدة البيانات
   const fetchBanners = async () => {
+    console.log('جلب البانرات من قاعدة البيانات...');
     try {
       const { data, error } = await supabase
         .from('banners')
@@ -67,15 +75,18 @@ const AdminBanners: React.FC = () => {
 
       if (error) throw error;
       setBanners(data || []);
+      console.log('تم جلب البانرات:', data);
     } catch (error) {
-      console.error('Error fetching banners:', error);
+      console.error('خطأ أثناء جلب البانرات:', error);
       toast.error('Error loading banners');
     } finally {
       setLoading(false);
     }
   };
 
+  // إعادة تعيين النموذج وإغلاقه
   const resetForm = () => {
+    console.log('إعادة تعيين النموذج');
     setFormData({
       title_ar: '',
       title_en: '',
@@ -93,7 +104,9 @@ const AdminBanners: React.FC = () => {
     setShowForm(false);
   };
 
+  // عند الضغط على زر التعديل، تعبئة النموذج ببيانات البانر المحدد
   const handleEdit = (banner: Banner) => {
+    console.log('تعديل البانر:', banner);
     setEditingBanner(banner);
     setFormData({
       title_ar: banner.title_ar,
@@ -111,39 +124,51 @@ const AdminBanners: React.FC = () => {
     setShowForm(true);
   };
 
+  // عند تغيير صورة البانر في النموذج
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      console.log('تم اختيار صورة:', file.name);
       setFormData(prev => ({ ...prev, image: file }));
     }
   };
 
+  // رفع الصورة إلى التخزين السحابي وإرجاع الرابط العام
   const uploadImage = async (file: File): Promise<string> => {
     const fileExt = file.name.split('.').pop();
     const fileName = `${Math.random()}.${fileExt}`;
     const filePath = `banners/${fileName}`;
 
+    console.log('رفع الصورة إلى التخزين:', filePath);
+
     const { error: uploadError } = await supabase.storage
       .from('product-images')
       .upload(filePath, file);
 
-    if (uploadError) throw uploadError;
+    if (uploadError) {
+      console.error('خطأ أثناء رفع الصورة:', uploadError);
+      throw uploadError;
+    }
 
     const { data } = supabase.storage
       .from('product-images')
       .getPublicUrl(filePath);
 
+    console.log('تم رفع الصورة، الرابط:', data.publicUrl);
     return data.publicUrl;
   };
 
+  // عند إرسال النموذج (إضافة أو تعديل بانر)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
+    // التحقق من العناوين
     if (!formData.title_ar || !formData.title_en || !formData.title_he) {
       toast.error(t('pleaseEnterAllTitles'));
       return;
     }
 
+    // التحقق من وجود صورة عند الإضافة
     if (!editingBanner && !formData.image) {
       toast.error(t('pleaseSelectImage'));
       return;
@@ -153,11 +178,13 @@ const AdminBanners: React.FC = () => {
 
     try {
       let imageUrl = formData.imageUrl;
-      
+
+      // رفع الصورة إذا تم اختيار صورة جديدة
       if (formData.image) {
         imageUrl = await uploadImage(formData.image);
       }
 
+      // تجهيز بيانات البانر للإرسال
       const bannerData = {
         title_ar: formData.title_ar,
         title_en: formData.title_en,
@@ -172,6 +199,8 @@ const AdminBanners: React.FC = () => {
       };
 
       if (editingBanner) {
+        // تعديل بانر موجود
+        console.log('تعديل بانر:', editingBanner.id, bannerData);
         const { error } = await supabase
           .from('banners')
           .update(bannerData)
@@ -180,6 +209,8 @@ const AdminBanners: React.FC = () => {
         if (error) throw error;
         toast.success(t('bannerUpdatedSuccessfully'));
       } else {
+        // إضافة بانر جديد
+        console.log('إضافة بانر جديد:', bannerData);
         const { error } = await supabase
           .from('banners')
           .insert([bannerData]);
@@ -191,17 +222,19 @@ const AdminBanners: React.FC = () => {
       resetForm();
       fetchBanners();
     } catch (error) {
-      console.error('Error saving banner:', error);
+      console.error('خطأ أثناء حفظ البانر:', error);
       toast.error(editingBanner ? t('errorUpdatingBanner') : t('errorAddingBanner'));
     } finally {
       setSubmitting(false);
     }
   };
 
+  // حذف بانر
   const handleDelete = async (id: string) => {
     if (!confirm(t('deleteBannerConfirmation'))) return;
 
     try {
+      console.log('حذف بانر:', id);
       const { error } = await supabase
         .from('banners')
         .delete()
@@ -211,13 +244,15 @@ const AdminBanners: React.FC = () => {
       toast.success(t('bannerDeletedSuccessfully'));
       fetchBanners();
     } catch (error) {
-      console.error('Error deleting banner:', error);
+      console.error('خطأ أثناء حذف البانر:', error);
       toast.error(t('errorDeletingBanner'));
     }
   };
 
+  // تفعيل أو تعطيل البانر
   const toggleActive = async (id: string, currentStatus: boolean) => {
     try {
+      console.log('تغيير حالة البانر:', id, 'الحالة الحالية:', currentStatus);
       const { error } = await supabase
         .from('banners')
         .update({ active: !currentStatus })
@@ -227,11 +262,12 @@ const AdminBanners: React.FC = () => {
       toast.success(t('bannerStatusUpdated'));
       fetchBanners();
     } catch (error) {
-      console.error('Error updating banner status:', error);
+      console.error('خطأ أثناء تحديث حالة البانر:', error);
       toast.error(t('errorUpdatingBannerStatus'));
     }
   };
 
+  // عرض مؤشر التحميل إذا كانت البيانات قيد التحميل
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -240,15 +276,20 @@ const AdminBanners: React.FC = () => {
     );
   }
 
+  // واجهة الصفحة الرئيسية
   return (
     <div className="space-y-6">
+      {/* رأس الصفحة وزر إضافة بانر */}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">{t('manageBanners')}</h1>
           <p className="text-gray-600">{t('manageBannersDescription')}</p>
         </div>
         <button
-          onClick={() => setShowForm(true)}
+          onClick={() => {
+            console.log('فتح نموذج إضافة بانر جديد');
+            setShowForm(true);
+          }}
           className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
         >
           <Plus className="h-4 w-4" />
@@ -256,6 +297,7 @@ const AdminBanners: React.FC = () => {
         </button>
       </div>
 
+      {/* نموذج إضافة/تعديل بانر */}
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -272,6 +314,7 @@ const AdminBanners: React.FC = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* عناوين البانر باللغات الثلاث */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -314,6 +357,7 @@ const AdminBanners: React.FC = () => {
                 </div>
               </div>
 
+              {/* العناوين الفرعية (اختياري) */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -353,6 +397,7 @@ const AdminBanners: React.FC = () => {
                 </div>
               </div>
 
+              {/* رفع صورة البانر */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   {t('bannerImage')}
@@ -387,6 +432,7 @@ const AdminBanners: React.FC = () => {
                 )}
               </div>
 
+              {/* رابط البانر وترتيبه */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -415,6 +461,7 @@ const AdminBanners: React.FC = () => {
                 </div>
               </div>
 
+              {/* حالة البانر (فعال/غير فعال) */}
               <div className="flex items-center">
                 <input
                   type="checkbox"
@@ -428,6 +475,7 @@ const AdminBanners: React.FC = () => {
                 </label>
               </div>
 
+              {/* أزرار الإرسال والإلغاء */}
               <div className="flex justify-end gap-2 pt-4">
                 <button
                   type="button"
@@ -452,6 +500,7 @@ const AdminBanners: React.FC = () => {
         </div>
       )}
 
+      {/* جدول عرض البانرات */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
         {banners.length === 0 ? (
           <div className="text-center py-12">
@@ -547,3 +596,16 @@ const AdminBanners: React.FC = () => {
 };
 
 export default AdminBanners;
+
+// -----------------------------
+// شرح الصفحة بالعربي:
+// -----------------------------
+// هذه الصفحة مخصصة لإدارة البانرات في لوحة تحكم الأدمن.
+// - يمكنك من خلالها إضافة بانر جديد أو تعديل أو حذف بانر موجود.
+// - كل بانر يحتوي على عنوان بثلاث لغات، وصورة، ورابط اختياري، وترتيب، وحالة تفعيل.
+// - عند إضافة أو تعديل بانر، يتم رفع الصورة إلى التخزين السحابي (Supabase Storage).
+// - يتم جلب البانرات من قاعدة البيانات وعرضها في جدول مع إمكانية التفعيل/التعطيل والتعديل والحذف.
+// - تم إضافة console.log في جميع العمليات المهمة لتسهيل تتبع الأخطاء أثناء التطوير.
+// - جميع الدوال الرئيسية مشروحة بالتعليقات داخل الكود.
+// - تم استخدام مكتبة sonner لعرض رسائل النجاح أو الخطأ.
+// - تم استخدام الترجمة من الكونتكست لدعم تعدد اللغات في الصفحة.

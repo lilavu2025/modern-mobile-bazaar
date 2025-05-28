@@ -1,31 +1,34 @@
-import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 
+/**
+ * هوك لجلب الفئات (Categories) من قاعدة البيانات، مع عدد المنتجات داخل كل فئة
+ */
 export const useCategories = () => {
   const { language } = useLanguage();
+
   return useQuery({
     queryKey: ['categories', language],
     queryFn: async () => {
-      console.log('Fetching categories from database...');
-      
-      // جلب الفئات
+      console.log('📦 بدء جلب الفئات من Supabase...');
+
+      // جلب الفئات النشطة فقط
       const { data: categories, error: categoriesError } = await supabase
         .from('categories')
         .select('*')
         .eq('active', true)
         .order('created_at');
-      
+
       if (categoriesError) {
-        console.error('Error fetching categories:', categoriesError);
+        console.error('❌ خطأ أثناء جلب الفئات:', categoriesError);
         throw categoriesError;
       }
-      
-      console.log('Raw categories data:', categories);
-      
-      // جلب عدد المنتجات لكل فئة
+
+      console.log('✅ الفئات التي تم جلبها:', categories);
+
+      // جلب عدد المنتجات داخل كل فئة
       const categoriesWithCounts = await Promise.all(
         (categories || []).map(async (category) => {
           const { count, error: countError } = await supabase
@@ -33,11 +36,11 @@ export const useCategories = () => {
             .select('*', { count: 'exact', head: true })
             .eq('category_id', category.id)
             .eq('active', true);
-          
+
           if (countError) {
-            console.error('Error counting products for category:', category.id, countError);
+            console.warn(`⚠️ خطأ أثناء حساب عدد المنتجات للفئة ${category.id}:`, countError);
           }
-          
+
           return {
             id: category.id,
             name: category[`name_${language}` as keyof typeof category] as string,
@@ -48,23 +51,30 @@ export const useCategories = () => {
           };
         })
       );
-      
-      console.log('Processed categories with counts:', categoriesWithCounts);
+
+      console.log('📊 الفئات بعد إضافة عدد المنتجات:', categoriesWithCounts);
       return categoriesWithCounts;
     },
   });
 };
 
+/**
+ * هوك لجلب المنتجات، ويمكن تحديد الفئة، ويأخذ بعين الاعتبار لغة المستخدم ونوعه (مفرق أو جملة)
+ */
 export const useProducts = (categoryId?: string) => {
   const { language } = useLanguage();
   const { profile } = useAuth();
-  
+
   return useQuery({
     queryKey: ['products', categoryId, language, profile?.user_type],
     queryFn: async () => {
+      console.log('🛍️ بدء جلب المنتجات...');
+      console.log('🔍 الفئة المحددة:', categoryId || 'all');
+      console.log('👤 نوع المستخدم:', profile?.user_type || 'guest');
+
       let query = supabase
         .from('products')
-        .select('*, categories!inner(*)')
+        .select('*, categories!inner(*)') // ربط المنتج بالفئة داخلياً
         .eq('active', true);
 
       if (categoryId && categoryId !== 'all') {
@@ -73,10 +83,15 @@ export const useProducts = (categoryId?: string) => {
 
       const { data, error } = await query.order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ خطأ أثناء جلب المنتجات:', error);
+        throw error;
+      }
 
-      return (data || []).map(product => {
-        // تحديد السعر حسب نوع المستخدم
+      console.log('✅ المنتجات التي تم جلبها:', data);
+
+      // تجهيز المنتجات للعرض
+      const processedProducts = (data || []).map(product => {
         const isWholesale = profile?.user_type === 'wholesale';
         const displayPrice = isWholesale && product.wholesale_price 
           ? Number(product.wholesale_price) 
@@ -103,25 +118,36 @@ export const useProducts = (categoryId?: string) => {
           stock_quantity: product.stock_quantity || 0,
         };
       });
+
+      console.log('📦 المنتجات المعالجة:', processedProducts);
+      return processedProducts;
     },
   });
 };
 
+/**
+ * هوك لجلب البنرات (الإعلانات) المعروضة في الواجهة الرئيسية، حسب اللغة
+ */
 export const useBanners = () => {
   const { language } = useLanguage();
-  
+
   return useQuery({
     queryKey: ['banners', language],
     queryFn: async () => {
+      console.log('🖼️ بدء جلب البنرات...');
+
       const { data, error } = await supabase
         .from('banners')
         .select('*')
         .eq('active', true)
         .order('sort_order');
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ خطأ أثناء جلب البنرات:', error);
+        throw error;
+      }
 
-      return (data || []).map(banner => ({
+      const banners = (data || []).map(banner => ({
         id: banner.id,
         title: banner[`title_${language}` as keyof typeof banner] as string,
         subtitle: banner[`subtitle_${language}` as keyof typeof banner] as string,
@@ -129,6 +155,9 @@ export const useBanners = () => {
         link: banner.link,
         active: banner.active,
       }));
+
+      console.log('🎯 البنرات المعالجة:', banners);
+      return banners;
     },
   });
 };

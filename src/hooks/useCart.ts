@@ -6,12 +6,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
 export const useCart = () => {
-  const { t } = useLanguage();
-  const { user } = useAuth();
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const { t } = useLanguage(); // ترجمة النصوص حسب اللغة المختارة
+  const { user } = useAuth(); // بيانات المستخدم الحالي
+  const [cartItems, setCartItems] = useState<CartItem[]>([]); // تخزين عناصر السلة
+  const [isLoading, setIsLoading] = useState(false); // حالة تحميل العمليات المتعلقة بالسلة
 
-  // Transform database product to Product interface
+  // دالة لتحويل المنتج من قاعدة البيانات إلى واجهة المنتج المطلوبة في التطبيق
   const transformProduct = (dbProduct: any): Product => ({
     id: dbProduct.id,
     name: dbProduct.name_ar,
@@ -32,7 +32,7 @@ export const useCart = () => {
     tags: dbProduct.tags || []
   });
 
-  // جلب السلة من Supabase عند تحميل الصفحة
+  // جلب بيانات السلة من Supabase عند تحميل الصفحة أو تغير المستخدم
   const fetchCartItems = async () => {
     if (!user) return;
     setIsLoading(true);
@@ -45,22 +45,43 @@ export const useCart = () => {
       console.error('Error fetching cart from Supabase:', error);
       return;
     }
-    if (Array.isArray(data)) {
-      setCartItems(
-        data.map((row: any) => ({
+    console.log('fetchCartItems: fetching cart for user:', user.id);
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('cart')
+        .select('*, product:products(*)')
+        .eq('user_id', user.id);
+
+      setIsLoading(false);
+
+      if (error) {
+        console.error('Error fetching cart from Supabase:', error);
+        return;
+      }
+
+      if (Array.isArray(data)) {
+        const transformedItems = data.map((row: any) => ({
           id: row.id,
           product: transformProduct(row.product),
           quantity: row.quantity,
-        }))
-      );
+        }));
+        console.log('fetchCartItems: fetched items:', transformedItems);
+        setCartItems(transformedItems);
+      }
+    } catch (error) {
+      setIsLoading(false);
+      console.error('Exception in fetchCartItems:', error);
     }
   };
 
+  // عند تغير المستخدم (تسجيل دخول/خروج)، نجلب بيانات السلة وندير الاشتراك للتحديثات المباشرة
   useEffect(() => {
     if (user) {
       fetchCartItems();
-      
-      // Set up real-time subscription for cart updates
+
+      // الاشتراك للتغييرات الفورية في جدول السلة
+      console.log('Setting up realtime subscription for cart changes for user:', user.id);
       const subscription = supabase
         .channel('cart_changes')
         .on(
@@ -72,16 +93,18 @@ export const useCart = () => {
             filter: `user_id=eq.${user.id}`
           },
           () => {
-            // Refetch cart items when changes occur
+            console.log('Realtime event received for cart changes, refetching cart...');
             fetchCartItems();
           }
         )
         .subscribe();
 
       return () => {
+        console.log('Unsubscribing from cart_changes realtime channel');
         subscription.unsubscribe();
       };
     } else {
+      console.log('User logged out, clearing cartItems');
       setCartItems([]);
     }
   }, [user]);
@@ -89,54 +112,61 @@ export const useCart = () => {
   // حفظ السلة في localStorage (اختياري)
   useEffect(() => {
     try {
+      console.log('Saving cartItems to localStorage:', cartItems);
       localStorage.setItem('cart', JSON.stringify(cartItems));
     } catch (error) {
-      console.error('Error saving cart:', error);
+      console.error('Error saving cart to localStorage:', error);
     }
   }, [cartItems]);
 
-  // إضافة منتج للسلة في Supabase
+  // دالة إضافة منتج للسلة مع دعم تحديث الكمية إذا المنتج موجود مسبقاً
   const addToCart = async (product: Product, quantity: number = 1) => {
+    console.log('addToCart called with product:', product, 'quantity:', quantity);
     if (!product || !product.id) {
       toast.error(t('invalidProduct'));
+      console.warn('addToCart: invalid product passed');
       return;
     }
-    
-    // If user is not logged in, show login message but still allow adding to cart
+
     if (!user) {
       toast.error(t('pleaseLoginToAddToCart') || 'Please login to add items to cart');
+      console.warn('addToCart: user not logged in');
       return;
     }
-    
+
     setIsLoading(true);
+
     try {
-      // تحقق إذا المنتج موجود مسبقاً
+      // جلب العنصر الموجود مسبقاً في السلة
       const { data: existing, error: fetchError } = await supabase
         .from('cart')
         .select('*')
         .eq('user_id', user.id)
         .eq('product_id', product.id)
         .single();
+
       if (fetchError && fetchError.code !== 'PGRST116') {
         throw fetchError;
       }
+
       if (existing) {
-        // تحديث الكمية
         const newQuantity = existing.quantity + quantity;
+        console.log(`Product already in cart, updating quantity to ${newQuantity}`);
         const { error: updateError } = await supabase
           .from('cart')
           .update({ quantity: newQuantity })
           .eq('id', existing.id);
+
         if (updateError) throw updateError;
-        
-        // Update local state immediately
-        setCartItems(items => items.map(item => 
-          item.product.id === product.id 
+
+        // تحديث الحالة المحلية مباشرة
+        setCartItems(items => items.map(item =>
+          item.product.id === product.id
             ? { ...item, quantity: newQuantity }
             : item
         ));
       } else {
-        // إضافة جديد
+        console.log('Product not in cart, inserting new cart item');
         const { data: newItem, error: insertError } = await supabase
           .from('cart')
           .insert({
@@ -147,9 +177,9 @@ export const useCart = () => {
           })
           .select('*, product:products(*)')
           .single();
+
         if (insertError) throw insertError;
-        
-        // Add to local state immediately
+
         if (newItem) {
           const cartItem = {
             id: newItem.id,
@@ -157,22 +187,27 @@ export const useCart = () => {
             quantity: newItem.quantity,
           };
           setCartItems(items => [...items, cartItem]);
+          console.log('New cart item added:', cartItem);
         }
       }
       toast.success(`${product.name} ${t('addedToCart')}`);
     } catch (error) {
       console.error('Error adding to cart:', error);
       toast.error(t('errorAddingToCart'));
-      // Refresh cart on error to ensure consistency
+      // إعادة تحميل السلة لضمان التزامن
       await fetchCartItems();
     } finally {
       setIsLoading(false);
     }
   };
 
-  // حذف منتج من السلة في Supabase
+  // دالة حذف منتج من السلة
   const removeFromCart = async (productId: string) => {
-    if (!user) return;
+    if (!user) {
+      console.warn('removeFromCart: user not logged in');
+      return;
+    }
+    console.log('removeFromCart called for productId:', productId);
     setIsLoading(true);
     try {
       const { error } = await supabase
@@ -183,6 +218,7 @@ export const useCart = () => {
       if (error) throw error;
       toast.success(t('productRemovedFromCart'));
       setCartItems(items => items.filter(item => item.product.id !== productId));
+      console.log('Product removed from cart:', productId);
     } catch (error) {
       console.error('Error removing from cart:', error);
       toast.error(t('errorRemovingFromCart'));
@@ -191,10 +227,15 @@ export const useCart = () => {
     }
   };
 
-  // تحديث الكمية في Supabase
+  // دالة تحديث كمية منتج في السلة
   const updateQuantity = async (productId: string, quantity: number) => {
-    if (!user) return;
+    if (!user) {
+      console.warn('updateQuantity: user not logged in');
+      return;
+    }
+    console.log('updateQuantity called for productId:', productId, 'new quantity:', quantity);
     if (quantity <= 0) {
+      console.log('Quantity <= 0, calling removeFromCart instead');
       await removeFromCart(productId);
       return;
     }
@@ -206,7 +247,13 @@ export const useCart = () => {
         .eq('user_id', user.id)
         .eq('product_id', productId);
       if (error) throw error;
-      setCartItems(items => items.map(item => item.product.id === productId ? { ...item, quantity } : item));
+
+      setCartItems(items => items.map(item =>
+        item.product.id === productId
+          ? { ...item, quantity }
+          : item
+      ));
+      console.log('Quantity updated successfully');
     } catch (error) {
       console.error('Error updating quantity:', error);
       toast.error(t('errorUpdatingCart'));
@@ -215,9 +262,13 @@ export const useCart = () => {
     }
   };
 
-  // مسح السلة بالكامل من Supabase
+  // دالة مسح كامل محتوى السلة
   const clearCart = async () => {
-    if (!user) return;
+    if (!user) {
+      console.warn('clearCart: user not logged in');
+      return;
+    }
+    console.log('clearCart called, removing all items from cart');
     setIsLoading(true);
     try {
       const { error } = await supabase
@@ -227,6 +278,7 @@ export const useCart = () => {
       if (error) throw error;
       setCartItems([]);
       toast.success(t('allProductsRemoved'));
+      console.log('Cart cleared successfully');
     } catch (error) {
       console.error('Error clearing cart:', error);
       toast.error(t('errorClearingCart'));
@@ -235,6 +287,7 @@ export const useCart = () => {
     }
   };
 
+  // حساب عدد العناصر الإجمالي في السلة
   const getTotalItems = () => {
     const currentItems = Array.isArray(cartItems) ? cartItems : [];
     const total = currentItems.reduce((total, item) => total + (item.quantity || 0), 0);
@@ -242,13 +295,16 @@ export const useCart = () => {
     return total;
   };
 
+  // حساب السعر الإجمالي لجميع العناصر في السلة
   const getTotalPrice = () => {
     const currentItems = Array.isArray(cartItems) ? cartItems : [];
-    return currentItems.reduce((total, item) => {
+    const totalPrice = currentItems.reduce((total, item) => {
       const price = item.product?.price || 0;
       const quantity = item.quantity || 0;
       return total + (price * quantity);
     }, 0);
+    console.log('Total price of cart:', totalPrice);
+    return totalPrice;
   };
 
   // الحصول على كمية المنتج في السلة
@@ -279,8 +335,7 @@ export const useCart = () => {
   };
 
   return {
-    cartItems: Array.isArray(cartItems) ? cartItems : [],
-    isLoading,
+    cartItems,
     addToCart,
     removeFromCart,
     updateQuantity,
@@ -289,5 +344,6 @@ export const useCart = () => {
     getTotalPrice,
     getItemQuantity,
     buyNow
+    isLoading,
   };
 };

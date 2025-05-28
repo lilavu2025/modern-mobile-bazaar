@@ -1,8 +1,8 @@
-
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
+// تعريف الواجهة التي تمثل مستخدم النظام
 interface UserProfile {
   id: string;
   full_name: string;
@@ -14,93 +14,117 @@ interface UserProfile {
   last_sign_in_at?: string;
 }
 
+// هوك مخصص لإدارة المستخدمين من قبل الأدمن
 export const useAdminUsers = () => {
   const { profile } = useAuth();
+
+  // حالة لتخزين جميع المستخدمين
   const [users, setUsers] = useState<UserProfile[]>([]);
+
+  // حالة لتحديد ما إذا كانت البيانات قيد التحميل
   const [isLoading, setIsLoading] = useState(true);
+
+  // حالة لتخزين الخطأ إن وُجد
   const [error, setError] = useState<string | null>(null);
+
+  // حالات التحكم في الفلترة والفرز
   const [searchQuery, setSearchQuery] = useState('');
   const [userTypeFilter, setUserTypeFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('created_at');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
+  // دالة تحميل بيانات المستخدمين من Supabase
   const fetchUsers = async () => {
     try {
+      console.log('⏳ بدء تحميل بيانات المستخدمين...');
       setIsLoading(true);
       setError(null);
 
-      // Check if current user is admin
+      // التحقق من أن المستخدم الحالي هو أدمن
       if (profile?.user_type !== 'admin') {
-        setError('Access denied. Admin privileges required.');
+        const accessDeniedMsg = '🚫 صلاحيات غير كافية. يلزم أن تكون أدمن.';
+        console.warn(accessDeniedMsg);
+        setError(accessDeniedMsg);
         return;
       }
 
-      console.log('Fetching all registered users...');
-
-      // Get all users from profiles table
+      // جلب جميع المستخدمين من جدول profiles
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (profilesError) {
-        console.error('Error fetching profiles:', profilesError);
+        console.error('❌ خطأ في جلب البيانات من Supabase:', profilesError);
         throw profilesError;
       }
 
-      console.log('Profiles data fetched:', profilesData);
+      console.log('✅ البيانات المسترجعة من Supabase:', profilesData);
 
-      // Create users list from profiles data
+      // تحويل البيانات إلى صيغة UserProfile
       const allUsers: UserProfile[] = [];
-      
-      if (profilesData) {
-        profilesData.forEach(profile => {
-          allUsers.push({
-            id: profile.id,
-            full_name: profile.full_name || 'غير محدد',
-            phone: profile.phone,
-            user_type: profile.user_type || 'retail',
-            created_at: profile.created_at,
-            email: profile.email || 'غير محدد',
-          });
-        });
-      }
 
-      console.log('Final users list:', allUsers);
+      profilesData?.forEach(profile => {
+        allUsers.push({
+          id: profile.id,
+          full_name: profile.full_name || 'غير محدد',
+          phone: profile.phone,
+          user_type: profile.user_type || 'retail',
+          created_at: profile.created_at,
+          email: profile.email || 'غير محدد',
+        });
+      });
+
+      console.log('📦 القائمة النهائية للمستخدمين:', allUsers);
+
+      // تحديث الحالة
       setUsers(allUsers);
     } catch (err: any) {
-      console.error('Error fetching users:', err);
-      setError(err.message || 'Failed to fetch users');
+      console.error('❌ فشل تحميل المستخدمين:', err);
+      setError(err.message || 'حدث خطأ أثناء تحميل المستخدمين');
     } finally {
+      console.log('✅ الانتهاء من تحميل المستخدمين');
       setIsLoading(false);
     }
   };
 
+  // تشغيل الدالة عند تحميل الصفحة أو عند تغير المستخدم الحالي
   useEffect(() => {
     if (profile) {
+      console.log('👤 تم تحميل الملف الشخصي للمستخدم الحالي، البدء بتحميل المستخدمين...');
       fetchUsers();
     }
   }, [profile]);
 
-  // Filter and sort users
+  // تصفية وفرز المستخدمين بحسب الحالات
   const filteredAndSortedUsers = useMemo(() => {
+    console.log('🔍 تطبيق الفلاتر والفرز...');
+    
     let filtered = users.filter(user => {
-      const matchesSearch = user.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           user.email?.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesType = userTypeFilter === 'all' || user.user_type === userTypeFilter;
-      const matchesStatus = statusFilter === 'all' || 
-                           (statusFilter === 'active' && user.email_confirmed_at) ||
-                           (statusFilter === 'inactive' && !user.email_confirmed_at);
-      
+      const matchesSearch =
+        user.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.email?.toLowerCase().includes(searchQuery.toLowerCase());
+
+      const matchesType =
+        userTypeFilter === 'all' || user.user_type === userTypeFilter;
+
+      const matchesStatus =
+        statusFilter === 'all' ||
+        (statusFilter === 'active' && user.email_confirmed_at) ||
+        (statusFilter === 'inactive' && !user.email_confirmed_at);
+
       return matchesSearch && matchesType && matchesStatus;
     });
 
-    // Sort users
+    console.log('👥 عدد المستخدمين بعد الفلترة:', filtered.length);
+
+    // تطبيق الفرز
     filtered.sort((a, b) => {
       let aValue: any = a[sortBy as keyof UserProfile];
       let bValue: any = b[sortBy as keyof UserProfile];
 
+      // التعامل مع التواريخ
       if (sortBy === 'created_at' || sortBy === 'last_sign_in_at') {
         aValue = new Date(aValue || 0).getTime();
         bValue = new Date(bValue || 0).getTime();
@@ -109,31 +133,26 @@ export const useAdminUsers = () => {
         bValue = bValue?.toLowerCase() || '';
       }
 
-      if (sortOrder === 'asc') {
-        return aValue > bValue ? 1 : -1;
-      } else {
-        return aValue < bValue ? 1 : -1;
-      }
+      return sortOrder === 'asc'
+        ? aValue > bValue ? 1 : -1
+        : aValue < bValue ? 1 : -1;
     });
 
+    console.log('✅ الانتهاء من الفرز، عدد المستخدمين النهائي:', filtered.length);
     return filtered;
   }, [users, searchQuery, userTypeFilter, statusFilter, sortBy, sortOrder]);
 
+  // القيم التي يتم إرجاعها من الهوك
   return {
-    users,
-    filteredAndSortedUsers,
-    isLoading,
-    error,
-    searchQuery,
-    setSearchQuery,
-    userTypeFilter,
-    setUserTypeFilter,
-    statusFilter,
-    setStatusFilter,
-    sortBy,
-    setSortBy,
-    sortOrder,
-    setSortOrder,
-    refetch: fetchUsers,
+    users,                         // جميع المستخدمين بدون فلترة
+    filteredAndSortedUsers,       // المستخدمين بعد الفلترة والفرز
+    isLoading,                    // هل البيانات قيد التحميل
+    error,                        // هل يوجد خطأ
+    searchQuery, setSearchQuery, // البحث
+    userTypeFilter, setUserTypeFilter, // فلترة حسب نوع المستخدم
+    statusFilter, setStatusFilter,     // فلترة حسب حالة التفعيل
+    sortBy, setSortBy,                 // الترتيب حسب
+    sortOrder, setSortOrder,          // ترتيب تصاعدي أو تنازلي
+    refetch: fetchUsers,              // دالة إعادة تحميل البيانات
   };
 };
