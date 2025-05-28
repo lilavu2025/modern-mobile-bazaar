@@ -1,7 +1,7 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User, Session } from '@supabase/supabase-js';
+import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 
 interface Profile {
   id: string;
@@ -29,8 +29,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
-  const fetchProfile = async (userId: string) => {
+  // Fetch profile by userId, return the profile or null
+  const fetchProfile = async (userId: string): Promise<Profile | null> => {
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -41,25 +43,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) {
         // If profile doesn't exist, create it
         if (error.code === 'PGRST116') {
-          await createProfile(userId);
-          return;
+          const newProfile = await createProfile(userId);
+          return newProfile;
         }
         console.error('Error fetching profile:', error);
-        return;
+        return null;
       }
 
       setProfile(data);
+      return data;
     } catch (error) {
       console.error('Error fetching profile:', error);
+      return null;
     }
   };
 
-  const createProfile = async (userId: string) => {
+  // Create profile for new user and return it
+  const createProfile = async (userId: string): Promise<Profile | null> => {
     try {
-      // Get user data from auth
       const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) return;
+      if (!user) return null;
 
       const profileData = {
         id: userId,
@@ -77,47 +80,66 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) {
         console.error('Error creating profile:', error);
-        return;
+        return null;
       }
 
       setProfile(data);
+      return data;
     } catch (error) {
       console.error('Error creating profile:', error);
+      return null;
+    }
+  };
+
+  // Redirect user based on user_type
+  const handleUserRedirection = (profile: Profile) => {
+    if (profile.user_type === 'admin') {
+      navigate('/admin');
+    } else if (profile.user_type === 'wholesale') {
+      navigate('/wholesale');
+    } else {
+      navigate('/'); // retail or default route
     }
   };
 
   useEffect(() => {
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
-        
+
         if (session?.user) {
-          setTimeout(() => fetchProfile(session.user.id), 0);
+          const fetchedProfile = await fetchProfile(session.user.id);
+
+          if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && fetchedProfile) {
+            handleUserRedirection(fetchedProfile);
+          }
         } else {
           setProfile(null);
         }
-        
+
         setLoading(false);
       }
     );
 
-    // Check for existing session
+    // Check for existing session on mount
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      
+
       if (session?.user) {
-        fetchProfile(session.user.id);
+        fetchProfile(session.user.id).then((profile) => {
+          if (profile) handleUserRedirection(profile);
+        });
       }
-      
+
       setLoading(false);
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [navigate]);
 
+  // SignIn function
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
       email,
@@ -125,9 +147,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     if (error) throw error;
+
+    localStorage.setItem('lastLoginTime', Date.now().toString());
   };
 
+  // SignUp function with email existence check
   const signUp = async (email: string, password: string, fullName: string, phone?: string) => {
+    // Check if email already exists in 'profiles'
+    const { data: existingProfile, error: fetchError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('email', email)
+      .single();
+
+    if (fetchError && fetchError.code !== 'PGRST116') {
+      // Unexpected error
+      throw fetchError;
+    }
+
+    if (existingProfile) {
+      throw new Error('هذا البريد الإلكتروني مسجل مسبقاً. الرجاء تسجيل الدخول أو استخدام بريد إلكتروني آخر.');
+    }
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -139,14 +180,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       },
     });
 
-    if (error) throw error;
+    if (error) {
+      // بعض أخطاء التسجيل يمكن أن تكون عن البريد موجود أصلاً (مثلاً من Supabase Auth)
+      if (error.message.includes('duplicate') || error.message.includes('already registered')) {
+        throw new Error('هذا البريد الإلكتروني مسجل مسبقاً. الرجاء تسجيل الدخول أو استخدام بريد إلكتروني آخر.');
+      }
+      throw error;
+    }
   };
 
+  // SignOut function
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
+
+    localStorage.removeItem('lastLoginTime');
   };
 
+  // Update profile function
   const updateProfile = async (data: Partial<Profile>) => {
     if (!user) throw new Error('No user found');
 
@@ -161,16 +212,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      session,
-      profile,
-      loading,
-      signIn,
-      signUp,
-      signOut,
-      updateProfile,
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        session,
+        profile,
+        loading,
+        signIn,
+        signUp,
+        signOut,
+        updateProfile,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

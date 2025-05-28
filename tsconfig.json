@@ -9,11 +9,13 @@
     "paths": {
       "@/*": ["./src/*"]
     },
+    "types": ["react", "react-native"],  // ✅ مهم جداً
+    "jsx": "react-native",               // ✅ مطلوب لملفات JSX/TSX
+    "allowJs": true,
     "noImplicitAny": false,
     "noUnusedParameters": false,
-    "skipLibCheck": true,
-    "allowJs": true,
     "noUnusedLocals": false,
-    "strictNullChecks": false
+    "strictNullChecks": false,
+    "skipLibCheck": true
   }
 }

@@ -34,6 +34,12 @@ const Auth: React.FC = () => {
   const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
   const [pendingEmail, setPendingEmail] = useState('');
 
+  const isValidEmail = (email: string) =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+  const isValidPhone = (phone: string) =>
+    /^05\d{8}$/.test(phone);
+
   useEffect(() => {
     if (user && !loading) {
       navigate('/');
@@ -45,6 +51,14 @@ const Auth: React.FC = () => {
     setIsLoading(true);
 
     try {
+      if (!isValidEmail(loginData.email)) {
+        throw new Error(t('invalidEmail'));
+      }
+
+      if (loginData.password.length < 6) {
+        throw new Error(t('passwordTooShort'));
+      }
+
       await signIn(loginData.email, loginData.password);
       toast({
         title: t('success'),
@@ -73,6 +87,25 @@ const Auth: React.FC = () => {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     
+
+    if (!isValidEmail(signupData.email)) {
+      toast({
+        title: t('error'),
+        description: t('invalidEmail'),
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (signupData.password.length < 6) {
+      toast({
+        title: t('error'),
+        description: t('passwordTooShort'),
+        variant: 'destructive',
+      });
+      return;
+    }
+
     if (signupData.password !== signupData.confirmPassword) {
       toast({
         title: t('error'),
@@ -82,15 +115,23 @@ const Auth: React.FC = () => {
       return;
     }
 
+    if (!isValidPhone(signupData.phone)) {
+      toast({
+        title: t('error'),
+        description: t('invalidPhone'),
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
       await signUp(signupData.email, signupData.password, signupData.fullName, signupData.phone);
-      
       // Show email confirmation screen
       setPendingEmail(signupData.email);
       setShowEmailConfirmation(true);
-      
+
       toast({
         title: t('success'),
         description: t('signupSuccess'),
@@ -138,7 +179,7 @@ const Auth: React.FC = () => {
         </div>
 
         {showEmailConfirmation ? (
-          <EmailConfirmationPending 
+          <EmailConfirmationPending
             email={pendingEmail}
             onBack={handleBackFromConfirmation}
           />
@@ -209,6 +250,7 @@ const Auth: React.FC = () => {
                         type="tel"
                         value={signupData.phone}
                         onChange={(e) => setSignupData(prev => ({ ...prev, phone: e.target.value }))}
+                        required
                       />
                     </div>
 

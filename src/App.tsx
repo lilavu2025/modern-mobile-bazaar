@@ -75,17 +75,17 @@ const queryClient = new QueryClient({
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <HelmetProvider>
-      <ErrorBoundary>
-        <LanguageProvider>
-          <AuthProvider>
-            <CartProvider>
-              <FavoritesProvider>
-                <TooltipProvider>
-                  <SEO />
-                  <PerformanceMonitorComponent />
-                  <Toaster />
-                  <Sonner />
-                  <BrowserRouter>
+      <BrowserRouter>
+        <ErrorBoundary>
+          <LanguageProvider>
+            <AuthProvider>
+              <CartProvider>
+                <FavoritesProvider>
+                  <TooltipProvider>
+                    <SEO />
+                    <PerformanceMonitorComponent />
+                    <Toaster />
+                    <Sonner />
                     <Routes>
                       <Route path="/" element={<Index />} />
                       <Route path="/auth" element={<Auth />} />
@@ -140,13 +140,13 @@ const App = () => (
                       {/* Catch-all route */}
                       <Route path="*" element={<NotFound />} />
                     </Routes>
-                  </BrowserRouter>
-                </TooltipProvider>
-              </FavoritesProvider>
-            </CartProvider>
-          </AuthProvider>
-        </LanguageProvider>
-      </ErrorBoundary>
+                  </TooltipProvider>
+                </FavoritesProvider>
+              </CartProvider>
+            </AuthProvider>
+          </LanguageProvider>
+        </ErrorBoundary>
+      </BrowserRouter>
     </HelmetProvider>
   </QueryClientProvider>
 );

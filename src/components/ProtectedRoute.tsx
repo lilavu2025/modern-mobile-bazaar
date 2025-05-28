@@ -1,15 +1,21 @@
-
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requireAdmin?: boolean;
+  requireAuth?: boolean;
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requireAdmin = false }) => {
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
+  children, 
+  requireAdmin = false,
+  requireAuth = true 
+}) => {
   const { user, profile, loading } = useAuth();
+  const { t } = useLanguage();
 
   console.log('ProtectedRoute - user:', user, 'profile:', profile, 'loading:', loading);
 
@@ -21,7 +27,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requireAdmin 
     );
   }
 
-  if (!user) {
+  // For checkout, require authentication
+  if (requireAuth && !user) {
     return <Navigate to="/auth" replace />;
   }
 
