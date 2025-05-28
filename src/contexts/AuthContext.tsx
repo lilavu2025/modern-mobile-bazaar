@@ -217,6 +217,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (error) throw error;
 
     localStorage.removeItem('lastLoginTime');
+    
+    // Clear state immediately
+    setUser(null);
+    setSession(null);
+    setProfile(null);
+    
+    // Redirect to home page
+    navigate('/');
   };
 
   // Update profile function

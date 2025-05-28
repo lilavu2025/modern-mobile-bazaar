@@ -84,6 +84,23 @@ const ProductCard: React.FC<ProductCardProps> = memo(({ product, onQuickView }) 
     }
   }, [onQuickView, product]);
 
+  // وظيفة إضافة/إزالة المنتج من المفضلة
+  const handleFavorite = useCallback(async () => {
+    if (!user) {
+      toast.error(t('pleaseLogin'));
+      return;
+    }
+    
+    try {
+      const wasInFavorites = isFavorite(product.id);
+      await toggleFavorite(product.id);
+      toast.success(wasInFavorites ? t('removedFromFavorites') : t('addedToFavorites'));
+    } catch (error) {
+      console.error('خطأ في تحديث المفضلة:', error);
+      toast.error(t('errorUpdatingFavorites') || 'حدث خطأ في تحديث المفضلة');
+    }
+  }, [user, toggleFavorite, product.id, t, isFavorite]);
+
   // وظيفة مشاركة المنتج
   const handleShare = useCallback(async () => {
     const productUrl = `${window.location.origin}/product/${product.id}`;
@@ -123,6 +140,9 @@ const ProductCard: React.FC<ProductCardProps> = memo(({ product, onQuickView }) 
     navigate(`/product/${product.id}`);
   }, [navigate, product.id]);
 
+  // التحقق من حالة المفضلة
+  const isFav = isFavorite(product.id);
+
   return (
     <>
       {/* كرت المنتج الرئيسي مع تأثيرات التفاعل */}
@@ -133,7 +153,9 @@ const ProductCard: React.FC<ProductCardProps> = memo(({ product, onQuickView }) 
         {/* صورة المنتج مع أزرار التفاعل */}
         <ProductCardImage
           product={product}
+          isFavorite={isFav}
           onQuickView={handleQuickView}
+          onFavorite={handleFavorite}
           onShare={handleShare}
           isLoading={isLoading}
         />
@@ -158,9 +180,11 @@ const ProductCard: React.FC<ProductCardProps> = memo(({ product, onQuickView }) 
         onClose={() => setShowQuickView(false)}
         quantity={quantity}
         cartQuantity={cartQuantity}
+        isFavorite={isFav}
         onQuantityChange={setQuantity}
         onAddToCart={handleAddToCart}
         onBuyNow={handleBuyNow}
+        onFavorite={handleFavorite}
         onShare={handleShare}
       />
     </>

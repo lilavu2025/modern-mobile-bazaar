@@ -43,24 +43,7 @@ const ProductCardContent = ({
         </h3>
       </Link>
 
-      {/* Rating */}
-      <div className={`flex items-center gap-1 mb-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
-        <div className="flex items-center gap-1">
-          {[...Array(5)].map((_, i) => (
-            <Star
-              key={i}
-              className={`h-4 w-4 ${
-                i < Math.floor(product.rating || 0)
-                  ? 'text-yellow-400 fill-current'
-                  : 'text-gray-300'
-              }`}
-            />
-          ))}
-        </div>
-        <span className="text-sm text-gray-600">
-          ({product.reviews || 0})
-        </span>
-      </div>
+
 
       {/* Price */}
       <div className={`flex items-center gap-2 mb-3 ${isRTL ? 'flex-row-reverse' : ''}`}>

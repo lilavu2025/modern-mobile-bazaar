@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, memo } from 'react';
 import { cn } from '@/lib/utils';
+import { getOptimizedImageUrl, supportsWebP, createImageObserver } from '@/utils/imageOptimization';
 
 interface LazyImageProps {
   src: string;
@@ -37,6 +38,8 @@ const LazyImage = memo(function LazyImage({
   const [isLoaded, setIsLoaded] = useState(false);
   const [isError, setIsError] = useState(false);
   const [isInView, setIsInView] = useState(priority);
+  const [supportsModernFormats, setSupportsModernFormats] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
 
   useEffect(() => {

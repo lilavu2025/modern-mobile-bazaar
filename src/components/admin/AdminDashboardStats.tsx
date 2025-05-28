@@ -24,7 +24,7 @@ const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
   const [isRevenueExpanded, setIsRevenueExpanded] = useState(false);
 
   // Fetch users statistics
-  const { data: usersStats = [] } = useQuery({
+  const { data: usersStats = [], isLoading: usersLoading, error: usersError } = useQuery({
     queryKey: ['admin-users-stats'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -44,10 +44,12 @@ const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
         { name: t('retail'), value: usersByType.retail || 0, color: '#10b981' },
       ];
     },
+    retry: 3,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   // Fetch products statistics
-  const { data: productsStats = [] } = useQuery({
+  const { data: productsStats = [], isLoading: productsLoading, error: productsError } = useQuery({
     queryKey: ['admin-products-stats'],
     queryFn: async () => {
       const { data: products, error: productsError } = await supabase
@@ -85,10 +87,12 @@ const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
         outOfStock: stats.outOfStock,
       }));
     },
+    retry: 3,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   // Fetch orders statistics
-  const { data: ordersStats } = useQuery({
+  const { data: ordersStats, isLoading: ordersLoading, error: ordersError } = useQuery({
     queryKey: ['admin-orders-stats'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -149,7 +153,9 @@ const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
         totalOrders: data.length,
         totalRevenue
       };
-    }
+    },
+    retry: 3,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   const handleUserTypeClick = (userType: string) => {
@@ -187,6 +193,37 @@ const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
     wholesale: { label: t('wholesale'), color: '#3b82f6' },
     retail: { label: t('retail'), color: '#10b981' },
   };
+
+  // Show loading state
+  if (usersLoading || productsLoading || ordersLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">{t('loading')}...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (usersError || productsError || ordersError) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="text-red-500 mb-4">
+            <svg className="h-12 w-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          <p className="text-red-600 font-medium mb-2">{t('error')}</p>
+          <p className="text-muted-foreground text-sm">
+             {usersError?.message || productsError?.message || ordersError?.message || t('unexpectedError')}
+           </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto">

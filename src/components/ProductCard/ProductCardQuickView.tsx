@@ -52,23 +52,7 @@ const ProductCardQuickView = ({
             />
           </div>
           <div className="space-y-4">
-            <div className={`flex items-center gap-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
-              <div className="flex items-center gap-1">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className={`h-4 w-4 ${
-                      i < Math.floor(product.rating || 0)
-                        ? 'text-yellow-400 fill-current'
-                        : 'text-gray-300'
-                    }`}
-                  />
-                ))}
-              </div>
-              <span className="text-sm text-gray-600">
-                ({product.reviews || 0} {t('reviews')})
-              </span>
-            </div>
+
 
             <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
               <span className="text-2xl font-bold text-primary">

@@ -13,17 +13,19 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import SEO from "@/components/SEO";
 import { PerformanceMonitorComponent } from "@/components/PerformanceMonitor";
-import { lazy, Suspense, memo } from "react";
+import { lazy, Suspense, memo, useEffect } from "react";
 
-// Pages - Regular imports for frequently accessed pages
+// Critical pages - Regular imports for initial load
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
-import EmailConfirmation from "./pages/EmailConfirmation";
-import Products from "./pages/Products";
-import Categories from "./pages/Categories";
-import ProductDetails from "./pages/ProductDetails";
 import NotFound from "./pages/NotFound";
-import Favorites from "./pages/Favorites";
+
+// Lazy load all other pages for better performance
+const Products = lazy(() => import("./pages/Products"));
+const Categories = lazy(() => import("./pages/Categories"));
+const ProductDetails = lazy(() => import("./pages/ProductDetails"));
+const Favorites = lazy(() => import("./pages/Favorites"));
+const EmailConfirmation = lazy(() => import("./pages/EmailConfirmation"));
 
 // Lazy load less frequently accessed pages with preload hints
 const Orders = lazy(() => 
@@ -53,6 +55,51 @@ const PageLoader = memo(() => (
   </div>
 ));
 
+const LoadingSpinner = memo(() => (
+  <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="flex flex-col items-center gap-4">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      <p className="text-sm text-muted-foreground animate-pulse">جاري التحميل...</p>
+    </div>
+  </div>
+));
+
+// Preload critical routes
+const preloadRoutes = () => {
+  const routes = [Products, Categories, ProductDetails, Favorites];
+  routes.forEach(route => {
+    const componentImport = route as any;
+    if (componentImport && typeof componentImport === 'function') {
+      // Preload after initial render
+      setTimeout(() => componentImport(), 100);
+    }
+  });
+};
+
+// Component to trigger preloading
+const RoutePreloader = memo(() => {
+  useEffect(() => {
+    // Preload critical routes after initial render
+    const preloadRoutesAsync = async () => {
+      try {
+        await Promise.all([
+          import("./pages/Products"),
+          import("./pages/Categories"),
+          import("./pages/ProductDetails"),
+          import("./pages/Favorites")
+        ]);
+      } catch (error) {
+        console.warn('Route preloading failed:', error);
+      }
+    };
+    
+    // Delay preloading to not interfere with initial render
+    const timer = setTimeout(preloadRoutesAsync, 2000);
+    return () => clearTimeout(timer);
+  }, []);
+  return null;
+});
+
 // Optimized QueryClient with better defaults
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -65,9 +112,12 @@ const queryClient = new QueryClient({
       },
       refetchOnWindowFocus: false,
       refetchOnMount: true,
+      refetchOnReconnect: 'always',
+      networkMode: 'offlineFirst',
     },
     mutations: {
       retry: 1,
+      networkMode: 'offlineFirst',
     },
   },
 });
@@ -82,11 +132,14 @@ const App = () => (
               <CartProvider>
                 <FavoritesProvider>
                   <TooltipProvider>
-                    <SEO />
-                    <PerformanceMonitorComponent />
-                    <Toaster />
-                    <Sonner />
-                    <Routes>
+                    <div className="min-h-screen bg-background font-sans antialiased">
+                      <SEO />
+                      <Toaster />
+                      <Sonner />
+                      <PerformanceMonitorComponent />
+                      <RoutePreloader />
+                      <Suspense fallback={<LoadingSpinner />}>
+                        <Routes>
                       <Route path="/" element={<Index />} />
                       <Route path="/auth" element={<Auth />} />
                       <Route path="/email-confirmation" element={<EmailConfirmation />} />
@@ -138,8 +191,10 @@ const App = () => (
                       } />
                       
                       {/* Catch-all route */}
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
+                          <Route path="*" element={<NotFound />} />
+                        </Routes>
+                      </Suspense>
+                    </div>
                   </TooltipProvider>
                 </FavoritesProvider>
               </CartProvider>

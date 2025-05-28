@@ -32,6 +32,18 @@ const Checkout: React.FC = () => {
   const { cartItems, getTotalPrice, clearCart } = useCart();
   const { toast } = useToast();
 
+  // Redirect to login if user is not authenticated
+  useEffect(() => {
+    if (!user) {
+      toast({
+        title: t('error'),
+        description: t('pleaseLoginToCheckout') || 'Please login to proceed with checkout',
+        variant: 'destructive',
+      });
+      navigate('/auth', { replace: true });
+    }
+  }, [user, navigate, toast, t]);
+
   // الحصول على بيانات الشراء المباشر من التنقل
   const directBuyState = location.state as DirectBuyState;
   const isDirectBuy = directBuyState?.directBuy || false;

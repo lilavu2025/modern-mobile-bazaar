@@ -11,6 +11,27 @@ export const useCart = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Transform database product to Product interface
+  const transformProduct = (dbProduct: any): Product => ({
+    id: dbProduct.id,
+    name: dbProduct.name_ar,
+    nameEn: dbProduct.name_en,
+    description: dbProduct.description_ar,
+    descriptionEn: dbProduct.description_en,
+    price: dbProduct.price,
+    originalPrice: dbProduct.original_price,
+    wholesalePrice: dbProduct.wholesale_price,
+    image: dbProduct.image,
+    images: dbProduct.images || [],
+    category: dbProduct.category_id,
+    inStock: dbProduct.in_stock ?? true,
+    rating: dbProduct.rating || 0,
+    reviews: dbProduct.reviews_count || 0,
+    discount: dbProduct.discount,
+    featured: dbProduct.featured || false,
+    tags: dbProduct.tags || []
+  });
+
   // جلب السلة من Supabase عند تحميل الصفحة
   const fetchCartItems = async () => {
     if (!user) return;
@@ -28,7 +49,7 @@ export const useCart = () => {
       setCartItems(
         data.map((row: any) => ({
           id: row.id,
-          product: row.product,
+          product: transformProduct(row.product),
           quantity: row.quantity,
         }))
       );
@@ -76,10 +97,17 @@ export const useCart = () => {
 
   // إضافة منتج للسلة في Supabase
   const addToCart = async (product: Product, quantity: number = 1) => {
-    if (!user || !product || !product.id) {
+    if (!product || !product.id) {
       toast.error(t('invalidProduct'));
       return;
     }
+    
+    // If user is not logged in, show login message but still allow adding to cart
+    if (!user) {
+      toast.error(t('pleaseLoginToAddToCart') || 'Please login to add items to cart');
+      return;
+    }
+    
     setIsLoading(true);
     try {
       // تحقق إذا المنتج موجود مسبقاً
@@ -94,41 +122,49 @@ export const useCart = () => {
       }
       if (existing) {
         // تحديث الكمية
+        const newQuantity = existing.quantity + quantity;
         const { error: updateError } = await supabase
           .from('cart')
-          .update({ quantity: existing.quantity + quantity })
+          .update({ quantity: newQuantity })
           .eq('id', existing.id);
         if (updateError) throw updateError;
+        
+        // Update local state immediately
+        setCartItems(items => items.map(item => 
+          item.product.id === product.id 
+            ? { ...item, quantity: newQuantity }
+            : item
+        ));
       } else {
         // إضافة جديد
-        const { error: insertError } = await supabase
+        const { data: newItem, error: insertError } = await supabase
           .from('cart')
           .insert({
             user_id: user.id,
             product_id: product.id,
             quantity,
             added_at: new Date().toISOString(),
-          });
+          })
+          .select('*, product:products(*)')
+          .single();
         if (insertError) throw insertError;
+        
+        // Add to local state immediately
+        if (newItem) {
+          const cartItem = {
+            id: newItem.id,
+            product: transformProduct(newItem.product),
+            quantity: newItem.quantity,
+          };
+          setCartItems(items => [...items, cartItem]);
+        }
       }
       toast.success(`${product.name} ${t('addedToCart')}`);
-      // إعادة جلب السلة
-      const { data, error } = await supabase
-        .from('cart')
-        .select('*, product:products(*)')
-        .eq('user_id', user.id);
-      if (!error && Array.isArray(data)) {
-        setCartItems(
-          data.map((row: any) => ({
-            id: row.id,
-            product: row.product,
-            quantity: row.quantity,
-          }))
-        );
-      }
     } catch (error) {
       console.error('Error adding to cart:', error);
       toast.error(t('errorAddingToCart'));
+      // Refresh cart on error to ensure consistency
+      await fetchCartItems();
     } finally {
       setIsLoading(false);
     }

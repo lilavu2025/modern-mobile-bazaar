@@ -49,8 +49,7 @@ const Products: React.FC = () => {
           return a.price - b.price;
         case 'price-high':
           return b.price - a.price;
-        case 'rating':
-          return b.rating - a.rating;
+
         case 'newest':
           return 0; // Would use created_at if available
         default:
@@ -150,7 +149,7 @@ const Products: React.FC = () => {
                     <SelectItem value="newest">{t('newest')}</SelectItem>
                     <SelectItem value="price-low">{t('priceLowHigh')}</SelectItem>
                     <SelectItem value="price-high">{t('priceHighLow')}</SelectItem>
-                    <SelectItem value="rating">{t('topRated')}</SelectItem>
+
                   </SelectContent>
                 </Select>
               </div>

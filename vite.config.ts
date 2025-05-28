@@ -6,6 +6,9 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  define: {
+    global: 'globalThis',
+  },
   server: {
     host: "::",
     port: 8080,
@@ -74,22 +77,70 @@ export default defineConfig(({ mode }) => ({
       compress: {
         drop_console: mode === 'production',
         drop_debugger: mode === 'production',
+        pure_funcs: mode === 'production' ? ['console.log', 'console.info'] : [],
+      },
+      mangle: {
+        safari10: true,
       },
     },
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
-          router: ['react-router-dom'],
-          ui: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu'],
-          supabase: ['@supabase/supabase-js'],
-          query: ['@tanstack/react-query'],
+        manualChunks: (id) => {
+          // Vendor chunks
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom')) {
+              return 'vendor';
+            }
+            if (id.includes('react-router')) {
+              return 'router';
+            }
+            if (id.includes('@radix-ui')) {
+              return 'ui';
+            }
+            if (id.includes('@supabase')) {
+              return 'supabase';
+            }
+            if (id.includes('@tanstack')) {
+              return 'query';
+            }
+            if (id.includes('recharts')) {
+              return 'charts';
+            }
+            if (id.includes('lucide-react')) {
+              return 'icons';
+            }
+            return 'vendor-misc';
+          }
+          // Admin chunks
+          if (id.includes('/admin/') || id.includes('AdminDashboard')) {
+            return 'admin';
+          }
+        },
+        chunkFileNames: (chunkInfo) => {
+          const facadeModuleId = chunkInfo.facadeModuleId ? chunkInfo.facadeModuleId.split('/').pop()?.replace('.tsx', '').replace('.ts', '') : 'chunk';
+          return `assets/[name]-[hash].js`;
         },
       },
     },
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 500,
+    sourcemap: false,
   },
   optimizeDeps: {
-    include: ['react', 'react-dom', 'react-router-dom'],
-  },
+      include: [
+        'react',
+        'react-dom',
+        'react-router-dom',
+        'react-hook-form',
+        'lucide-react',
+        'date-fns',
+        'recharts',
+        'react-intersection-observer',
+        'react-helmet-async',
+        'yup',
+        'clsx',
+        'tailwind-merge',
+        '@supabase/supabase-js',
+        '@tanstack/react-query'
+      ]
+    },
 }));

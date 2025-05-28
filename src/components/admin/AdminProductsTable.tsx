@@ -71,7 +71,7 @@ const AdminProductsTable: React.FC<AdminProductsTableProps> = ({
                 <TableCell className="font-medium">{product.name}</TableCell>
                 <TableCell>{product.category}</TableCell>
                 <TableCell>{product.price} {t('currency')}</TableCell>
-                <TableCell>0</TableCell>
+                <TableCell>{product.stock_quantity || 0}</TableCell>
                 <TableCell>
                   <Badge variant={product.inStock ? 'default' : 'destructive'}>
                     {product.inStock ? t('inStock') : t('outOfStock')}

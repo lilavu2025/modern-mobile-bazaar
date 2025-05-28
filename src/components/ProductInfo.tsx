@@ -27,23 +27,7 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
         {product.nameEn && <p className="text-gray-600">{product.nameEn}</p>}
       </div>
 
-      {/* Rating */}
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-1">
-          {[...Array(5)].map((_, i) => (
-            <Star
-              key={i}
-              className={`h-5 w-5 ${
-                i < Math.floor(product.rating || 0)
-                  ? 'text-yellow-400 fill-current'
-                  : 'text-gray-300'
-              }`}
-            />
-          ))}
-          <span className="mr-2 font-semibold">{product.rating || 0}</span>
-        </div>
-        <span className="text-gray-600">({product.reviews || 0} {t('reviews')})</span>
-      </div>
+
 
       {/* Price */}
       <div className="flex items-center gap-4">

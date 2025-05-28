@@ -38,7 +38,7 @@ export const useAdminUsers = () => {
 
       console.log('Fetching all registered users...');
 
-      // First, get all users from profiles table
+      // Get all users from profiles table
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
@@ -46,68 +46,25 @@ export const useAdminUsers = () => {
 
       if (profilesError) {
         console.error('Error fetching profiles:', profilesError);
+        throw profilesError;
       }
 
       console.log('Profiles data fetched:', profilesData);
 
-      // Try to get auth users using admin.listUsers()
-      let authUsers: any[] = [];
-      try {
-        const { data: authResponse, error: authError } = await supabase.auth.admin.listUsers();
-        
-        if (authError) {
-          console.log('Cannot access auth.admin.listUsers (expected in client-side):', authError.message);
-        } else {
-          authUsers = authResponse.users || [];
-          console.log('Auth users fetched:', authUsers.length);
-        }
-      } catch (error) {
-        console.log('Auth admin access not available on client side');
-      }
-
-      // Create a map of profiles for easy lookup
-      const profilesMap = new Map();
+      // Create users list from profiles data
+      const allUsers: UserProfile[] = [];
+      
       if (profilesData) {
         profilesData.forEach(profile => {
-          profilesMap.set(profile.id, profile);
-        });
-      }
-
-      // Combine auth users with profile data
-      const allUsers: UserProfile[] = [];
-
-      // Process auth users first (these are the definitive list of registered users)
-      if (authUsers.length > 0) {
-        authUsers.forEach(authUser => {
-          const profile = profilesMap.get(authUser.id);
-          
           allUsers.push({
-            id: authUser.id,
-            full_name: profile?.full_name || authUser.user_metadata?.full_name || 'غير محدد',
-            phone: profile?.phone || authUser.user_metadata?.phone || null,
-            user_type: profile?.user_type || 'retail',
-            created_at: authUser.created_at,
-            email: authUser.email || 'غير محدد',
-            email_confirmed_at: authUser.email_confirmed_at,
-            last_sign_in_at: authUser.last_sign_in_at,
+            id: profile.id,
+            full_name: profile.full_name || 'غير محدد',
+            phone: profile.phone,
+            user_type: profile.user_type || 'retail',
+            created_at: profile.created_at,
+            email: profile.email || 'غير محدد',
           });
         });
-      } else {
-        // Fallback: if we can't access auth users, use profiles only
-        if (profilesData) {
-          profilesData.forEach(profile => {
-            allUsers.push({
-              id: profile.id,
-              full_name: profile.full_name || 'غير محدد',
-              phone: profile.phone,
-              user_type: profile.user_type || 'retail',
-              created_at: profile.created_at,
-              email: profile.email || 'غير محدد',
-              email_confirmed_at: profile.created_at,
-              last_sign_in_at: profile.updated_at,
-            });
-          });
-        }
       }
 
       console.log('Final users list:', allUsers);

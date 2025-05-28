@@ -632,7 +632,7 @@ const AdminOrders: React.FC = () => {
                       العميل: {order.profiles?.full_name || 'غير محدد'}
                     </p>
                     <p className="text-sm text-gray-600">
-                      التاريخ: {new Date(order.created_at).toLocaleDateString('ar-SA')}
+                      التاريخ: {new Date(order.created_at).toLocaleDateString('en-GB')}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
