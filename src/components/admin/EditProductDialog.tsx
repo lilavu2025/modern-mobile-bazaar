@@ -19,6 +19,9 @@ import ProductCategoryField from './ProductCategoryField';
 import ProductToggleFields from './ProductToggleFields';
 
 interface Product {
+  active: any;
+  tags: any[];
+  stock_quantity: number;
   id: string;
   name_ar: string;
   name_en: string;
@@ -124,12 +127,12 @@ const EditProductDialog: React.FC<EditProductDialogProps> = ({
         image: product.image || '',
         images: product.images || [product.image].filter(Boolean),
         category_id: product.category_id || '',
-        in_stock: product.in_stock || false,
+        in_stock: product.in_stock !== undefined ? product.in_stock : true,
         discount: product.discount || 0,
-        featured: product.featured || false,
-        active: true,
-        tags: [],
-        stock_quantity: (product as any).stock_quantity || 0,
+        featured: product.featured !== undefined ? product.featured : false,
+        active: product.active !== undefined ? product.active : true,
+        tags: product.tags || [],
+        stock_quantity: product.stock_quantity || 0,
       });
     }
   }, [product]);

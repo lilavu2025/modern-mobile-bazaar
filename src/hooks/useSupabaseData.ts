@@ -100,6 +100,7 @@ export const useProducts = (categoryId?: string) => {
           discount: product.discount ? Number(product.discount) : undefined,
           featured: product.featured || false,
           tags: product.tags || [],
+          stock_quantity: product.stock_quantity || 0,
         };
       });
     },

@@ -17,6 +17,8 @@ export interface Product {
   discount?: number;
   featured?: boolean;
   tags?: string[];
+  stock_quantity?: number;
+  active?: boolean;
 }
 
 export interface ProductFormData {
