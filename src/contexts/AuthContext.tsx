@@ -1,7 +1,8 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 interface Profile {
   id: string;
@@ -30,6 +31,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Fetch profile by userId, return the profile or null
   const fetchProfile = async (userId: string): Promise<Profile | null> => {
@@ -91,28 +93,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Redirect user based on user_type
-  const handleUserRedirection = (profile: Profile) => {
-    if (profile.user_type === 'admin') {
-      navigate('/admin');
-    } else if (profile.user_type === 'wholesale') {
-      navigate('/wholesale');
-    } else {
-      navigate('/'); // retail or default route
+  // Redirect user based on user_type - only for specific events
+  const handleUserRedirection = (profile: Profile, event: string) => {
+    // Only redirect on successful login, not on token refresh or other events
+    if (event !== 'SIGNED_IN') return;
+    
+    // Don't redirect if already on auth page or email confirmation
+    if (location.pathname === '/auth' || location.pathname === '/email-confirmation') {
+      if (profile.user_type === 'admin') {
+        navigate('/admin');
+      } else if (profile.user_type === 'wholesale') {
+        navigate('/wholesale');
+      } else {
+        navigate('/');
+      }
     }
   };
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state change:', event, 'session:', !!session);
+        
         setSession(session);
         setUser(session?.user ?? null);
 
         if (session?.user) {
           const fetchedProfile = await fetchProfile(session.user.id);
-
-          if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && fetchedProfile) {
-            handleUserRedirection(fetchedProfile);
+          
+          // Only redirect on sign in event
+          if (event === 'SIGNED_IN' && fetchedProfile) {
+            handleUserRedirection(fetchedProfile, event);
           }
         } else {
           setProfile(null);
@@ -124,20 +135,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Check for existing session on mount
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session check:', !!session);
       setSession(session);
       setUser(session?.user ?? null);
 
       if (session?.user) {
-        fetchProfile(session.user.id).then((profile) => {
-          if (profile) handleUserRedirection(profile);
-        });
+        fetchProfile(session.user.id);
       }
 
       setLoading(false);
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, []); // Remove navigate and location from dependencies
 
   // SignIn function
   const signIn = async (email: string, password: string) => {

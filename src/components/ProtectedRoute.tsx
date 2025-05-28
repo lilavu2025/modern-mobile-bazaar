@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -16,8 +17,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 }) => {
   const { user, profile, loading } = useAuth();
   const { t } = useLanguage();
+  const location = useLocation();
 
-  console.log('ProtectedRoute - user:', user, 'profile:', profile, 'loading:', loading);
+  console.log('ProtectedRoute - user:', !!user, 'profile:', !!profile, 'loading:', loading, 'path:', location.pathname);
 
   if (loading) {
     return (
@@ -27,12 +29,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
-  // For checkout, require authentication
+  // For authentication requirement
   if (requireAuth && !user) {
-    return <Navigate to="/auth" replace />;
+    return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
-  if (requireAdmin && profile?.user_type !== 'admin') {
+  // For admin requirement
+  if (requireAdmin && (!profile || profile.user_type !== 'admin')) {
     return <Navigate to="/" replace />;
   }
 
