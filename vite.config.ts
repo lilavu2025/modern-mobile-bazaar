@@ -100,9 +100,6 @@ export default defineConfig(({ mode }) => ({
             if (id.includes('@supabase')) {
               return 'supabase';
             }
-            if (id.includes('@tanstack')) {
-              return 'query';
-            }
             if (id.includes('recharts')) {
               return 'charts';
             }
@@ -117,7 +114,6 @@ export default defineConfig(({ mode }) => ({
           }
         },
         chunkFileNames: (chunkInfo) => {
-          const facadeModuleId = chunkInfo.facadeModuleId ? chunkInfo.facadeModuleId.split('/').pop()?.replace('.tsx', '').replace('.ts', '') : 'chunk';
           return `assets/[name]-[hash].js`;
         },
       },
@@ -126,21 +122,23 @@ export default defineConfig(({ mode }) => ({
     sourcemap: false,
   },
   optimizeDeps: {
-      include: [
-        'react',
-        'react-dom',
-        'react-router-dom',
-        'react-hook-form',
-        'lucide-react',
-        'date-fns',
-        'recharts',
-        'react-intersection-observer',
-        'react-helmet-async',
-        'yup',
-        'clsx',
-        'tailwind-merge',
-        '@supabase/supabase-js',
-        '@tanstack/react-query'
-      ]
-    },
+    include: [
+      'react',
+      'react-dom',
+      'react-router-dom',
+      'react-hook-form',
+      'lucide-react',
+      'date-fns',
+      'recharts',
+      'react-intersection-observer',
+      'react-helmet-async',
+      'yup',
+      'clsx',
+      'tailwind-merge',
+      '@supabase/supabase-js'
+    ],
+    exclude: [
+      '@tanstack/react-query'
+    ]
+  },
 }));

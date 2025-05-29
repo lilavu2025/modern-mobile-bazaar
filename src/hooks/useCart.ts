@@ -10,6 +10,7 @@ export const useCart = () => {
   const { user } = useAuth(); // بيانات المستخدم الحالي
   const [cartItems, setCartItems] = useState<CartItem[]>([]); // تخزين عناصر السلة
   const [isLoading, setIsLoading] = useState(false); // حالة تحميل العمليات المتعلقة بالسلة
+  const [error, setError] = useState<Error | null>(null); // حالة الخطأ
 
   // دالة لتحويل المنتج من قاعدة البيانات إلى واجهة المنتج المطلوبة في التطبيق
   const transformProduct = (dbProduct: any): Product => ({
@@ -36,30 +37,19 @@ export const useCart = () => {
   const fetchCartItems = async () => {
     if (!user) return;
     setIsLoading(true);
-    const { data, error } = await supabase
-      .from('cart')
-      .select('*, product:products(*)')
-      .eq('user_id', user.id);
-    setIsLoading(false);
-    if (error) {
-      console.error('Error fetching cart from Supabase:', error);
-      return;
-    }
-    console.log('fetchCartItems: fetching cart for user:', user.id);
-    setIsLoading(true);
     try {
       const { data, error } = await supabase
         .from('cart')
         .select('*, product:products(*)')
         .eq('user_id', user.id);
-
       setIsLoading(false);
-
       if (error) {
+        setError(error);
         console.error('Error fetching cart from Supabase:', error);
         return;
+      } else {
+        setError(null);
       }
-
       if (Array.isArray(data)) {
         const transformedItems = data.map((row: any) => ({
           id: row.id,
@@ -71,6 +61,7 @@ export const useCart = () => {
       }
     } catch (error) {
       setIsLoading(false);
+      setError(error instanceof Error ? error : new Error(String(error)));
       console.error('Exception in fetchCartItems:', error);
     }
   };
@@ -336,6 +327,8 @@ export const useCart = () => {
 
   return {
     cartItems,
+    isLoading,
+    error,
     addToCart,
     removeFromCart,
     updateQuantity,
@@ -344,6 +337,5 @@ export const useCart = () => {
     getTotalPrice,
     getItemQuantity,
     buyNow,
-    isLoading,
   };
 };

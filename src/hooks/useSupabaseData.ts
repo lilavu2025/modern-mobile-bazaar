@@ -3,15 +3,32 @@ import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 
+// دالة مساعدة لتجديد التوكن إذا كان قريب من الانتهاء
+async function refreshSessionIfNeeded(session) {
+  if (!session) return;
+  // إذا بقي أقل من 3 دقائق على انتهاء التوكن، جددها
+  const expiresIn = session.expires_at * 1000 - Date.now();
+  if (expiresIn < 3 * 60 * 1000) {
+    try {
+      await supabase.auth.refreshSession();
+      // يمكن إضافة log هنا
+    } catch (err) {
+      // يمكن التعامل مع الخطأ هنا
+    }
+  }
+}
+
 /**
  * هوك لجلب الفئات (Categories) من قاعدة البيانات، مع عدد المنتجات داخل كل فئة
  */
 export const useCategories = () => {
   const { language } = useLanguage();
+  const { session } = useAuth();
 
-  return useQuery({
+  const query = useQuery({
     queryKey: ['categories', language],
     queryFn: async () => {
+      await refreshSessionIfNeeded(session);
       console.log('📦 بدء جلب الفئات من Supabase...');
 
       // جلب الفئات النشطة فقط
@@ -43,7 +60,7 @@ export const useCategories = () => {
 
           return {
             id: category.id,
-            name: category[`name_${language}` as keyof typeof category] as string,
+            name: category[`name_${language}`],
             nameEn: category.name_en,
             image: category.image,
             icon: category.icon,
@@ -56,6 +73,10 @@ export const useCategories = () => {
       return categoriesWithCounts;
     },
   });
+  return {
+    ...query,
+    error: query.error,
+  };
 };
 
 /**
@@ -63,25 +84,26 @@ export const useCategories = () => {
  */
 export const useProducts = (categoryId?: string) => {
   const { language } = useLanguage();
-  const { profile } = useAuth();
+  const { profile, session } = useAuth();
 
-  return useQuery({
+  const query = useQuery({
     queryKey: ['products', categoryId, language, profile?.user_type],
     queryFn: async () => {
+      await refreshSessionIfNeeded(session);
       console.log('🛍️ بدء جلب المنتجات...');
       console.log('🔍 الفئة المحددة:', categoryId || 'all');
       console.log('👤 نوع المستخدم:', profile?.user_type || 'guest');
 
-      let query = supabase
+      let q = supabase
         .from('products')
         .select('*, categories!inner(*)') // ربط المنتج بالفئة داخلياً
         .eq('active', true);
 
       if (categoryId && categoryId !== 'all') {
-        query = query.eq('category_id', categoryId);
+        q = q.eq('category_id', categoryId);
       }
 
-      const { data, error } = await query.order('created_at', { ascending: false });
+      const { data, error } = await q.order('created_at', { ascending: false });
 
       if (error) {
         console.error('❌ خطأ أثناء جلب المنتجات:', error);
@@ -99,16 +121,16 @@ export const useProducts = (categoryId?: string) => {
 
         return {
           id: product.id,
-          name: product[`name_${language}` as keyof typeof product] as string,
+          name: product[`name_${language}`],
           nameEn: product.name_en,
-          description: product[`description_${language}` as keyof typeof product] as string,
+          description: product[`description_${language}`],
           descriptionEn: product.description_en,
           price: displayPrice,
           originalPrice: product.original_price ? Number(product.original_price) : undefined,
           wholesalePrice: product.wholesale_price ? Number(product.wholesale_price) : undefined,
           image: product.image,
           images: product.images || [],
-          category: product.categories[`name_${language}` as keyof typeof product.categories] as string,
+          category: product.categories[`name_${language}`],
           inStock: product.in_stock || false,
           rating: Number(product.rating) || 0,
           reviews: product.reviews_count || 0,
@@ -123,6 +145,10 @@ export const useProducts = (categoryId?: string) => {
       return processedProducts;
     },
   });
+  return {
+    ...query,
+    error: query.error,
+  };
 };
 
 /**
@@ -130,10 +156,11 @@ export const useProducts = (categoryId?: string) => {
  */
 export const useBanners = () => {
   const { language } = useLanguage();
-
+  const { session } = useAuth();
   return useQuery({
     queryKey: ['banners', language],
     queryFn: async () => {
+      await refreshSessionIfNeeded(session);
       console.log('🖼️ بدء جلب البنرات...');
 
       const { data, error } = await supabase
@@ -149,8 +176,8 @@ export const useBanners = () => {
 
       const banners = (data || []).map(banner => ({
         id: banner.id,
-        title: banner[`title_${language}` as keyof typeof banner] as string,
-        subtitle: banner[`subtitle_${language}` as keyof typeof banner] as string,
+        title: banner[`title_${language}`],
+        subtitle: banner[`subtitle_${language}`],
         image: banner.image,
         link: banner.link,
         active: banner.active,

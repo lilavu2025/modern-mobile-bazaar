@@ -1,8 +1,8 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { toast } from "@/hooks/use-toast";
 
 interface Profile {
   id: string;
@@ -261,6 +261,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     setProfile(prev => prev ? { ...prev, ...data } : null);
   };
+
+  // مراقبة انتهاء صلاحية الجلسة تلقائيًا
+  useEffect(() => {
+    if (!loading && session === null && user !== null) {
+      toast({
+        title: "انتهت الجلسة",
+        description: "يرجى تسجيل الدخول مجددًا.",
+        variant: "destructive"
+      });
+      signOut();
+    }
+  }, [session, loading, user]);
+
+  // منع انتهاء السيشن تلقائيًا عبر تفعيل التحديث التلقائي للـ token
+  useEffect(() => {
+    const interval = setInterval(() => {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (!session) return;
+        const expiresIn = session.expires_at ? session.expires_at * 1000 - Date.now() : 0;
+        if (expiresIn < 1000 * 60 * 10) {
+          supabase.auth.refreshSession();
+        }
+      });
+    }, 1000 * 60 * 5);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <AuthContext.Provider

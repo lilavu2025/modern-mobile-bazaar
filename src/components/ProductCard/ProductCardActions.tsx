@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Eye, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -6,17 +5,19 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { Product } from '@/types';
 import FavoriteButton from './FavoriteButton';
 
-interface ProductCardActionsProps {
+export interface ProductCardActionsProps {
   product: Product;
   onQuickView: () => void;
-  onShare: () => void;
+  onFavorite: () => Promise<void>;
+  onShare: () => Promise<void>;
 }
 
-const ProductCardActions = ({ 
+const ProductCardActions: React.FC<ProductCardActionsProps> = ({ 
   product, 
   onQuickView, 
+  onFavorite, 
   onShare 
-}: ProductCardActionsProps) => {
+}) => {
   const { isRTL } = useLanguage();
 
   return (
@@ -33,6 +34,7 @@ const ProductCardActions = ({
         productId={product.id}
         variant="secondary"
         className="h-8 w-8 bg-white/90 hover:bg-white shadow-md"
+        onClick={onFavorite}
       />
       <Button
         size="icon"

@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAdminUsers } from '@/hooks/useAdminUsers';
@@ -76,7 +75,7 @@ const AdminUsers: React.FC = () => {
           setSortOrder={handleSortOrderChange}
         />
 
-        <UsersTable users={filteredAndSortedUsers} isLoading={isLoading} />
+        <UsersTable users={filteredAndSortedUsers} isLoading={isLoading} error={error} />
       </div>
     </div>
   );

@@ -12,6 +12,8 @@ export const useFavorites = () => {
   const [favorites, setFavorites] = useState<string[]>([]);
   // حالة لتحكم في تحميل البيانات
   const [isLoading, setIsLoading] = useState(false);
+  // حالة لتخزين الأخطاء
+  const [error, setError] = useState<Error | null>(null);
 
   // ------------------------------------
   // 1. جلب المفضلة عند تحميل الصفحة أو عند تغير المستخدم
@@ -47,16 +49,20 @@ export const useFavorites = () => {
           .order('added_at', { ascending: false });
 
         if (error) {
+          setError(error);
           console.error('[fetchFavorites] خطأ في جلب المفضلة من Supabase:', error);
           toast.error(t('errorLoadingFavorites'));
           setFavorites([]);
           return;
+        } else {
+          setError(null);
         }
 
         const favoriteIds = Array.isArray(data) ? data.map((row: any) => row.product_id) : [];
         console.log('[fetchFavorites] تم جلب المفضلة بنجاح:', favoriteIds);
         setFavorites(favoriteIds);
       } catch (error) {
+        setError(error instanceof Error ? error : new Error(String(error)));
         console.error('[fetchFavorites] خطأ غير متوقع في جلب المفضلة:', error);
         toast.error(t('errorLoadingFavorites'));
       } finally {
@@ -308,6 +314,7 @@ export const useFavorites = () => {
   return {
     favorites: Array.isArray(favorites) ? favorites : [],
     isLoading,
+    error,
     toggleFavorite,
     isFavorite,
     getFavoritesCount,

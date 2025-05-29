@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -20,9 +19,10 @@ interface UserProfile {
 interface UsersTableProps {
   users: UserProfile[];
   isLoading: boolean;
+  error?: string | null;
 }
 
-const UsersTable: React.FC<UsersTableProps> = ({ users, isLoading }) => {
+const UsersTable: React.FC<UsersTableProps> = ({ users, isLoading, error }) => {
   const { t } = useLanguage();
 
   if (isLoading) {
@@ -34,6 +34,28 @@ const UsersTable: React.FC<UsersTableProps> = ({ users, isLoading }) => {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
               <span className="text-gray-600">{t('loadingData')}</span>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="shadow-xl border-0 overflow-hidden">
+        <CardContent className="p-0">
+          <div className="text-center py-16">
+            <div className="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <span className="text-4xl text-red-500">!</span>
+            </div>
+            <h3 className="text-xl font-medium text-red-900 mb-2">{t('errorLoadingData') || 'خطأ في تحميل البيانات'}</h3>
+            <p className="text-red-600 mb-4">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-700 transition-colors"
+            >
+              {t('retry') || 'إعادة المحاولة'}
+            </button>
           </div>
         </CardContent>
       </Card>

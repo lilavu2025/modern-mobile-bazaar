@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,9 +6,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from 'sonner';
 
-interface FavoriteButtonProps {
+export interface FavoriteButtonProps {
   productId: string;
   className?: string;
+  onClick?: () => void | Promise<void>; // <-- Add this line
   size?: 'sm' | 'icon' | 'default';
   variant?: 'ghost' | 'outline' | 'secondary';
 }
@@ -18,7 +18,8 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
   productId, 
   className = '', 
   size = 'icon',
-  variant = 'ghost'
+  variant = 'ghost',
+  onClick, // <-- Add this line
 }) => {
   const { toggleFavorite, isFavorite } = useFavorites();
   const { user } = useAuth();
@@ -55,7 +56,10 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
       size={size}
       variant={variant}
       className={`${className} ${isFav ? 'text-red-500' : ''}`}
-      onClick={handleFavorite}
+      onClick={(e) => {
+        handleFavorite(e);
+        if (onClick) onClick(); // Call onClick prop if provided
+      }}
       aria-label={isFav ? t('removeFromFavorites') : t('addToFavorites')}
     >
       <Heart className={`h-4 w-4 ${isFav ? 'fill-current' : ''}`} />

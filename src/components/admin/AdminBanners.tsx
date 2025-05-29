@@ -58,6 +58,7 @@ const AdminBanners: React.FC = () => {
     active: true
   });
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // جلب البانرات عند تحميل الصفحة
   useEffect(() => {
@@ -68,6 +69,7 @@ const AdminBanners: React.FC = () => {
   const fetchBanners = async () => {
     console.log('جلب البانرات من قاعدة البيانات...');
     try {
+      setError(null);
       const { data, error } = await supabase
         .from('banners')
         .select('*')
@@ -76,8 +78,9 @@ const AdminBanners: React.FC = () => {
       if (error) throw error;
       setBanners(data || []);
       console.log('تم جلب البانرات:', data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('خطأ أثناء جلب البانرات:', error);
+      setError(error.message || 'حدث خطأ أثناء تحميل البانرات');
       toast.error('Error loading banners');
     } finally {
       setLoading(false);
@@ -272,6 +275,30 @@ const AdminBanners: React.FC = () => {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-96">
+        <div className="text-center">
+          <div className="flex flex-col items-center mb-4">
+            <X className="h-16 w-16 text-red-300 mb-2" />
+            <h3 className="text-lg font-medium text-red-900 mb-2">{t('errorLoadingBanners') || 'خطأ في تحميل البانرات'}</h3>
+            <p className="text-red-600 mb-4">{error}</p>
+          </div>
+          <button
+            onClick={() => {
+              setLoading(true);
+              setError(null);
+              fetchBanners();
+            }}
+            className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-700 transition-colors"
+          >
+            {t('retry') || 'إعادة المحاولة'}
+          </button>
+        </div>
       </div>
     );
   }

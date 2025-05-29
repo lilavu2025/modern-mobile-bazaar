@@ -1,22 +1,25 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Product } from '@/types';
 import ProductCardBadges from './ProductCardBadges';
 import ProductCardActions from './ProductCardActions';
 
-interface ProductCardImageProps {
+export interface ProductCardImageProps {
   product: Product;
+  isFavorite: boolean;
   onQuickView: () => void;
-  onShare: () => void;
+  onFavorite: () => Promise<void>;
+  onShare: () => Promise<void>;
   isLoading?: boolean;
 }
 
-const ProductCardImage = ({ 
+const ProductCardImage: React.FC<ProductCardImageProps> = ({ 
   product, 
+  isFavorite,
   onQuickView, 
+  onFavorite, 
   onShare,
-  isLoading = false
+  isLoading = false,
 }: ProductCardImageProps) => {
   return (
     <div className="relative overflow-hidden">
@@ -34,6 +37,7 @@ const ProductCardImage = ({
       <ProductCardActions 
         product={product}
         onQuickView={onQuickView}
+        onFavorite={onFavorite}
         onShare={onShare}
       />
     </div>

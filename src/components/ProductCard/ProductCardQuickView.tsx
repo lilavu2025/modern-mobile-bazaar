@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Star, ShoppingCart, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,29 +8,33 @@ import { Product } from '@/types';
 import QuantitySelector from '@/components/QuantitySelector';
 import FavoriteButton from '@/components/ProductCard/FavoriteButton';
 
-interface ProductCardQuickViewProps {
+export interface ProductCardQuickViewProps {
   product: Product;
   isOpen: boolean;
   onClose: () => void;
   quantity: number;
   cartQuantity: number;
-  onQuantityChange: (quantity: number) => void;
-  onAddToCart: () => void;
-  onBuyNow: () => void;
-  onShare: () => void;
+  isFavorite: boolean;
+  onQuantityChange: React.Dispatch<React.SetStateAction<number>>;
+  onAddToCart: () => Promise<void>;
+  onBuyNow: () => Promise<void>;
+  onFavorite: () => Promise<void>;
+  onShare: () => Promise<void>;
 }
 
-const ProductCardQuickView = ({ 
+const ProductCardQuickView: React.FC<ProductCardQuickViewProps> = ({ 
   product, 
   isOpen, 
   onClose, 
   quantity, 
   cartQuantity, 
+  isFavorite, 
   onQuantityChange, 
   onAddToCart, 
   onBuyNow, 
+  onFavorite, 
   onShare 
-}: ProductCardQuickViewProps) => {
+}) => {
   const { t, isRTL } = useLanguage();
   const { profile } = useAuth();
 
