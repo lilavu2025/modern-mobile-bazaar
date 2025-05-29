@@ -1,150 +1,64 @@
+// /home/ubuntu/modern-mobile-bazaar/src/hooks/useSupabaseData.ts
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { supabaseService } from '@/services/supabaseService'; // Import the service
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
-
-// دالة مساعدة لتجديد التوكن إذا كان قريب من الانتهاء
-async function refreshSessionIfNeeded(session) {
-  if (!session) return;
-  // إذا بقي أقل من 3 دقائق على انتهاء التوكن، جددها
-  const expiresIn = session.expires_at * 1000 - Date.now();
-  if (expiresIn < 3 * 60 * 1000) {
-    try {
-      await supabase.auth.refreshSession();
-      // يمكن إضافة log هنا
-    } catch (err) {
-      // يمكن التعامل مع الخطأ هنا
-    }
-  }
-}
+import { Profile } from '@/contexts/AuthContext'; // Assuming Profile type is here
+import { Language } from '@/types/language'; // Assuming Language type is defined
 
 /**
- * هوك لجلب الفئات (Categories) من قاعدة البيانات، مع عدد المنتجات داخل كل فئة
+ * Hook to fetch categories using SupabaseService.
  */
 export const useCategories = () => {
   const { language } = useLanguage();
-  const { session } = useAuth();
 
   const query = useQuery({
     queryKey: ['categories', language],
     queryFn: async () => {
-      await refreshSessionIfNeeded(session);
-      console.log('📦 بدء جلب الفئات من Supabase...');
+      console.log('📦 Calling SupabaseService to fetch categories...');
+      const { data, error } = await supabaseService.getCategories(language as Language);
 
-      // جلب الفئات النشطة فقط
-      const { data: categories, error: categoriesError } = await supabase
-        .from('categories')
-        .select('*')
-        .eq('active', true)
-        .order('created_at');
-
-      if (categoriesError) {
-        console.error('❌ خطأ أثناء جلب الفئات:', categoriesError);
-        throw categoriesError;
+      if (error) {
+        console.error('❌ Error fetching categories via service:', error);
+        throw error; // Re-throw the error for react-query to handle
       }
-
-      console.log('✅ الفئات التي تم جلبها:', categories);
-
-      // جلب عدد المنتجات داخل كل فئة
-      const categoriesWithCounts = await Promise.all(
-        (categories || []).map(async (category) => {
-          const { count, error: countError } = await supabase
-            .from('products')
-            .select('*', { count: 'exact', head: true })
-            .eq('category_id', category.id)
-            .eq('active', true);
-
-          if (countError) {
-            console.warn(`⚠️ خطأ أثناء حساب عدد المنتجات للفئة ${category.id}:`, countError);
-          }
-
-          return {
-            id: category.id,
-            name: category[`name_${language}`],
-            nameEn: category.name_en,
-            image: category.image,
-            icon: category.icon,
-            count: count || 0,
-          };
-        })
-      );
-
-      console.log('📊 الفئات بعد إضافة عدد المنتجات:', categoriesWithCounts);
-      return categoriesWithCounts;
+      console.log('📊 Categories fetched via service:', data);
+      return data || []; // Return data or an empty array if null
     },
+    // Add other react-query options if needed (e.g., staleTime, cacheTime)
   });
+
   return {
     ...query,
+    // Explicitly return error for easier handling in components
     error: query.error,
   };
 };
 
 /**
- * هوك لجلب المنتجات، ويمكن تحديد الفئة، ويأخذ بعين الاعتبار لغة المستخدم ونوعه (مفرق أو جملة)
+ * Hook to fetch products using SupabaseService.
  */
 export const useProducts = (categoryId?: string) => {
   const { language } = useLanguage();
-  const { profile, session } = useAuth();
+  const { profile } = useAuth(); // Get profile to determine user type
 
   const query = useQuery({
+    // Include user_type in the queryKey as price depends on it
     queryKey: ['products', categoryId, language, profile?.user_type],
     queryFn: async () => {
-      await refreshSessionIfNeeded(session);
-      console.log('🛍️ بدء جلب المنتجات...');
-      console.log('🔍 الفئة المحددة:', categoryId || 'all');
-      console.log('👤 نوع المستخدم:', profile?.user_type || 'guest');
-
-      let q = supabase
-        .from('products')
-        .select('*, categories!inner(*)') // ربط المنتج بالفئة داخلياً
-        .eq('active', true);
-
-      if (categoryId && categoryId !== 'all') {
-        q = q.eq('category_id', categoryId);
-      }
-
-      const { data, error } = await q.order('created_at', { ascending: false });
+      console.log('🛍️ Calling SupabaseService to fetch products...');
+      const userType = profile?.user_type as Profile['user_type'] | null | undefined;
+      const { data, error } = await supabaseService.getProducts(language as Language, userType, categoryId);
 
       if (error) {
-        console.error('❌ خطأ أثناء جلب المنتجات:', error);
+        console.error('❌ Error fetching products via service:', error);
         throw error;
       }
-
-      console.log('✅ المنتجات التي تم جلبها:', data);
-
-      // تجهيز المنتجات للعرض
-      const processedProducts = (data || []).map(product => {
-        const isWholesale = profile?.user_type === 'wholesale';
-        const displayPrice = isWholesale && product.wholesale_price 
-          ? Number(product.wholesale_price) 
-          : Number(product.price);
-
-        return {
-          id: product.id,
-          name: product[`name_${language}`],
-          nameEn: product.name_en,
-          description: product[`description_${language}`],
-          descriptionEn: product.description_en,
-          price: displayPrice,
-          originalPrice: product.original_price ? Number(product.original_price) : undefined,
-          wholesalePrice: product.wholesale_price ? Number(product.wholesale_price) : undefined,
-          image: product.image,
-          images: product.images || [],
-          category: product.categories[`name_${language}`],
-          inStock: product.in_stock || false,
-          rating: Number(product.rating) || 0,
-          reviews: product.reviews_count || 0,
-          discount: product.discount ? Number(product.discount) : undefined,
-          featured: product.featured || false,
-          tags: product.tags || [],
-          stock_quantity: product.stock_quantity || 0,
-        };
-      });
-
-      console.log('📦 المنتجات المعالجة:', processedProducts);
-      return processedProducts;
+      console.log('📦 Products fetched via service:', data);
+      return data || [];
     },
   });
+
   return {
     ...query,
     error: query.error,
@@ -152,39 +66,29 @@ export const useProducts = (categoryId?: string) => {
 };
 
 /**
- * هوك لجلب البنرات (الإعلانات) المعروضة في الواجهة الرئيسية، حسب اللغة
+ * Hook to fetch banners using SupabaseService.
  */
 export const useBanners = () => {
   const { language } = useLanguage();
-  const { session } = useAuth();
+
   return useQuery({
     queryKey: ['banners', language],
     queryFn: async () => {
-      await refreshSessionIfNeeded(session);
-      console.log('🖼️ بدء جلب البنرات...');
-
-      const { data, error } = await supabase
-        .from('banners')
-        .select('*')
-        .eq('active', true)
-        .order('sort_order');
+      console.log('🖼️ Calling SupabaseService to fetch banners...');
+      const { data, error } = await supabaseService.getBanners(language as Language);
 
       if (error) {
-        console.error('❌ خطأ أثناء جلب البنرات:', error);
+        console.error('❌ Error fetching banners via service:', error);
         throw error;
       }
-
-      const banners = (data || []).map(banner => ({
-        id: banner.id,
-        title: banner[`title_${language}`],
-        subtitle: banner[`subtitle_${language}`],
-        image: banner.image,
-        link: banner.link,
-        active: banner.active,
-      }));
-
-      console.log('🎯 البنرات المعالجة:', banners);
-      return banners;
+      console.log('🎯 Banners fetched via service:', data);
+      return data || [];
     },
   });
 };
+
+// Add other hooks here that need data from Supabase, refactoring them
+// to use supabaseService similarly.
+// For example, hooks for fetching user addresses, orders, favorites, etc.
+// should also be updated.
+
