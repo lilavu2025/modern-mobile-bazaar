@@ -1,3 +1,4 @@
+
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
@@ -136,9 +137,6 @@ export default defineConfig(({ mode }) => ({
       'clsx',
       'tailwind-merge',
       '@supabase/supabase-js'
-    ],
-    exclude: [
-      '@tanstack/react-query'
     ]
   },
 }));

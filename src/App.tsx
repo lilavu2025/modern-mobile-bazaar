@@ -1,8 +1,8 @@
+
 import "./App.css";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { LanguageProvider } from "@/contexts/LanguageContext";
@@ -64,18 +64,6 @@ const LoadingSpinner = memo(() => (
   </div>
 ));
 
-// Preload critical routes
-const preloadRoutes = () => {
-  const routes = [Products, Categories, ProductDetails, Favorites];
-  routes.forEach(route => {
-    const componentImport = route as any;
-    if (componentImport && typeof componentImport === 'function') {
-      // Preload after initial render
-      setTimeout(() => componentImport(), 100);
-    }
-  });
-};
-
 // Component to trigger preloading
 const RoutePreloader = memo(() => {
   useEffect(() => {
@@ -100,110 +88,86 @@ const RoutePreloader = memo(() => {
   return null;
 });
 
-// Optimized QueryClient with better defaults
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 10 * 60 * 1000, // 10 minutes
-      retry: (failureCount, error: any) => {
-        if (error?.status === 404) return false;
-        return failureCount < 3;
-      },
-      refetchOnWindowFocus: false,
-      refetchOnMount: true,
-      refetchOnReconnect: 'always',
-      networkMode: 'offlineFirst',
-    },
-    mutations: {
-      retry: 1,
-      networkMode: 'offlineFirst',
-    },
-  },
-});
-
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <HelmetProvider>
-      <BrowserRouter>
-        <ErrorBoundary>
-          <LanguageProvider>
-            <AuthProvider>
-              <CartProvider>
-                <FavoritesProvider>
-                  <TooltipProvider>
-                    <div className="min-h-screen bg-background font-sans antialiased">
-                      <SEO />
-                      <Toaster />
-                      <Sonner />
-                      <PerformanceMonitorComponent />
-                      <RoutePreloader />
-                      <Suspense fallback={<LoadingSpinner />}>
-                        <Routes>
-                      <Route path="/" element={<Index />} />
-                      <Route path="/auth" element={<Auth />} />
-                      <Route path="/email-confirmation" element={<EmailConfirmation />} />
-                      <Route path="/products" element={<Products />} />
-                      <Route path="/categories" element={<Categories />} />
-                      <Route path="/product/:id" element={<ProductDetails />} />
-                      <Route path="/favorites" element={<Favorites />} />
-                      <Route path="/offers" element={
-                        <Suspense fallback={<PageLoader />}>
-                          <Offers />
-                        </Suspense>
-                      } />
-                      <Route path="/contact" element={
-                        <Suspense fallback={<PageLoader />}>
-                          <Contact />
-                        </Suspense>
-                      } />
-                      
-                      {/* Protected Routes */}
-                      <Route path="/orders" element={
-                        <ProtectedRoute>
+  <HelmetProvider>
+    <BrowserRouter>
+      <ErrorBoundary>
+        <LanguageProvider>
+          <AuthProvider>
+            <CartProvider>
+              <FavoritesProvider>
+                <TooltipProvider>
+                  <div className="min-h-screen bg-background font-sans antialiased">
+                    <SEO />
+                    <Toaster />
+                    <Sonner />
+                    <PerformanceMonitorComponent />
+                    <RoutePreloader />
+                    <Suspense fallback={<LoadingSpinner />}>
+                      <Routes>
+                        <Route path="/" element={<Index />} />
+                        <Route path="/auth" element={<Auth />} />
+                        <Route path="/email-confirmation" element={<EmailConfirmation />} />
+                        <Route path="/products" element={<Products />} />
+                        <Route path="/categories" element={<Categories />} />
+                        <Route path="/product/:id" element={<ProductDetails />} />
+                        <Route path="/favorites" element={<Favorites />} />
+                        <Route path="/offers" element={
                           <Suspense fallback={<PageLoader />}>
-                            <Orders />
+                            <Offers />
                           </Suspense>
-                        </ProtectedRoute>
-                      } />
-                      <Route path="/profile" element={
-                        <ProtectedRoute>
+                        } />
+                        <Route path="/contact" element={
                           <Suspense fallback={<PageLoader />}>
-                            <Profile />
+                            <Contact />
                           </Suspense>
-                        </ProtectedRoute>
-                      } />
-                      <Route path="/checkout" element={
-                        <ProtectedRoute>
-                          <Suspense fallback={<PageLoader />}>
-                            <Checkout />
-                          </Suspense>
-                        </ProtectedRoute>
-                      } />
-                      
-                      {/* Admin Routes */}
-                      <Route path="/admin/*" element={
-                        <ProtectedRoute requireAdmin>
-                          <Suspense fallback={<PageLoader />}>
-                            <AdminDashboard />
-                          </Suspense>
-                        </ProtectedRoute>
-                      } />
-                      
-                      {/* Catch-all route */}
-                          <Route path="*" element={<NotFound />} />
-                        </Routes>
-                      </Suspense>
-                    </div>
-                  </TooltipProvider>
-                </FavoritesProvider>
-              </CartProvider>
-            </AuthProvider>
-          </LanguageProvider>
-        </ErrorBoundary>
-      </BrowserRouter>
-    </HelmetProvider>
-  </QueryClientProvider>
+                        } />
+                        
+                        {/* Protected Routes */}
+                        <Route path="/orders" element={
+                          <ProtectedRoute>
+                            <Suspense fallback={<PageLoader />}>
+                              <Orders />
+                            </Suspense>
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/profile" element={
+                          <ProtectedRoute>
+                            <Suspense fallback={<PageLoader />}>
+                              <Profile />
+                            </Suspense>
+                          </ProtectedRoute>
+                        } />
+                        <Route path="/checkout" element={
+                          <ProtectedRoute>
+                            <Suspense fallback={<PageLoader />}>
+                              <Checkout />
+                            </Suspense>
+                          </ProtectedRoute>
+                        } />
+                        
+                        {/* Admin Routes */}
+                        <Route path="/admin/*" element={
+                          <ProtectedRoute requireAdmin>
+                            <Suspense fallback={<PageLoader />}>
+                              <AdminDashboard />
+                            </Suspense>
+                          </ProtectedRoute>
+                        } />
+                        
+                        {/* Catch-all route */}
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </Suspense>
+                  </div>
+                </TooltipProvider>
+              </FavoritesProvider>
+            </CartProvider>
+          </AuthProvider>
+        </LanguageProvider>
+      </ErrorBoundary>
+    </BrowserRouter>
+  </HelmetProvider>
 );
 
 export default App;
