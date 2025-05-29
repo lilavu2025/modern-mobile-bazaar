@@ -1,12 +1,11 @@
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+
+import React, { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import Header from '@/components/Header';
 import CartSidebar from '@/components/CartSidebar';
 import { Badge } from '@/components/ui/badge';
 import { Percent } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useProducts } from '@/hooks/useSupabaseData';
 import { Link } from 'react-router-dom';
 import { Heart, Share2 } from 'lucide-react';
 import { useCart } from '@/hooks/useCart';
@@ -17,22 +16,35 @@ const Offers: React.FC = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const { addToCart } = useCart();
+  const [offers, setOffers] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // جلب العروض من قاعدة البيانات
-  const { data: offers = [], isLoading, error } = useQuery({
-    queryKey: ['offers'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('offers')
-        .select('*')
-        .eq('active', true)
-        .gte('end_date', new Date().toISOString())
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      return data;
-    }
-  });
+  useEffect(() => {
+    const fetchOffers = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        const { data, error: offersError } = await supabase
+          .from('offers')
+          .select('*')
+          .eq('active', true)
+          .gte('end_date', new Date().toISOString())
+          .order('created_at', { ascending: false });
+        
+        if (offersError) throw offersError;
+        setOffers(data || []);
+      } catch (err) {
+        console.error('خطأ في جلب العروض:', err);
+        setError(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchOffers();
+  }, []);
 
   // تصفية العروض حسب البحث
   const filteredOffers = offers.filter(offer =>
