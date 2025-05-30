@@ -19,3 +19,8 @@ export const supabase = createClient<Database>(
     }
   }
 );
+// إذا لم تضفها بعد، ثم أعد تشغيل dev server:
+if (import.meta.env.DEV) {
+  // @ts-expect-error
+  window.supabase = supabase;
+}
