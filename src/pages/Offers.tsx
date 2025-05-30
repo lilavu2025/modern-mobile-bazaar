@@ -22,7 +22,7 @@ const Offers: React.FC = () => {
   const { addToCart } = useCart();
 
   // جلب العروض من قاعدة البيانات
-  const { data: offers = [], isLoading, error, refetch } = useQuery<Database['public']['Tables']['offers']['Row[]']>({
+  const { data: offers = [], isLoading, error, refetch } = useQuery<Array<Database['public']['Tables']['offers']['Row']>>({
     queryKey: ['offers'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -32,7 +32,7 @@ const Offers: React.FC = () => {
         .gte('end_date', new Date().toISOString())
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return data as Database['public']['Tables']['offers']['Row'][];
+      return data as Array<Database['public']['Tables']['offers']['Row']>;
     },
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: true,
