@@ -1,324 +1,234 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
+// /home/ubuntu/modern-mobile-bazaar/src/hooks/useFavorites.ts
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { toast } from "sonner";
+import { FavoriteService } from "@/services/supabaseService";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Product } from "@/types"; // Assuming Product type is defined
+import { Language } from "@/types/language";
 
 export const useFavorites = () => {
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const queryClient = useQueryClient();
 
-  // الحالة التي تحمل قائمة المنتجات المفضلة (معرفات المنتجات فقط)
-  const [favorites, setFavorites] = useState<string[]>([]);
-  // حالة لتحكم في تحميل البيانات
-  const [isLoading, setIsLoading] = useState(false);
-  // حالة لتخزين الأخطاء
-  const [error, setError] = useState<Error | null>(null);
-
-  // ------------------------------------
-  // 1. جلب المفضلة عند تحميل الصفحة أو عند تغير المستخدم
-  // ------------------------------------
-  useEffect(() => {
-    const fetchFavorites = async () => {
-      console.log('[fetchFavorites] بدء جلب المفضلة...');
-
+  // تفعيل polling وتحديث عند العودة للنافذة في جلب favoriteIds
+  const { data: favoriteIdsRaw = [], isLoading: isLoadingIds, error: fetchError } = useQuery<string[]>({
+    queryKey: ["favorites", user?.id],
+    queryFn: async () => {
       if (!user) {
-        // حالة المستخدم غير مسجل: جلب المفضلة من localStorage للضيوف
+        // Guest user: Load from localStorage
         try {
-          const guestFavorites = localStorage.getItem('favorites_guest');
-          console.log('[fetchFavorites] جلب المفضلة من localStorage للضيف:', guestFavorites);
-          if (guestFavorites) {
-            setFavorites(JSON.parse(guestFavorites));
-          } else {
-            setFavorites([]);
-          }
+          const guestFavorites = localStorage.getItem("favorites_guest");
+          return guestFavorites ? JSON.parse(guestFavorites) : [];
         } catch (error) {
-          console.error('[fetchFavorites] خطأ في جلب المفضلة للضيف:', error);
+          console.error("[useFavorites] Error loading guest favorites:", error);
+          return [];
         }
-        return;
       }
+      return await FavoriteService.getUserFavorites(user.id);
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: true,
+    refetchInterval: 60 * 1000,
+  });
+  const favoriteIds: string[] = useMemo(() => favoriteIdsRaw || [], [favoriteIdsRaw]);
 
-      setIsLoading(true);
-
-      try {
-        // جلب المفضلة للمستخدم المسجل من قاعدة بيانات Supabase
-        const { data, error } = await supabase
-          .from('favorites')
-          .select('product_id')
-          .eq('user_id', user.id)
-          .order('added_at', { ascending: false });
-
-        if (error) {
-          setError(error);
-          console.error('[fetchFavorites] خطأ في جلب المفضلة من Supabase:', error);
-          toast.error(t('errorLoadingFavorites'));
-          setFavorites([]);
-          return;
-        } else {
-          setError(null);
-        }
-
-        const favoriteIds = Array.isArray(data) ? data.map((row: any) => row.product_id) : [];
-        console.log('[fetchFavorites] تم جلب المفضلة بنجاح:', favoriteIds);
-        setFavorites(favoriteIds);
-      } catch (error) {
-        setError(error instanceof Error ? error : new Error(String(error)));
-        console.error('[fetchFavorites] خطأ غير متوقع في جلب المفضلة:', error);
-        toast.error(t('errorLoadingFavorites'));
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchFavorites();
-
-    if (user) {
-      // ------------------------------------
-      // 2. إعداد الاشتراك لتحديث المفضلة في الوقت الحقيقي
-      // ------------------------------------
-      console.log('[useEffect] إعداد اشتراك تحديث المفضلة للمستخدم:', user.id);
-      const subscription = supabase
-        .channel('favorites_changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'favorites',
-            filter: `user_id=eq.${user.id}`
-          },
-          () => {
-            console.log('[subscription] حدث تغيير في المفضلة، إعادة جلب...');
-            fetchFavorites();
-          }
-        )
-        .subscribe();
-
-      // تنظيف الاشتراك عند التفكيك
-      return () => {
-        console.log('[useEffect] تنظيف اشتراك المفضلة');
-        subscription.unsubscribe();
-      };
-    }
-  }, [user?.id, t]);
-
-  // ------------------------------------
-  // 3. حفظ المفضلة في localStorage للضيوف (غير المسجلين)
-  // ------------------------------------
+  // Save guest favorites to localStorage
   useEffect(() => {
-    try {
-      if (!user) {
-        console.log('[useEffect] حفظ المفضلة في localStorage للضيف:', favorites);
-        localStorage.setItem('favorites_guest', JSON.stringify(favorites));
-      }
-    } catch (error) {
-      console.error('[useEffect] خطأ في حفظ المفضلة:', error);
-    }
-  }, [favorites, user]);
-
-  // ------------------------------------
-  // 4. دالة لإضافة أو حذف منتج من المفضلة
-  // ------------------------------------
-  const toggleFavorite = async (productId: string) => {
-    console.log('[toggleFavorite] تبديل حالة المفضلة للمنتج:', productId);
-
-    if (!productId) {
-      toast.error(t('invalidProduct'));
-      return;
-    }
-
-    const isFav = favorites.includes(productId);
-    console.log('[toggleFavorite] هل المنتج موجود مسبقاً في المفضلة؟', isFav);
-
-    // حالة الضيف (غير مسجل) فقط تحديث localStorage
-    if (!user) {
-      if (isFav) {
-        setFavorites(prev => {
-          const updated = prev.filter(id => id !== productId);
-          console.log('[toggleFavorite] إزالة المنتج من المفضلة (ضيف):', updated);
-          return updated;
-        });
-        toast.success(t('removedFromFavorites'));
-      } else {
-        setFavorites(prev => {
-          const updated = [...prev, productId];
-          console.log('[toggleFavorite] إضافة المنتج للمفضلة (ضيف):', updated);
-          return updated;
-        });
-        toast.success(t('addedToFavorites'));
-      }
-      return;
-    }
-
-    // تحديث الواجهة فوراً لتجربة مستخدم سلسة
-    if (isFav) {
-      setFavorites(prev => {
-        const updated = prev.filter(id => id !== productId);
-        console.log('[toggleFavorite] إزالة المنتج من المفضلة (مستخدم مسجل):', updated);
-        return updated;
-      });
-    } else {
-      setFavorites(prev => {
-        const updated = [...prev, productId];
-        console.log('[toggleFavorite] إضافة المنتج للمفضلة (مستخدم مسجل):', updated);
-        return updated;
-      });
-    }
-
-    // تحديث قاعدة البيانات في Supabase
-    try {
-      if (isFav) {
-        // حذف من المفضلة
-        const { error } = await supabase
-          .from('favorites')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('product_id', productId);
-
-        if (error) {
-          // في حالة الخطأ، إعادة المنتج إلى الحالة السابقة
-          setFavorites(prev => {
-            const restored = [...prev, productId];
-            console.error('[toggleFavorite] خطأ في حذف المنتج من المفضلة:', error);
-            console.log('[toggleFavorite] إعادة المنتج إلى الحالة السابقة:', restored);
-            return restored;
-          });
-          toast.error(t('errorRemovingFromFavorites'));
-        } else {
-          toast.success(t('removedFromFavorites'));
-        }
-      } else {
-        // إضافة إلى المفضلة
-        const { error } = await supabase
-          .from('favorites')
-          .insert({
-            user_id: user.id,
-            product_id: productId,
-            added_at: new Date().toISOString(),
-          });
-
-        if (error) {
-          // في حالة الخطأ، إزالة المنتج من الحالة الحالية
-          setFavorites(prev => {
-            const removed = prev.filter(id => id !== productId);
-            console.error('[toggleFavorite] خطأ في إضافة المنتج للمفضلة:', error);
-            console.log('[toggleFavorite] إزالة المنتج من الحالة الحالية:', removed);
-            return removed;
-          });
-          toast.error(t('errorAddingToFavorites'));
-        } else {
-          toast.success(t('addedToFavorites'));
-        }
-      }
-    } catch (error) {
-      // في حالة خطأ غير متوقع، إعادة الحالة السابقة
-      if (isFav) {
-        setFavorites(prev => {
-          const restored = [...prev, productId];
-          console.error('[toggleFavorite] خطأ غير متوقع أثناء حذف المنتج:', error);
-          console.log('[toggleFavorite] إعادة المنتج إلى الحالة السابقة:', restored);
-          return restored;
-        });
-      } else {
-        setFavorites(prev => {
-          const removed = prev.filter(id => id !== productId);
-          console.error('[toggleFavorite] خطأ غير متوقع أثناء إضافة المنتج:', error);
-          console.log('[toggleFavorite] إزالة المنتج من الحالة الحالية:', removed);
-          return removed;
-        });
-      }
-      toast.error(t('unexpectedError'));
-    }
-  };
-
-  // ------------------------------------
-  // 5. دالة للتحقق إذا كان المنتج مضاف في المفضلة
-  // ------------------------------------
-  const isFavorite = (productId: string) => {
-    if (!productId) return false;
-    const currentFavorites = Array.isArray(favorites) ? favorites : [];
-    const result = currentFavorites.includes(productId);
-    console.log('[isFavorite] تحقق من وجود المنتج في المفضلة:', productId, result);
-    return result;
-  };
-
-  // ------------------------------------
-  // 6. الحصول على عدد المنتجات المفضلة
-  // ------------------------------------
-  const getFavoritesCount = () => {
-    const count = Array.isArray(favorites) ? favorites.length : 0;
-    console.log('[getFavoritesCount] عدد المنتجات المفضلة:', count);
-    return count;
-  };
-
-  // ------------------------------------
-  // 7. مسح كل المفضلة
-  // ------------------------------------
-  const clearFavorites = async () => {
-    console.log('[clearFavorites] بدء مسح المفضلة...');
-    if (user) {
+    if (!user && Array.isArray(favoriteIds)) {
       try {
-        const { error } = await supabase
-          .from('favorites')
-          .delete()
-          .eq('user_id', user.id);
-
-        if (error) {
-          console.error('[clearFavorites] خطأ في مسح المفضلة:', error);
-          toast.error(t('errorClearingFavorites'));
-          return;
-        }
+        localStorage.setItem("favorites_guest", JSON.stringify(favoriteIds));
       } catch (error) {
-        console.error('[clearFavorites] خطأ غير متوقع في مسح المفضلة:', error);
-        toast.error(t('unexpectedError'));
+        console.error("[useFavorites] Error saving guest favorites:", error);
+      }
+    }
+  }, [favoriteIds, user]);
+
+  // Mutation for adding a favorite
+  const addFavoriteMutation = useMutation({
+    mutationFn: async (productId: string) => {
+      if (!user) {
+        // Guest: Update local state directly via query cache invalidation/update
+        const currentGuestFavorites = JSON.parse(localStorage.getItem("favorites_guest") || "[]");
+        if (!currentGuestFavorites.includes(productId)) {
+          const updatedGuestFavorites = [...currentGuestFavorites, productId];
+          localStorage.setItem("favorites_guest", JSON.stringify(updatedGuestFavorites));
+        }
+        return productId; // Return ID for optimistic update
+      }
+      // Logged-in user: Call service
+      const { error } = await FavoriteService.addFavorite(user.id, productId);
+      if (error) {
+        // Handle potential errors, e.g., unique constraint violation if already added
+        console.error("[useFavorites] Error adding favorite via service:", error);
+        throw error;
+      }
+      return productId;
+    },
+    onMutate: async (productId) => {
+      // Optimistic update: Add to cache immediately
+      await queryClient.cancelQueries({ queryKey: ["favorites", user?.id] });
+      const previousFavorites = queryClient.getQueryData<string[]>(["favorites", user?.id]);
+      queryClient.setQueryData<string[]>(["favorites", user?.id], (old = []) => 
+        old.includes(productId) ? old : [...old, productId]
+      );
+      return { previousFavorites }; // Return context for rollback
+    },
+    onError: (err, productId, context) => {
+      // Rollback on error
+      if (context?.previousFavorites) {
+        queryClient.setQueryData(["favorites", user?.id], context.previousFavorites);
+      }
+      toast.error(t("errorAddingToFavorites"));
+    },
+    onSettled: (productId) => {
+      // Invalidate to ensure consistency after mutation settles
+      queryClient.invalidateQueries({ queryKey: ["favorites", user?.id] });
+      // Also invalidate favorite product details if that query exists
+      queryClient.invalidateQueries({ queryKey: ["favoriteProducts", user?.id] }); 
+    },
+    onSuccess: () => {
+      toast.success(t("addedToFavorites"));
+    }
+  });
+
+  // Mutation for removing a favorite
+  const removeFavoriteMutation = useMutation({
+    mutationFn: async (productId: string) => {
+      if (!user) {
+        // Guest: Update local state directly
+        const currentGuestFavorites = JSON.parse(localStorage.getItem("favorites_guest") || "[]");
+        const updatedGuestFavorites = currentGuestFavorites.filter((id: string) => id !== productId);
+        localStorage.setItem("favorites_guest", JSON.stringify(updatedGuestFavorites));
+        return productId; // Return ID for optimistic update
+      }
+      // Logged-in user: Call service
+      const { error } = await FavoriteService.removeFavorite(user.id, productId);
+      if (error) {
+        console.error("[useFavorites] Error removing favorite via service:", error);
+        throw error;
+      }
+      return productId;
+    },
+    onMutate: async (productId) => {
+      // Optimistic update: Remove from cache immediately
+      await queryClient.cancelQueries({ queryKey: ["favorites", user?.id] });
+      const previousFavorites = queryClient.getQueryData<string[]>(["favorites", user?.id]);
+      queryClient.setQueryData<string[]>(["favorites", user?.id], (old = []) => 
+        old.filter(id => id !== productId)
+      );
+      return { previousFavorites }; // Return context for rollback
+    },
+    onError: (err, productId, context) => {
+      // Rollback on error
+      if (context?.previousFavorites) {
+        queryClient.setQueryData(["favorites", user?.id], context.previousFavorites);
+      }
+      toast.error(t("errorRemovingFromFavorites"));
+    },
+    onSettled: (productId) => {
+      // Invalidate to ensure consistency
+      queryClient.invalidateQueries({ queryKey: ["favorites", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["favoriteProducts", user?.id] });
+    },
+    onSuccess: () => {
+      toast.success(t("removedFromFavorites"));
+    }
+  });
+
+  // Mutation for clearing all favorites
+  const clearFavoritesMutation = useMutation({
+    mutationFn: async () => {
+      if (!user) {
+        // Guest: Clear localStorage
+        localStorage.removeItem("favorites_guest");
         return;
       }
-    }
-    setFavorites([]);
-    toast.success(t('favoritesCleared'));
-    console.log('[clearFavorites] تم مسح المفضلة بنجاح');
-  };
-
-  // ------------------------------------
-  // 8. جلب تفاصيل المنتجات المفضلة كاملة من جدول المنتجات
-  // ------------------------------------
-  const getFavoriteProducts = async () => {
-    console.log('[getFavoriteProducts] جلب تفاصيل المنتجات المفضلة...');
-    if (!user || favorites.length === 0) {
-      console.log('[getFavoriteProducts] لا يوجد مستخدم مسجل أو لا توجد مفضلة');
-      return [];
-    }
-
-    try {
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .in('id', favorites);
-
+      // Logged-in user: Call service
+      const { error } = await FavoriteService.clearUserFavorites(user.id);
       if (error) {
-        console.error('[getFavoriteProducts] خطأ في جلب المنتجات المفضلة:', error);
-        return [];
+        console.error("[useFavorites] Error clearing favorites via service:", error);
+        throw error;
       }
-
-      console.log('[getFavoriteProducts] تم جلب المنتجات المفضلة:', data);
-      return data || [];
-    } catch (error) {
-      console.error('[getFavoriteProducts] خطأ غير متوقع في جلب المنتجات المفضلة:', error);
-      return [];
+    },
+    onMutate: async () => {
+      // Optimistic update: Clear cache
+      await queryClient.cancelQueries({ queryKey: ["favorites", user?.id] });
+      const previousFavorites = queryClient.getQueryData<string[]>(["favorites", user?.id]);
+      queryClient.setQueryData<string[]>(["favorites", user?.id], []);
+      return { previousFavorites };
+    },
+    onError: (err, variables, context) => {
+      // Rollback
+      if (context?.previousFavorites) {
+        queryClient.setQueryData(["favorites", user?.id], context.previousFavorites);
+      }
+      toast.error(t("errorClearingFavorites"));
+    },
+    onSettled: () => {
+      // Invalidate
+      queryClient.invalidateQueries({ queryKey: ["favorites", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["favoriteProducts", user?.id] });
+    },
+    onSuccess: () => {
+      toast.success(t("favoritesCleared"));
     }
-  };
+  });
 
-  // ------------------------------------
-  // 9. القيمة المرجعة من ال hook (الدوال والحالات)
-  // ------------------------------------
+  // Toggle function using the mutations
+  const toggleFavorite = useCallback((productId: string) => {
+    if (!productId) {
+      toast.error(t("invalidProduct"));
+      return;
+    }
+    const isFav = favoriteIds.includes(productId);
+    if (isFav) {
+      removeFavoriteMutation.mutate(productId);
+    } else {
+      addFavoriteMutation.mutate(productId);
+    }
+  }, [favoriteIds, addFavoriteMutation, removeFavoriteMutation, t]);
+
+  // Check if a product is favorite
+  const isFavorite = useCallback((productId: string): boolean => {
+    return favoriteIds.includes(productId);
+  }, [favoriteIds]);
+
+  // Get count
+  const getFavoritesCount = useCallback((): number => {
+    return favoriteIds.length;
+  }, [favoriteIds]);
+
+  // تفعيل polling وتحديث عند العودة للنافذة في جلب تفاصيل المنتجات المفضلة
+  const { data: favoriteProductsRaw = [], isLoading: isLoadingProducts, error: productsError } = useQuery({
+    queryKey: ["favoriteProducts", user?.id, language, favoriteIds], // Include language and IDs
+    queryFn: async () => {
+      console.log("[useFavorites] Fetching favorite product details...");
+      if (favoriteIds.length === 0) return [];
+      
+      const { data, error } = await FavoriteService.getFavoriteProductDetails(favoriteIds, language as Language);
+      if (error) return [];
+      return data || [];
+    },
+    enabled: favoriteIds.length > 0, // Only run if there are favorite IDs
+    staleTime: 5 * 60 * 1000, 
+    refetchOnWindowFocus: true,
+    refetchInterval: 60 * 1000,
+  });
+
   return {
-    favorites: Array.isArray(favorites) ? favorites : [],
-    isLoading,
-    error,
+    favorites: favoriteIds, // List of product IDs
+    favoriteProducts: favoriteProductsRaw, // إذا احتجت تحويل لنوع Product، أضف mapping هنا
+    isLoading: isLoadingIds || (favoriteIds.length > 0 && isLoadingProducts), // Combined loading state
+    error: fetchError || productsError,
     toggleFavorite,
     isFavorite,
     getFavoritesCount,
-    clearFavorites,
-    getFavoriteProducts,
+    clearFavorites: clearFavoritesMutation.mutate,
+    isToggling: addFavoriteMutation.isPending || removeFavoriteMutation.isPending,
+    isClearing: clearFavoritesMutation.isPending,
   };
 };
+

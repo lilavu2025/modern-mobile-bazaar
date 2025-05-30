@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Category } from '@/types';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
+import LazyImage from '@/components/LazyImage';
 
 interface CategoryCardProps {
   category: Category;
@@ -28,16 +29,10 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category }) => {
       <Card className="group hover:shadow-xl transition-all duration-300 overflow-hidden border-2 hover:border-primary/20">
         <div className="relative">
           {/* صورة الفئة أو صورة بديلة إن لم تتوفر */}
-          <img
+          <LazyImage
             src={category.image || '/placeholder.svg'}
             alt={category.name}
             className="w-full h-32 object-cover transition-transform duration-300 group-hover:scale-110"
-            onError={(e) => {
-              // عند فشل تحميل الصورة، نضع صورة بديلة
-              console.warn(`Failed to load image for category: ${category.name}, fallback to placeholder`);
-              const target = e.target as HTMLImageElement;
-              target.src = '/placeholder.svg';
-            }}
           />
           {/* تدرج لوني من الأسفل للأعلى لتحسين ظهور النص */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />

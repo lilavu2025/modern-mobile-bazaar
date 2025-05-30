@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { X, Minus, Plus, ShoppingBag, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -15,7 +14,8 @@ interface CartSidebarProps {
 }
 
 const CartSidebar: React.FC<CartSidebarProps> = ({ isOpen, onClose }) => {
-  const { cartItems, updateQuantity, removeFromCart, getTotalPrice, getTotalItems } = useCart();
+  const { state, updateQuantity, removeItem, getTotalItems } = useCart();
+  const cartItems = state.items;
   const { t, isRTL } = useLanguage();
 
   return (
@@ -117,7 +117,7 @@ const CartSidebar: React.FC<CartSidebarProps> = ({ isOpen, onClose }) => {
                             size="icon"
                             variant="ghost"
                             className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
-                            onClick={() => removeFromCart(item.product.id)}
+                            onClick={() => removeItem(item.product.id)}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -133,7 +133,7 @@ const CartSidebar: React.FC<CartSidebarProps> = ({ isOpen, onClose }) => {
                 <div className="flex justify-between items-center">
                   <span className="text-lg font-semibold">{t('total')}:</span>
                   <span className="text-2xl font-bold text-primary">
-                    {getTotalPrice().toFixed(2)} {t('currency')}
+                    {state.total.toFixed(2)} {t('currency')}
                   </span>
                 </div>
                 

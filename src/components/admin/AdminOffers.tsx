@@ -28,7 +28,7 @@ const AdminOffers: React.FC = () => {
   const [showAdd, setShowAdd] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
-  const [selectedOffer, setSelectedOffer] = useState<any>(null);
+  const [selectedOffer, setSelectedOffer] = useState<Database['public']['Tables']['offers']['Row'] | null>(null);
   
   // نموذج العرض مع جميع الحقول المطلوبة
   const initialForm = {
@@ -50,7 +50,7 @@ const AdminOffers: React.FC = () => {
 
   // جلب العروض من قاعدة البيانات
   const { data: offers = [], refetch, isLoading: isLoadingOffers } = useQuery({
-    queryKey: ['admin-offers'],
+    queryKey: ["admin-offers"],
     queryFn: async () => {
       try {
         const { data, error } = await supabase
@@ -71,6 +71,9 @@ const AdminOffers: React.FC = () => {
         throw error;
       }
     },
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,
+    refetchInterval: 60 * 1000,
   });
 
   // حذف عرض
@@ -284,9 +287,9 @@ const AdminOffers: React.FC = () => {
       {/* عرض العروض */}
       {!isLoadingOffers && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {offers.map((offer: any) => {
-            const currentTitle = offer.title_ar || offer.title_en || offer.title;
-            const currentDescription = offer.description_ar || offer.description_en || offer.description;
+          {offers.map((offer: Database['public']['Tables']['offers']['Row']) => {
+            const currentTitle = offer.title_ar || offer.title_en;
+            const currentDescription = offer.description_ar || offer.description_en;
             const isActive = offer.active;
             const isExpired = offer.end_date && new Date(offer.end_date) < new Date();
             
@@ -318,6 +321,7 @@ const AdminOffers: React.FC = () => {
                 {offer.image_url && (
                   <div className="relative h-48 overflow-hidden">
                     <img 
+                      loading="lazy"
                       src={offer.image_url} 
                       alt={currentTitle} 
                       className="w-full h-full object-cover transition-transform duration-200 hover:scale-105" 
@@ -767,7 +771,7 @@ const AdminOffers: React.FC = () => {
               {t('deleteOfferConfirmation')} 
               {selectedOffer && (
                 <span className="font-semibold">
-                  "{selectedOffer.title_ar || selectedOffer.title_en || selectedOffer.title}"
+                  "{selectedOffer.title_ar || selectedOffer.title_en}"
                 </span>
               )}
             </DialogDescription>

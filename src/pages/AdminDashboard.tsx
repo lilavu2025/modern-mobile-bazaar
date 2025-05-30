@@ -48,11 +48,13 @@ const AdminDashboard: React.FC = () => {
     return false;
   };
 
-  // توجيه تلقائي للأدمن فقط
+  // لا تقم بعمل redirect إذا كان profile غير موجود (أي أثناء التحميل)، أو إذا كان المستخدم أدمن فعليًا
   useEffect(() => {
-    if (profile && profile.user_type !== 'admin') {
-      navigate('/');
+    if (!profile) return; // انتظر حتى يتم تحميل البروفايل
+    if (profile.user_type !== 'admin') {
+      navigate('/', { replace: true });
     }
+    // إذا كان أدمن، لا تفعل أي شيء
   }, [profile, navigate]);
 
   return (

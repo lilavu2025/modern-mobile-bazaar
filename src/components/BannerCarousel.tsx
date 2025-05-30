@@ -1,8 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Banner } from '@/types';
+import LazyImage from '@/components/LazyImage';
 
 interface BannerCarouselProps {
   banners: Banner[];
@@ -36,7 +36,7 @@ const BannerCarousel: React.FC<BannerCarouselProps> = ({ banners }) => {
             index === currentSlide ? 'opacity-100' : 'opacity-0'
           }`}
         >
-          <img
+          <LazyImage
             src={banner.image}
             alt={banner.title}
             className="w-full h-full object-cover"
