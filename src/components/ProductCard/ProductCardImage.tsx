@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Product } from '@/types';
 import ProductCardBadges from './ProductCardBadges';
 import ProductCardActions from './ProductCardActions';
+import LazyImage from '@/components/LazyImage';
 
 export interface ProductCardImageProps {
   product: Product;
@@ -24,7 +25,7 @@ const ProductCardImage: React.FC<ProductCardImageProps> = ({
   return (
     <div className="relative overflow-hidden">
       <Link to={`/product/${product.id}`} className="block">
-        <img
+        <LazyImage
           src={product.image}
           alt={product.name}
           className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-110"

@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from "@/hooks/use-toast";
 
-interface Profile {
+export interface Profile {
   id: string;
   full_name: string;
   phone: string | null;
@@ -93,22 +93,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Redirect user based on user_type - only for specific events
+  // توجيه الأدمن دائمًا للوحة الإدارة بعد تسجيل الدخول
   const handleUserRedirection = (profile: Profile, event: string) => {
-    // Only redirect on successful login, not on token refresh or other events
     if (event !== 'SIGNED_IN') return;
-    
-    // Don't redirect if already on auth page or email confirmation
-    if (location.pathname === '/auth' || location.pathname === '/email-confirmation') {
-      if (profile.user_type === 'admin') {
-        navigate('/admin');
-      } else if (profile.user_type === 'wholesale') {
-        navigate('/wholesale');
-      } else {
-        navigate('/');
-      }
+    if (profile.user_type === 'admin') {
+      navigate('/admin', { replace: true });
+      return;
     }
+    // باقي الأنواع
+    if (profile.user_type === 'wholesale') {
+      navigate('/', { replace: true });
+      return;
+    }
+    navigate('/', { replace: true });
   };
+
+  // حفظ آخر صفحة زارها المستخدم (عدا صفحات auth)
+  useEffect(() => {
+    if (
+      location.pathname !== '/auth' &&
+      location.pathname !== '/email-confirmation'
+    ) {
+      localStorage.setItem('lastVisitedPath', location.pathname + location.search + location.hash);
+    }
+  }, [location.pathname, location.search, location.hash]);
+
+  // عند تحميل الصفحة، لا تعيد توجيه المستخدم لأي صفحة، فقط أبقه على نفس الصفحة (لا تستخدم navigate إطلاقًا هنا)
+  // تم حذف useEffect الخاص بإعادة التوجيه بناءً على lastVisitedPath
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -267,12 +278,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!loading && session === null && user !== null) {
       toast({
         title: "انتهت الجلسة",
-        description: "يرجى تسجيل الدخول مجددًا.",
+        description: "يرجى تسجيل الدخول مجددًا. سيتم إعادة تحميل الصفحة تلقائيًا.",
         variant: "destructive"
       });
-      signOut();
+      setTimeout(() => {
+        signOut();
+        window.location.reload();
+      }, 2000);
     }
-  }, [session, loading, user]);
+  }, [session, loading, user, signOut]);
 
   // منع انتهاء السيشن تلقائيًا عبر تفعيل التحديث التلقائي للـ token
   useEffect(() => {
@@ -281,12 +295,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (!session) return;
         const expiresIn = session.expires_at ? session.expires_at * 1000 - Date.now() : 0;
         if (expiresIn < 1000 * 60 * 10) {
-          supabase.auth.refreshSession();
+          supabase.auth.refreshSession().catch(() => {
+            toast({
+              title: "فشل تحديث الجلسة",
+              description: "يرجى تسجيل الدخول مجددًا.",
+              variant: "destructive"
+            });
+            setTimeout(() => {
+              signOut();
+              window.location.reload();
+            }, 2000);
+          });
         }
       });
     }, 1000 * 60 * 5);
     return () => clearInterval(interval);
-  }, []);
+  }, [signOut]);
 
   return (
     <AuthContext.Provider

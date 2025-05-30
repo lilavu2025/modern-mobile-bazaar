@@ -11,6 +11,9 @@ import { Link } from 'react-router-dom';
 import { Heart, Share2 } from 'lucide-react';
 import { useCart } from '@/hooks/useCart';
 import { useFavorites } from '@/hooks/useFavorites';
+import LazyImage from '@/components/LazyImage';
+import type { Database } from '@/integrations/supabase/types';
+import type { Product } from '@/types';
 
 const Offers: React.FC = () => {
   const { t } = useLanguage();
@@ -19,7 +22,7 @@ const Offers: React.FC = () => {
   const { addToCart } = useCart();
 
   // جلب العروض من قاعدة البيانات
-  const { data: offers = [], isLoading, error } = useQuery({
+  const { data: offers = [], isLoading, error } = useQuery<Database['public']['Tables']['offers']['Row'][]>({
     queryKey: ['offers'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -28,14 +31,13 @@ const Offers: React.FC = () => {
         .eq('active', true)
         .gte('end_date', new Date().toISOString())
         .order('created_at', { ascending: false });
-      
       if (error) throw error;
-      return data;
+      return data as Database['public']['Tables']['offers']['Row'][];
     }
   });
 
   // تصفية العروض حسب البحث
-  const filteredOffers = offers.filter(offer =>
+  const filteredOffers = offers.filter((offer: Database['public']['Tables']['offers']['Row']) =>
     searchQuery === '' || 
     offer.title_ar?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     offer.title_en?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -69,8 +71,31 @@ const Offers: React.FC = () => {
     );
   }
 
-  function handleBuyNow(product) {
-    addToCart(product, 1);
+  // تحويل بيانات العرض إلى منتج متوافق مع السلة
+  function offerToProduct(offer: Database['public']['Tables']['offers']['Row']): Product {
+    return {
+      id: offer.id,
+      name: offer.title_ar || offer.title_en || '',
+      nameEn: offer.title_en || '',
+      description: offer.description_ar || '',
+      descriptionEn: offer.description_en || '',
+      price: offer.discount_percent || 0, // أو يمكن وضع سعر العرض إذا كان متوفرًا
+      originalPrice: undefined,
+      wholesalePrice: undefined,
+      image: offer.image_url,
+      images: offer.image_url ? [offer.image_url] : [],
+      category: '',
+      inStock: true,
+      rating: 0,
+      reviews: 0,
+      discount: offer.discount_percent,
+      featured: false,
+      tags: [],
+    };
+  }
+
+  function handleBuyNow(product: Database['public']['Tables']['offers']['Row']) {
+    addToCart(offerToProduct(product), 1);
     setIsCartOpen(true);
   }
 
@@ -92,19 +117,21 @@ const Offers: React.FC = () => {
     );
   }
 
-  function ShareButton({ product }: { product: any }) {
+  function ShareButton({ product }: { product: Database['public']['Tables']['offers']['Row'] }) {
     const { t } = useLanguage();
     const handleShare = async (e: React.MouseEvent) => {
       e.preventDefault();
-      const url = window.location.origin + `/product/${product.id}`;
+      const url = window.location.origin + `/offer/${product.id}`;
       if (navigator.share) {
         try {
           await navigator.share({
-            title: product.name,
-            text: product.description,
+            title: product.title_ar || product.title_en,
+            text: product.description_ar || product.description_en,
             url,
           });
-        } catch {}
+        } catch {
+          // intentionally ignore share errors
+        }
       } else {
         await navigator.clipboard.writeText(url);
         alert(t('linkCopied') || 'تم نسخ الرابط');
@@ -164,15 +191,15 @@ const Offers: React.FC = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredOffers.map(offer => (
+            {filteredOffers.map((offer: Database['public']['Tables']['offers']['Row']) => (
               <div
                 key={offer.id}
                 className="bg-white rounded-xl shadow-md p-4 flex flex-col items-center transition hover:shadow-lg group relative"
               >
-                <img 
-                  src={offer.image_url} 
-                  alt={offer.title_ar || offer.title_en} 
-                  className="w-full h-40 object-cover rounded mb-4 group-hover:scale-105 transition-transform duration-200" 
+                <LazyImage
+                  src={offer.image_url}
+                  alt={offer.title_ar || offer.title_en || 'عرض خاص'}
+                  className="w-full h-40 object-cover rounded mb-4 group-hover:scale-105 transition-transform duration-200"
                 />
                 <h3 className="text-xl font-bold mb-2 text-center w-full truncate">
                   {offer.title_ar || offer.title_en}

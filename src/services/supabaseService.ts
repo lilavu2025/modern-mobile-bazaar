@@ -4,6 +4,129 @@ import { Session, User, AuthError } from "@supabase/supabase-js";
 import { Profile } from "@/contexts/AuthContext"; // Assuming Profile type is defined here or move it to types
 import { Language } from "@/types/language"; // Assuming Language type is defined
 import { Address } from "@/hooks/useAddresses"; // Import Address type
+import { Tables } from '@/integrations/supabase/types';
+import type { Product as AppProduct, Category as AppCategory, Banner as AppBanner } from '@/types/index';
+import type { PostgrestSingleResponse } from '@supabase/supabase-js';
+
+/**
+ * إعداد مستمع التركيز (visibilitychange) مع تأخير لمنع التكرار.
+ */
+const setupVisibilityHandler = () => {
+  const handleVisibilityChange = () => {
+    if (document.visibilityState === 'visible') {
+      setTimeout(() => {
+        refreshSession(true);
+      }, 1000);
+    }
+  };
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+  return () => {
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
+  };
+};
+
+/**
+ * Ensures only one session refresh runs at a time. All callers await the same promise.
+ * Triggers a global event on error for UI feedback.
+ */
+let isRefreshing = false;
+let refreshPromise: Promise<void> | null = null;
+
+/**
+ * Refreshes the Supabase session atomically. If a refresh is already in progress, waits for it.
+ * @param force إذا true، يجبر التحديث حتى لو لم تكن الجلسة منتهية
+ */
+export async function refreshSession(force = false): Promise<void> {
+  if (isRefreshing && refreshPromise) {
+    // Wait for the ongoing refresh
+    await refreshPromise;
+    return;
+  }
+  isRefreshing = true;
+  refreshPromise = (async () => {
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) throw error;
+      if (!session) throw new Error('No session found');
+      const expiresIn = session.expires_at ? session.expires_at * 1000 - Date.now() : 0;
+      if (force || expiresIn < 1000 * 60 * 10) {
+        const { error: refreshError } = await supabase.auth.refreshSession();
+        if (refreshError) throw refreshError;
+        if (process.env.NODE_ENV !== 'production') {
+          console.debug('[refreshSession] Session refreshed.');
+        }
+      } else {
+        // Session is still valid
+        // console.log('[refreshSession] Session still valid.');
+      }
+    } catch (err: unknown) {
+      if (typeof window !== 'undefined') {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const errorObj = err as any;
+        if (errorObj?.name === 'AuthError') {
+          window.dispatchEvent(new CustomEvent('supabase-auth-error', { detail: err }));
+        } else if (errorObj?.name === 'TypeError' && /fetch/i.test(errorObj.message)) {
+          window.dispatchEvent(new CustomEvent('supabase-network-error', { detail: err }));
+        } else {
+          window.dispatchEvent(new CustomEvent('supabase-error', { detail: err }));
+        }
+      }
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('[refreshSession] Error refreshing session:', err);
+      }
+    } finally {
+      isRefreshing = false;
+      refreshPromise = null;
+    }
+  })();
+  await refreshPromise;
+}
+
+/**
+ * استعلام مرن من Supabase يراعي حالة التحديث ويعيد المحاولة عند أخطاء المصادقة.
+ */
+type TableName = 'addresses' | 'profiles' | 'banners' | 'cart' | 'products' | 'categories' | 'favorites' | 'offers' | 'order_items' | 'orders';
+
+export const fetchData = async (
+  table: TableName,
+  columns: string = '*',
+  filter: { field: string; value: unknown } | null = null
+) => {
+  try {
+    let query = supabase.from(table).select(columns);
+    if (filter) {
+      // @ts-expect-error: Supabase eq يقبل اسم الحقل كسلسلة نصية ديناميكية
+      query = query.eq(filter.field, filter.value);
+    }
+    const { data, error } = await query;
+    if (error) {
+      if (error.message && error.message.includes('401')) {
+        await refreshSession(true);
+        return fetchData(table, columns, filter);
+      }
+      throw error;
+    }
+    return data;
+  } catch (error) {
+    console.error(`[Service] Error fetching ${table}:`, error);
+    throw error;
+  }
+}
+
+// --- Global session refresh logic ---
+/**
+ * Ensures only one session refresh runs at a time. All callers await the same promise.
+ * Triggers a global event on error for UI feedback.
+ */
+// let isRefreshing = false;
+// let refreshPromise: Promise<void> | null = null;
+
+/**
+ * Refreshes the Supabase session atomically. If a refresh is already in progress, waits for it.
+ * @param force إذا true، يجبر التحديث حتى لو لم تكن الجلسة منتهية
+ */
+// export async function refreshSession(force = false): Promise<void> { ... }
+// --- End global session refresh logic ---
 
 /**
  * Centralized Supabase Service Class
@@ -13,16 +136,12 @@ import { Address } from "@/hooks/useAddresses"; // Import Address type
  */
 class SupabaseService {
   private static instance: SupabaseService;
-  private refreshIntervalId: NodeJS.Timeout | null = null;
-  private isRefreshing: boolean = false; // Flag to prevent concurrent refresh attempts
+  private refreshIntervalId: ReturnType<typeof setInterval> | null = null;
+  private removeVisibilityHandler: (() => void) | null = null;
 
   private constructor() {
-    // Private constructor ensures singleton pattern
-    this.initializeSessionRefresh();
-    // Listen for visibility changes to potentially trigger refresh on focus
-    if (typeof document !== 'undefined') {
-      document.addEventListener('visibilitychange', this.handleVisibilityChange);
-    }
+    this.removeVisibilityHandler = setupVisibilityHandler();
+    this.setupSessionRefresh();
   }
 
   /**
@@ -36,94 +155,18 @@ class SupabaseService {
   }
 
   /**
-   * Handles browser tab visibility changes.
-   * Refreshes session immediately when tab becomes visible after being hidden.
+   * إعداد فحص دوري للجلسة باستخدام refreshSession الجديد.
    */
-  private handleVisibilityChange = () => {
-    if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
-      console.log('[Service] Tab became visible, checking session status.');
-      this.refreshSessionIfNeeded(true); // Force check on visibility change
-    }
-  };
-
-  /**
-   * Ensures the Supabase session token is refreshed if it's close to expiring or forced.
-   * Includes basic retry logic and improved error handling.
-   * @param forceCheck - If true, bypasses the threshold check and attempts refresh if session exists.
-   */
-  private async refreshSessionIfNeeded(forceCheck = false): Promise<void> {
-    if (this.isRefreshing) {
-      console.log('[Service] Session refresh already in progress, skipping.');
-      return;
-    }
-
-    this.isRefreshing = true;
-    console.log(`[Service] Checking session status. Forced: ${forceCheck}`);
-
-    try {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-      if (sessionError) {
-        console.error('[Service] Error getting session:', sessionError);
-        // If session cannot be retrieved, might indicate a deeper issue.
-        // Consider triggering logout if this persists.
-        this.isRefreshing = false;
-        return;
-      }
-
-      if (!session) {
-        console.log('[Service] No active session, no refresh needed.');
-        this.isRefreshing = false;
-        return;
-      }
-
-      const now = Date.now();
-      const expiresAt = session.expires_at ? session.expires_at * 1000 : now;
-      const expiresIn = expiresAt - now;
-      const refreshThreshold = 5 * 60 * 1000; // 5 minutes
-
-      console.log(`[Service] Session expires in ${Math.round(expiresIn / 1000)}s. Threshold: ${refreshThreshold / 1000}s.`);
-
-      if (forceCheck || expiresIn < refreshThreshold) {
-        console.log(`[Service] Attempting to refresh session. Reason: ${forceCheck ? 'Forced check' : 'Threshold reached'}`);
-        
-        const { error: refreshError } = await supabase.auth.refreshSession();
-
-        if (refreshError) {
-          console.error('[Service] Error refreshing session:', refreshError);
-          // If refresh fails, the session might be invalid. 
-          // Supabase client might handle this internally, but logging is important.
-          // Consider triggering a global sign-out event if refresh consistently fails.
-          // Example: window.dispatchEvent(new CustomEvent('auth-error', { detail: 'session-refresh-failed' }));
-          // AuthContext could listen for this event.
-        } else {
-          console.log('[Service] Session refreshed successfully.');
-        }
-      } else {
-        console.log('[Service] Session is valid, no refresh needed now.');
-      }
-    } catch (error) {
-      console.error('[Service] Unexpected error during session refresh check:', error);
-    } finally {
-      this.isRefreshing = false;
-    }
-  }
-
-  /**
-   * Initializes periodic session refresh checks.
-   */
-  private initializeSessionRefresh(): void {
-    // Clear any existing interval
+  private setupSessionRefresh(): void {
     if (this.refreshIntervalId) {
       clearInterval(this.refreshIntervalId);
     }
-    // Check immediately on startup
-    this.refreshSessionIfNeeded();
-    // Set up interval for periodic checks (e.g., every 2 minutes)
+    // فحص فوري عند البدء
+    refreshSession();
+    // فحص كل دقيقتين
     const intervalDuration = 2 * 60 * 1000;
-    console.log(`[Service] Setting up periodic session check every ${intervalDuration / 1000}s.`);
     this.refreshIntervalId = setInterval(() => {
-      this.refreshSessionIfNeeded();
+      refreshSession();
     }, intervalDuration);
   }
 
@@ -134,49 +177,74 @@ class SupabaseService {
     if (this.refreshIntervalId) {
       clearInterval(this.refreshIntervalId);
       this.refreshIntervalId = null;
-      console.log('[Service] Cleared session refresh interval.');
+      if (process.env.NODE_ENV !== 'production') {
+        console.debug('[Service] Cleared session refresh interval.');
+      }
     }
-    if (typeof document !== 'undefined') {
-      document.removeEventListener('visibilitychange', this.handleVisibilityChange);
-      console.log('[Service] Removed visibility change listener.');
+    if (this.removeVisibilityHandler) {
+      this.removeVisibilityHandler();
+      this.removeVisibilityHandler = null;
     }
   }
 
   /**
-   * Wrapper for Supabase queries that ensures session is fresh.
+   * Wrapper for Supabase queries that ensures session is fresh and returns a typed response.
+   * @template T نوع البيانات المرجعية
+   * @param queryBuilder - كائن استعلام Supabase (عادة PostgrestBuilder)
+   * @returns كائن { data, error } مع الأنواع المناسبة
+   *
+   * ملاحظة: نستخدم any هنا لأن PostgrestFilterBuilder غير متاح دائماً في supabase-js v2.
    */
-  private async executeQuery<T>(queryBuilder: any): Promise<{ data: T | null; error: any }> {
-    // Ensure session is checked/refreshed before the query
-    // Use forceCheck=true if you suspect staleness immediately before a critical query,
-    // otherwise rely on the periodic checks and the pre-query check.
-    await this.refreshSessionIfNeeded(); 
-    
-    console.log('[Service] Executing Supabase query...');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private async executeQuery<T>(queryBuilder: any): Promise<PostgrestSingleResponse<T>> {
+    await refreshSession();
     try {
-      const { data, error } = await queryBuilder;
-      if (error) {
-        console.error('[Service] Supabase query error:', error);
-        // Handle specific errors if needed (e.g., RLS violations, network errors)
+      const result = await queryBuilder;
+      if (result.error) {
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('supabase-error', { detail: result.error }));
+        }
+        if (process.env.NODE_ENV !== 'production') {
+          console.error('[Service] Supabase query error:', result.error);
+        }
       }
-      return { data, error };
-    } catch (err) {
-      console.error('[Service] Unexpected error executing Supabase query:', err);
-      return { data: null, error: err };
+      return result;
+    } catch (err: unknown) {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('supabase-error', { detail: err }));
+      }
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('[Service] Unexpected error executing Supabase query:', err);
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return { data: null, error: err as any, count: null, status: 500, statusText: 'Unexpected error' };
     }
   }
 
-  // --- Authentication Methods --- 
-
+  /**
+   * تسجيل الدخول للمستخدم.
+   * @param email البريد الإلكتروني
+   * @param password كلمة المرور
+   * @returns الجلسة والمستخدم أو الخطأ
+   */
   async signIn(email: string, password: string): Promise<{ session: Session | null; user: User | null; error: AuthError | null }> {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (!error && data.session) {
       localStorage.setItem('lastLoginTime', Date.now().toString());
       // Trigger immediate refresh check after sign-in
-      this.refreshSessionIfNeeded(true);
+      refreshSession(true);
     }
     return { session: data.session, user: data.user, error };
   }
 
+  /**
+   * تسجيل مستخدم جديد.
+   * @param email البريد الإلكتروني
+   * @param password كلمة المرور
+   * @param fullName الاسم الكامل
+   * @param phone رقم الهاتف (اختياري)
+   * @returns المستخدم أو الخطأ
+   */
   async signUp(email: string, password: string, fullName: string, phone?: string): Promise<{ user: User | null; error: AuthError | null }> {
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -191,6 +259,11 @@ class SupabaseService {
     return { user: data.user, error };
   }
 
+  /**
+   * تسجيل الخروج وتنظيف الموارد.
+   * @returns الخطأ إن وجد
+   * @note يجب استدعاء this.cleanup() عند تسجيل الخروج أو تفكيك التطبيق لمنع memory leaks.
+   */
   async signOut(): Promise<{ error: AuthError | null }> {
     localStorage.removeItem('lastLoginTime');
     const { error } = await supabase.auth.signOut();
@@ -199,23 +272,39 @@ class SupabaseService {
     return { error };
   }
 
+  /**
+   * جلب بيانات المستخدم الحالي.
+   * @returns المستخدم أو الخطأ
+   */
   async getUser(): Promise<{ user: User | null; error: AuthError | null }> {
     const { data: { user }, error } = await supabase.auth.getUser();
     return { user, error };
   }
 
+  /**
+   * جلب الجلسة الحالية.
+   * @returns الجلسة أو الخطأ
+   */
   async getSession(): Promise<{ session: Session | null; error: AuthError | null }> {
     const { data: { session }, error } = await supabase.auth.getSession();
     return { session, error };
   }
 
-  onAuthStateChange(callback: (event: string, session: Session | null) => void): { data: { subscription: any } } {
+  /**
+   * الاشتراك في تغييرات حالة المصادقة.
+   * @param callback دالة الاستدعاء عند التغيير
+   * @returns كائن الاشتراك
+   */
+  onAuthStateChange(callback: (event: string, session: Session | null) => void): { data: { subscription: unknown } } {
     return supabase.auth.onAuthStateChange(callback);
   }
 
-  // --- Profile Methods --- 
-
-  async fetchProfile(userId: string): Promise<{ data: Profile | null; error: any }> {
+  /**
+   * جلب بروفايل المستخدم.
+   * @param userId معرف المستخدم
+   * @returns بيانات البروفايل أو الخطأ
+   */
+  async fetchProfile(userId: string): Promise<{ data: Profile | null; error: unknown }> {
     return this.executeQuery<Profile>(
       supabase
         .from('profiles')
@@ -225,7 +314,7 @@ class SupabaseService {
     );
   }
 
-  async createProfile(userId: string, profileData: Omit<Profile, 'id' | 'user_type' | 'email'> & { email: string }): Promise<{ data: Profile | null; error: any }> {
+  async createProfile(userId: string, profileData: Omit<Profile, 'id' | 'user_type' | 'email'> & { email: string }): Promise<{ data: Profile | null; error: unknown }> {
     const newProfileData = {
       id: userId,
       full_name: profileData.full_name || '',
@@ -242,7 +331,7 @@ class SupabaseService {
     );
   }
 
-  async updateProfile(userId: string, data: Partial<Profile>): Promise<{ error: any }> {
+  async updateProfile(userId: string, data: Partial<Profile>): Promise<{ error: unknown }> {
     const { error } = await this.executeQuery(
       supabase
         .from('profiles')
@@ -254,24 +343,22 @@ class SupabaseService {
 
   // --- Data Fetching Methods --- 
 
-  async getCategories(language: Language): Promise<{ data: any[] | null; error: any }> {
+  async getCategories(language: Language): Promise<{ data: AppCategory[] | null; error: unknown }> {
     console.log(`[Service] Fetching categories for language: ${language}`);
-    const { data: categories, error: categoriesError } = await this.executeQuery<any[]>(
+    const { data: categories, error: categoriesError } = await this.executeQuery<Tables<'categories'>[]>(
       supabase
         .from('categories')
         .select('*')
         .eq('active', true)
         .order('created_at')
     );
-
     if (categoriesError || !categories) {
       return { data: null, error: categoriesError };
     }
-
     try {
       const categoriesWithCounts = await Promise.all(
         categories.map(async (category) => {
-          const { data: countResult, error: countError } = await this.executeQuery<{ count: number }>( 
+          const { data: countResult, error: countError } = await this.executeQuery<{ count: number }>(
             supabase
               .from('products')
               .select('*', { count: 'exact', head: true })
@@ -288,7 +375,7 @@ class SupabaseService {
             image: category.image,
             icon: category.icon,
             count: countResult?.count ?? 0,
-          };
+          } as AppCategory;
         })
       );
       return { data: categoriesWithCounts, error: null };
@@ -298,26 +385,22 @@ class SupabaseService {
     }
   }
 
-  async getProducts(language: Language, userType: Profile['user_type'] | null | undefined, categoryId?: string): Promise<{ data: any[] | null; error: any }> {
+  async getProducts(language: Language, userType: Profile['user_type'] | null | undefined, categoryId?: string): Promise<{ data: AppProduct[] | null; error: unknown }> {
     console.log(`[Service] Fetching products. Lang: ${language}, UserType: ${userType || 'guest'}, Category: ${categoryId || 'all'}`);
     let query = supabase
       .from('products')
-      .select('*, categories!inner(*)')
+      .select('*')
       .eq('active', true);
-
     if (categoryId && categoryId !== 'all') {
       query = query.eq('category_id', categoryId);
     }
-
-    const { data: products, error } = await this.executeQuery<any[]>(
+    const { data: products, error } = await this.executeQuery<Tables<'products'>[]>(
       query.order('created_at', { ascending: false })
     );
-
     if (error || !products) {
       return { data: null, error };
     }
-
-    const processedProducts = products.map(product => {
+    const processedProducts: AppProduct[] = products.map(product => {
       const isWholesale = userType === 'wholesale';
       const displayPrice = isWholesale && product.wholesale_price 
         ? Number(product.wholesale_price) 
@@ -333,7 +416,7 @@ class SupabaseService {
         wholesalePrice: product.wholesale_price ? Number(product.wholesale_price) : undefined,
         image: product.image,
         images: product.images || [],
-        category: product.categories ? product.categories[`name_${language}`] : 'Unknown',
+        category: product.category_id, // Use category_id, not categories
         inStock: product.in_stock || false,
         rating: Number(product.rating) || 0,
         reviews: product.reviews_count || 0,
@@ -341,14 +424,15 @@ class SupabaseService {
         featured: product.featured || false,
         tags: product.tags || [],
         stock_quantity: product.stock_quantity || 0,
+        active: product.active ?? true,
       };
     });
     return { data: processedProducts, error: null };
   }
 
-  async getBanners(language: Language): Promise<{ data: any[] | null; error: any }> {
+  async getBanners(language: Language): Promise<{ data: AppBanner[] | null; error: unknown }> {
     console.log(`[Service] Fetching banners for language: ${language}`);
-    const { data: banners, error } = await this.executeQuery<any[]>(
+    const { data: banners, error } = await this.executeQuery<Tables<'banners'>[]>(
       supabase
         .from('banners')
         .select('*')
@@ -358,34 +442,34 @@ class SupabaseService {
     if (error || !banners) {
       return { data: null, error };
     }
-    const processedBanners = banners.map(banner => ({
+    const processedBanners: AppBanner[] = banners.map(banner => ({
       id: banner.id,
       title: banner[`title_${language}`],
       subtitle: banner[`subtitle_${language}`],
       image: banner.image,
-      link: banner.link,
-      active: banner.active,
+      link: banner.link ?? undefined,
+      active: banner.active ?? true,
     }));
     return { data: processedBanners, error: null };
   }
 
   // --- Admin Specific Methods --- 
 
-  async getAllUsers(filters?: any): Promise<{ data: Profile[] | null; error: any }> {
+  async getAllUsers(filters?: unknown): Promise<{ data: Profile[] | null; error: unknown }> {
     console.log('[Service] Fetching all users (admin)');
-    let query = supabase.from('profiles').select('*');
+    const query = supabase.from('profiles').select('*');
     // Add filtering logic here if needed
     return this.executeQuery<Profile[]>(query.order('created_at'));
   }
 
-  async updateUserProfile(userId: string, data: Partial<Profile>): Promise<{ error: any }> {
+  async updateUserProfile(userId: string, data: Partial<Profile>): Promise<{ error: unknown }> {
     console.log(`[Service] Updating profile for user ${userId} (admin)`);
     return this.updateProfile(userId, data);
   }
 
   // --- Address Methods ---
 
-  async getUserAddresses(userId: string): Promise<{ data: Address[] | null; error: any }> {
+  async getUserAddresses(userId: string): Promise<{ data: Address[] | null; error: unknown }> {
     console.log(`[Service] Fetching addresses for user: ${userId}`);
     return this.executeQuery<Address[]>(
       supabase
@@ -396,7 +480,7 @@ class SupabaseService {
     );
   }
 
-  async createAddress(userId: string, addressData: Omit<Address, 'id' | 'user_id'>): Promise<{ data: Address | null; error: any }> {
+  async createAddress(userId: string, addressData: Omit<Address, 'id' | 'user_id'>): Promise<{ data: Address | null; error: unknown }> {
     console.log(`[Service] Creating address for user: ${userId}`);
     const dataToInsert = { ...addressData, user_id: userId };
     return this.executeQuery<Address>(
@@ -408,20 +492,20 @@ class SupabaseService {
     );
   }
 
-  async updateAddress(addressId: string, addressData: Partial<Omit<Address, 'id' | 'user_id'>>): Promise<{ data: Address | null; error: any }> {
+  async updateAddress(addressId: string, addressData: Partial<Omit<Address, 'id' | 'user_id'>>): Promise<{ data: Address | null; error: unknown }> {
     console.log(`[Service] Updating address: ${addressId}`);
-    const { user_id, ...updateData } = addressData as any;
+    // Don't destructure user_id, just use addressData directly
     return this.executeQuery<Address>(
       supabase
         .from('addresses')
-        .update(updateData)
+        .update(addressData)
         .eq('id', addressId)
         .select()
         .single()
     );
   }
 
-  async deleteAddress(addressId: string): Promise<{ error: any }> {
+  async deleteAddress(addressId: string): Promise<{ error: unknown }> {
     console.log(`[Service] Deleting address: ${addressId}`);
     const { error } = await this.executeQuery(
       supabase
@@ -434,7 +518,7 @@ class SupabaseService {
 
   // --- Favorites Methods ---
 
-  async getUserFavorites(userId: string): Promise<{ data: { product_id: string }[] | null; error: any }> {
+  async getUserFavorites(userId: string): Promise<{ data: { product_id: string }[] | null; error: unknown }> {
     console.log(`[Service] Fetching favorites for user: ${userId}`);
     return this.executeQuery<{ product_id: string }[]>(
       supabase
@@ -445,7 +529,7 @@ class SupabaseService {
     );
   }
 
-  async addFavorite(userId: string, productId: string): Promise<{ error: any }> {
+  async addFavorite(userId: string, productId: string): Promise<{ error: unknown }> {
     console.log(`[Service] Adding favorite for user: ${userId}, product: ${productId}`);
     const { error } = await this.executeQuery(
       supabase
@@ -455,7 +539,7 @@ class SupabaseService {
     return { error };
   }
 
-  async removeFavorite(userId: string, productId: string): Promise<{ error: any }> {
+  async removeFavorite(userId: string, productId: string): Promise<{ error: unknown }> {
     console.log(`[Service] Removing favorite for user: ${userId}, product: ${productId}`);
     const { error } = await this.executeQuery(
       supabase
@@ -467,7 +551,7 @@ class SupabaseService {
     return { error };
   }
 
-  async clearUserFavorites(userId: string): Promise<{ error: any }> {
+  async clearUserFavorites(userId: string): Promise<{ error: unknown }> {
     console.log(`[Service] Clearing all favorites for user: ${userId}`);
     const { error } = await this.executeQuery(
       supabase
@@ -478,28 +562,41 @@ class SupabaseService {
     return { error };
   }
 
-  async getFavoriteProductDetails(productIds: string[], language: Language): Promise<{ data: any[] | null; error: any }> {
+  async getFavoriteProductDetails(productIds: string[], language: Language): Promise<{ data: AppProduct[] | null; error: unknown }> {
     console.log(`[Service] Fetching details for favorite products: ${productIds.join(', ')}`);
     if (!productIds || productIds.length === 0) {
       return { data: [], error: null };
     }
-    const { data: products, error } = await this.executeQuery<any[]>(
+    const { data: products, error } = await this.executeQuery<Tables<'products'>[]>(
       supabase
         .from('products')
-        .select('*, categories(*)')
+        .select('*')
         .in('id', productIds)
         .eq('active', true)
     );
     if (error || !products) {
       return { data: null, error };
     }
-    const processedProducts = products.map(product => ({
+    const processedProducts: AppProduct[] = products.map(product => ({
       id: product.id,
       name: product[`name_${language}`],
+      nameEn: product.name_en,
+      description: product[`description_${language}`],
+      descriptionEn: product.description_en,
       price: Number(product.price),
+      originalPrice: product.original_price ? Number(product.original_price) : undefined,
+      wholesalePrice: product.wholesale_price ? Number(product.wholesale_price) : undefined,
       image: product.image,
-      category: product.categories ? product.categories[`name_${language}`] : 'Unknown',
-      // Add other fields as needed
+      images: product.images || [],
+      category: product.category_id, // Use category_id
+      inStock: product.in_stock || false,
+      rating: Number(product.rating) || 0,
+      reviews: product.reviews_count || 0,
+      discount: product.discount ? Number(product.discount) : undefined,
+      featured: product.featured || false,
+      tags: product.tags || [],
+      stock_quantity: product.stock_quantity || 0,
+      active: product.active ?? true,
     }));
     return { data: processedProducts, error: null };
   }
@@ -510,4 +607,13 @@ class SupabaseService {
 
 // Export a singleton instance
 export const supabaseService = SupabaseService.getInstance();
+
+// HMR cleanup for Vite
+declare const importMeta: ImportMeta;
+if (import.meta && import.meta.hot) {
+  import.meta.hot.accept();
+  import.meta.hot.dispose(() => {
+    supabaseService.cleanup();
+  });
+}
 

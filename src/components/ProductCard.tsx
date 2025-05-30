@@ -22,7 +22,7 @@ interface ProductCardProps {
 // مكون كرت المنتج مع تحسين الأداء باستخدام memo
 const ProductCard: React.FC<ProductCardProps> = memo(({ product, onQuickView }) => {
   // استخدام الخطافات للوصول للوظائف المختلفة
-  const { addToCart, getItemQuantity, buyNow } = useCart();
+  const { addItem, getItemQuantity} = useCart();
   const { toggleFavorite, isFavorite } = useFavorites();
   const { user } = useAuth();
   const { t } = useLanguage();
@@ -42,7 +42,7 @@ const ProductCard: React.FC<ProductCardProps> = memo(({ product, onQuickView }) 
     
     try {
       setIsLoading(true);
-      await addToCart(product, quantity);
+      await addItem(product, quantity);
       toast.success(t('addedToCart'));
     } catch (error) {
       console.error('خطأ في إضافة المنتج للسلة:', error);
@@ -50,7 +50,7 @@ const ProductCard: React.FC<ProductCardProps> = memo(({ product, onQuickView }) 
     } finally {
       setIsLoading(false);
     }
-  }, [addToCart, product, quantity, t, isLoading]);
+  }, [addItem, product, quantity, t, isLoading]);
 
   // وظيفة الشراء المباشر - توجه إلى صفحة الدفع
   const handleBuyNow = useCallback(async () => {
@@ -59,7 +59,7 @@ const ProductCard: React.FC<ProductCardProps> = memo(({ product, onQuickView }) 
     try {
       setIsLoading(true);
       // إضافة المنتج للسلة أولاً ثم التوجه للدفع
-      await addToCart(product, quantity);
+      await addItem(product, quantity);
       navigate('/checkout', { 
         state: { 
           directBuy: true, 
@@ -73,7 +73,7 @@ const ProductCard: React.FC<ProductCardProps> = memo(({ product, onQuickView }) 
     } finally {
       setIsLoading(false);
     }
-  }, [addToCart, product, quantity, navigate, isLoading]);
+  }, [addItem, product, quantity, navigate, isLoading]);
 
   // وظيفة فتح العرض السريع للمنتج
   const handleQuickView = useCallback(() => {

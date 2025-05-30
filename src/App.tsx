@@ -68,10 +68,10 @@ const LoadingSpinner = memo(() => (
 const preloadRoutes = () => {
   const routes = [Products, Categories, ProductDetails, Favorites];
   routes.forEach(route => {
-    const componentImport = route as any;
-    if (componentImport && typeof componentImport === 'function') {
-      // Preload after initial render
-      setTimeout(() => componentImport(), 100);
+    // استخدم unknown بدلاً من any
+    const componentImport = route as unknown;
+    if (typeof componentImport === 'function') {
+      setTimeout(() => (componentImport as () => void)(), 100);
     }
   });
 };
@@ -106,8 +106,8 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: 5 * 60 * 1000, // 5 minutes
       gcTime: 10 * 60 * 1000, // 10 minutes
-      retry: (failureCount, error: any) => {
-        if (error?.status === 404) return false;
+      retry: (failureCount: number, error: unknown) => {
+        if (typeof error === 'object' && error !== null && 'status' in error && (error as { status?: number }).status === 404) return false;
         return failureCount < 3;
       },
       refetchOnWindowFocus: false,
@@ -125,7 +125,7 @@ const queryClient = new QueryClient({
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <HelmetProvider>
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <ErrorBoundary>
           <LanguageProvider>
             <AuthProvider>

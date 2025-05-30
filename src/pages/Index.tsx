@@ -18,10 +18,12 @@ const Index = () => {
   const { data: categories = [], isLoading: categoriesLoading, error: categoriesError } = useCategories();
   const { data: products = [], isLoading: productsLoading, error: productsError } = useProducts();
 
-  // إضافة console logs للتشخيص
-  console.log('Categories data:', categories);
-  console.log('Categories loading:', categoriesLoading);
-  console.log('Categories error:', categoriesError);
+  // إزالة console.log من الإنتاج
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('Categories data:', categories);
+    console.log('Categories loading:', categoriesLoading);
+    console.log('Categories error:', categoriesError);
+  }
 
   const featuredProducts = products.filter(product => product.featured).slice(0, 8);
   const filteredProducts = products.filter(product => 
@@ -34,14 +36,14 @@ const Index = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="text-red-500 mb-4">
-            <svg className="h-12 w-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="text-red-500 mb-4" aria-label="خطأ في تحميل المنتجات">
+            <svg className="h-12 w-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
             </svg>
           </div>
           <h2 className="text-xl font-bold mb-2">{t('error')}</h2>
           <p className="mb-4">{productsError.message || t('errorLoadingData')}</p>
-          <Button onClick={() => window.location.reload()}>{t('retry')}</Button>
+          <Button onClick={() => window.location.reload()} aria-label={t('retry')}>{t('retry')}</Button>
         </div>
       </div>
     );
@@ -89,10 +91,9 @@ const Index = () => {
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold">{t('categories')}</h2>
               <Button asChild variant="outline">
-                <Link to="/categories">{t('viewAll')}</Link>
+                <Link to="/categories" aria-label={t('viewAll')}>{t('viewAll')}</Link>
               </Button>
             </div>
-            
             {categoriesLoading ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
                 {[...Array(5)].map((_, i) => (
@@ -126,10 +127,9 @@ const Index = () => {
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold">{t('featuredProducts')}</h2>
               <Button asChild variant="outline">
-                <Link to="/products">{t('viewAll')}</Link>
+                <Link to="/products" aria-label={t('viewAll')}>{t('viewAll')}</Link>
               </Button>
             </div>
-            
             {productsLoading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {[...Array(8)].map((_, i) => (
@@ -145,7 +145,7 @@ const Index = () => {
               <div className="text-center py-12">
                 <p className="text-gray-500">{t('noFeaturedProducts')}</p>
                 <Button asChild className="mt-4">
-                  <Link to="/products">{t('browseAllProducts')}</Link>
+                  <Link to="/products" aria-label={t('browseAllProducts')}>{t('browseAllProducts')}</Link>
                 </Button>
               </div>
             ) : (
