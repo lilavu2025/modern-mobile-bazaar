@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -18,16 +17,17 @@ import { ShoppingCart, Eye, Package, Clock, CheckCircle, XCircle, Plus, Trash2, 
 import { toast } from 'sonner';
 import { useProducts } from '@/hooks/useSupabaseData';
 import { useAdminUsers } from '@/hooks/useAdminUsers';
+import { Address, Product } from '@/types';
 
 // واجهة الطلب
 interface Order {
   id: string;
   user_id: string;
-  items: any;
+  items: OrderItem[];
   total: number;
-  status: string;
+  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   payment_method: string;
-  shipping_address: any;
+  shipping_address: Address;
   notes?: string;
   created_at: string;
   updated_at: string;
@@ -54,16 +54,68 @@ interface NewOrderForm {
   status: string;
   notes: string;
   items: OrderItem[];
-  shipping_address: {
-    full_name: string;
-    phone: string;
-    city: string;
-    street: string;
-    building: string;
-    apartment?: string;
-    floor?: string;
+  shipping_address: Address;
+}
+
+// Helper: Convert snake_case to camelCase for Address
+function mapAddressFromDb(dbAddress: Record<string, unknown>): Address {
+  return {
+    fullName: dbAddress['full_name'] as string,
+    phone: dbAddress['phone'] as string,
+    city: dbAddress['city'] as string,
+    area: dbAddress['area'] as string,
+    street: dbAddress['street'] as string,
+    building: dbAddress['building'] as string,
+    floor: dbAddress['floor'] as string,
+    apartment: dbAddress['apartment'] as string,
   };
 }
+function mapAddressToDb(address: Address) {
+  return {
+    full_name: address.fullName,
+    phone: address.phone,
+    city: address.city,
+    area: address.area,
+    street: address.street,
+    building: address.building,
+    floor: address.floor,
+    apartment: address.apartment,
+  };
+}
+// Helper: Map order from DB
+function mapOrderFromDb(order: Record<string, unknown>): Order {
+  return {
+    id: order['id'] as string,
+    user_id: order['user_id'] as string,
+    items: typeof order['items'] === 'string' ? JSON.parse(order['items'] as string) : (order['items'] as OrderItem[]),
+    total: order['total'] as number,
+    status: order['status'] as Order['status'],
+    created_at: order['created_at'] as string,
+    shipping_address: typeof order['shipping_address'] === 'string' ? mapAddressFromDb(JSON.parse(order['shipping_address'] as string)) : mapAddressFromDb(order['shipping_address'] as Record<string, unknown>),
+    payment_method: order['payment_method'] as string,
+    notes: order['notes'] as string,
+    updated_at: order['updated_at'] as string,
+    profiles: order['profiles'] as { full_name: string; email?: string; phone?: string },
+  };
+}
+
+const initialOrderForm: NewOrderForm = {
+  user_id: '',
+  payment_method: 'cash',
+  status: 'pending',
+  notes: '',
+  items: [],
+  shipping_address: {
+    fullName: '',
+    phone: '',
+    city: '',
+    area: '',
+    street: '',
+    building: '',
+    floor: '',
+    apartment: '',
+  },
+};
 
 const AdminOrders: React.FC = () => {
   const { t, isRTL } = useLanguage();
@@ -75,15 +127,9 @@ const AdminOrders: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortBy, setSortBy] = useState('created_at');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  
-  // حالات النموذج الجديد
   const [showAddOrder, setShowAddOrder] = useState(false);
   const [isAddingOrder, setIsAddingOrder] = useState(false);
-  
-  // جلب البيانات المطلوبة
+  const [orderForm, setOrderForm] = useState<NewOrderForm>(initialOrderForm);
   const { data: products = [] } = useProducts();
   const { users, isLoading: usersLoading } = useAdminUsers();
 
@@ -94,57 +140,21 @@ const AdminOrders: React.FC = () => {
     }
   }, [location.state]);
   
-  // النموذج الأولي للطلب الجديد
-  const initialOrderForm: NewOrderForm = {
-    user_id: '',
-    payment_method: 'cash',
-    status: 'pending',
-    notes: '',
-    items: [],
-    shipping_address: {
-      full_name: '',
-      phone: '',
-      city: '',
-      street: '',
-      building: '',
-      apartment: '',
-      floor: ''
-    }
-  };
-  
-  const [orderForm, setOrderForm] = useState<NewOrderForm>(initialOrderForm);
-  
-  // جلب الطلبات من قاعدة البيانات
-  const fetchOrders = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      
+  // استعلام الطلبات مع تفعيل polling وتحديث البيانات عند العودة للنافذة
+  const { data: orders = [], isLoading, error, refetch } = useQuery<Order[]>({
+    queryKey: ["admin-orders"],
+    queryFn: async () => {
       const { data, error } = await supabase
         .from('orders')
-        .select(`
-          *,
-          profiles:user_id (
-            full_name,
-            email,
-            phone
-          )
-        `)
+        .select(`*, profiles:user_id (full_name, email, phone)`)
         .order('created_at', { ascending: false });
-      
-      if (error) {
-        throw error;
-      }
-      
-      setOrders(data || []);
-    } catch (err: any) {
-      console.error('خطأ في جلب الطلبات:', err);
-      setError(err.message);
-      toast.error('فشل في جلب الطلبات');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      if (error) throw error;
+      return (data || []).map(mapOrderFromDb);
+    },
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,
+    refetchInterval: 60 * 1000,
+  });
   
   // تحديث حالة الطلب
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
@@ -159,15 +169,8 @@ const AdminOrders: React.FC = () => {
       
       if (error) throw error;
       
-      // تحديث الحالة محلياً
-      setOrders(prev => prev.map(order => 
-        order.id === orderId 
-          ? { ...order, status: newStatus, updated_at: new Date().toISOString() }
-          : order
-      ));
-      
       toast.success('تم تحديث حالة الطلب بنجاح');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('خطأ في تحديث حالة الطلب:', err);
       toast.error('فشل في تحديث حالة الطلب');
     }
@@ -197,22 +200,19 @@ const AdminOrders: React.FC = () => {
   };
   
   // تحديث عنصر في الطلب
-  const updateOrderItem = (itemId: string, field: keyof OrderItem, value: any) => {
+  const updateOrderItem = (itemId: string, field: keyof OrderItem, value: string | number) => {
     setOrderForm(prev => ({
       ...prev,
       items: prev.items.map(item => {
         if (item.id === itemId) {
           const updatedItem = { ...item, [field]: value };
-          
-          // إذا تم تغيير المنتج، نحديث الاسم والسعر
           if (field === 'product_id') {
-            const selectedProduct = products.find(p => p.id === value);
+            const selectedProduct = products.find((p: Product) => p.id === value);
             if (selectedProduct) {
               updatedItem.product_name = selectedProduct.name;
               updatedItem.price = selectedProduct.price;
             }
           }
-          
           return updatedItem;
         }
         return item;
@@ -241,7 +241,7 @@ const AdminOrders: React.FC = () => {
         return;
       }
       
-      if (!orderForm.shipping_address.full_name || !orderForm.shipping_address.phone) {
+      if (!orderForm.shipping_address.fullName || !orderForm.shipping_address.phone) {
         toast.error('يرجى إدخال معلومات الشحن الأساسية');
         return;
       }
@@ -288,11 +288,11 @@ const AdminOrders: React.FC = () => {
       toast.success('تم إضافة الطلب بنجاح');
       setShowAddOrder(false);
       setOrderForm(initialOrderForm);
-      fetchOrders(); // إعادة جلب الطلبات
+      refetch(); // إعادة جلب الطلبات
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('خطأ في إضافة الطلب:', error);
-      toast.error(error.message || 'فشل في إضافة الطلب');
+      toast.error('فشل في إضافة الطلب');
     } finally {
       setIsAddingOrder(false);
     }
@@ -330,10 +330,6 @@ const AdminOrders: React.FC = () => {
     return orders.filter(order => order.status === statusFilter);
   }, [orders, statusFilter]);
 
-  useEffect(() => {
-    fetchOrders();
-  }, []);
-  
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -355,8 +351,8 @@ const AdminOrders: React.FC = () => {
             <div className="text-center">
               <XCircle className="h-16 w-16 text-red-300 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-red-900 mb-2">خطأ في تحميل الطلبات</h3>
-              <p className="text-red-600 mb-4">{error}</p>
-              <Button onClick={fetchOrders}>إعادة المحاولة</Button>
+              <p className="text-red-600 mb-4">{error.message}</p>
+              <Button onClick={() => refetch()}>إعادة المحاولة</Button>
             </div>
           </CardContent>
         </Card>
@@ -429,10 +425,10 @@ const AdminOrders: React.FC = () => {
                       <Label htmlFor="full_name">الاسم الكامل *</Label>
                       <Input
                         id="full_name"
-                        value={orderForm.shipping_address.full_name}
+                        value={orderForm.shipping_address.fullName}
                         onChange={(e) => setOrderForm(prev => ({
                           ...prev,
-                          shipping_address: { ...prev.shipping_address, full_name: e.target.value }
+                          shipping_address: { ...prev.shipping_address, fullName: e.target.value }
                         }))}
                         placeholder="أدخل الاسم الكامل"
                       />
@@ -612,7 +608,7 @@ const AdminOrders: React.FC = () => {
             </DialogContent>
           </Dialog>
           
-          <Button onClick={fetchOrders} variant="outline">
+          <Button onClick={() => refetch()} variant="outline">
             تحديث
           </Button>
         </div>

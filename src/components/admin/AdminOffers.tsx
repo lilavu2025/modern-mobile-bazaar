@@ -50,7 +50,7 @@ const AdminOffers: React.FC = () => {
 
   // جلب العروض من قاعدة البيانات
   const { data: offers = [], refetch, isLoading: isLoadingOffers } = useQuery({
-    queryKey: ['admin-offers'],
+    queryKey: ["admin-offers"],
     queryFn: async () => {
       try {
         const { data, error } = await supabase
@@ -71,6 +71,9 @@ const AdminOffers: React.FC = () => {
         throw error;
       }
     },
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,
+    refetchInterval: 60 * 1000,
   });
 
   // حذف عرض

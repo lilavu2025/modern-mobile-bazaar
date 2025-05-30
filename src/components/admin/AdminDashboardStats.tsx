@@ -25,7 +25,7 @@ const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
 
   // Fetch users statistics
   const { data: usersStats = [], isLoading: usersLoading, error: usersError } = useQuery({
-    queryKey: ['admin-users-stats'],
+    queryKey: ["admin-users-stats"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
@@ -45,12 +45,14 @@ const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
       ];
     },
     retry: 3,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,
+    refetchInterval: 60 * 1000,
   });
 
   // Fetch products statistics
   const { data: productsStats = [], isLoading: productsLoading, error: productsError } = useQuery({
-    queryKey: ['admin-products-stats'],
+    queryKey: ["admin-products-stats"],
     queryFn: async () => {
       const { data: products, error: productsError } = await supabase
         .from('products')
@@ -88,12 +90,14 @@ const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
       }));
     },
     retry: 3,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,
+    refetchInterval: 60 * 1000,
   });
 
   // Fetch orders statistics
   const { data: ordersStats, isLoading: ordersLoading, error: ordersError } = useQuery({
-    queryKey: ['admin-orders-stats'],
+    queryKey: ["admin-orders-stats"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('orders')
@@ -162,7 +166,9 @@ const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
       };
     },
     retry: 3,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,
+    refetchInterval: 60 * 1000,
   });
 
   const handleUserTypeClick = (userType: string) => {
@@ -181,7 +187,7 @@ const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
 
   // Fetch monthly orders and revenue data
   const { data: monthlyData = [], isLoading: monthlyLoading } = useQuery({
-    queryKey: ['admin-monthly-stats'],
+    queryKey: ["admin-monthly-data"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('orders')
@@ -218,12 +224,14 @@ const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
       return Object.values(monthlyStats);
     },
     retry: 3,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,
+    refetchInterval: 60 * 1000,
   });
 
   // Fetch recent activity data
   const { data: recentActivity = [], isLoading: activityLoading } = useQuery({
-    queryKey: ['admin-recent-activity'],
+    queryKey: ["admin-recent-activity"],
     queryFn: async () => {
       const activities = [];
       
@@ -287,7 +295,9 @@ const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
         .slice(0, 4);
     },
     retry: 3,
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,
+    refetchInterval: 60 * 1000,
   });
 
   const chartConfig = {

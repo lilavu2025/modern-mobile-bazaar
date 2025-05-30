@@ -1,9 +1,9 @@
 // /home/ubuntu/modern-mobile-bazaar/src/hooks/useFavorites.ts
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
-import { supabaseService } from "@/services/supabaseService"; // Import the service
+import { FavoriteService } from "@/services/supabaseService";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Product } from "@/types"; // Assuming Product type is defined
 import { Language } from "@/types/language";
@@ -13,11 +13,10 @@ export const useFavorites = () => {
   const { t, language } = useLanguage();
   const queryClient = useQueryClient();
 
-  // Use React Query to fetch favorite IDs
-  const { data: favoriteIds = [], isLoading: isLoadingIds, error: fetchError } = useQuery({
+  // تفعيل polling وتحديث عند العودة للنافذة في جلب favoriteIds
+  const { data: favoriteIdsRaw = [], isLoading: isLoadingIds, error: fetchError } = useQuery<string[]>({
     queryKey: ["favorites", user?.id],
     queryFn: async () => {
-      console.log("[useFavorites] Fetching favorite IDs for user:", user?.id);
       if (!user) {
         // Guest user: Load from localStorage
         try {
@@ -28,19 +27,13 @@ export const useFavorites = () => {
           return [];
         }
       }
-      // Logged-in user: Fetch from service
-      const { data, error } = await supabaseService.getUserFavorites(user.id);
-      if (error) {
-        console.error("[useFavorites] Error fetching favorite IDs via service:", error);
-        toast.error(t("errorLoadingFavorites"));
-        throw error; // Let React Query handle the error state
-      }
-      return data?.map(fav => fav.product_id) || [];
+      return await FavoriteService.getUserFavorites(user.id);
     },
-    // Keep data fresh, but don't refetch too aggressively on window focus unless needed
     staleTime: 5 * 60 * 1000, // 5 minutes
-    cacheTime: 15 * 60 * 1000, // 15 minutes
+    refetchOnWindowFocus: true,
+    refetchInterval: 60 * 1000,
   });
+  const favoriteIds: string[] = useMemo(() => favoriteIdsRaw || [], [favoriteIdsRaw]);
 
   // Save guest favorites to localStorage
   useEffect(() => {
@@ -66,7 +59,7 @@ export const useFavorites = () => {
         return productId; // Return ID for optimistic update
       }
       // Logged-in user: Call service
-      const { error } = await supabaseService.addFavorite(user.id, productId);
+      const { error } = await FavoriteService.addFavorite(user.id, productId);
       if (error) {
         // Handle potential errors, e.g., unique constraint violation if already added
         console.error("[useFavorites] Error adding favorite via service:", error);
@@ -112,7 +105,7 @@ export const useFavorites = () => {
         return productId; // Return ID for optimistic update
       }
       // Logged-in user: Call service
-      const { error } = await supabaseService.removeFavorite(user.id, productId);
+      const { error } = await FavoriteService.removeFavorite(user.id, productId);
       if (error) {
         console.error("[useFavorites] Error removing favorite via service:", error);
         throw error;
@@ -154,7 +147,7 @@ export const useFavorites = () => {
         return;
       }
       // Logged-in user: Call service
-      const { error } = await supabaseService.clearUserFavorites(user.id);
+      const { error } = await FavoriteService.clearUserFavorites(user.id);
       if (error) {
         console.error("[useFavorites] Error clearing favorites via service:", error);
         throw error;
@@ -208,28 +201,26 @@ export const useFavorites = () => {
     return favoriteIds.length;
   }, [favoriteIds]);
 
-  // Fetch full product details for favorites
-  const { data: favoriteProducts = [], isLoading: isLoadingProducts, error: productsError } = useQuery({
+  // تفعيل polling وتحديث عند العودة للنافذة في جلب تفاصيل المنتجات المفضلة
+  const { data: favoriteProductsRaw = [], isLoading: isLoadingProducts, error: productsError } = useQuery({
     queryKey: ["favoriteProducts", user?.id, language, favoriteIds], // Include language and IDs
     queryFn: async () => {
       console.log("[useFavorites] Fetching favorite product details...");
       if (favoriteIds.length === 0) return [];
       
-      const { data, error } = await supabaseService.getFavoriteProductDetails(favoriteIds, language as Language);
-      if (error) {
-        console.error("[useFavorites] Error fetching favorite product details:", error);
-        // Don't throw here, just return empty array or handle error display
-        return []; 
-      }
+      const { data, error } = await FavoriteService.getFavoriteProductDetails(favoriteIds, language as Language);
+      if (error) return [];
       return data || [];
     },
     enabled: favoriteIds.length > 0, // Only run if there are favorite IDs
     staleTime: 5 * 60 * 1000, 
+    refetchOnWindowFocus: true,
+    refetchInterval: 60 * 1000,
   });
 
   return {
     favorites: favoriteIds, // List of product IDs
-    favoriteProducts: favoriteProducts as Product[], // List of full product details
+    favoriteProducts: favoriteProductsRaw, // إذا احتجت تحويل لنوع Product، أضف mapping هنا
     isLoading: isLoadingIds || (favoriteIds.length > 0 && isLoadingProducts), // Combined loading state
     error: fetchError || productsError,
     toggleFavorite,

@@ -1,6 +1,6 @@
 // /home/ubuntu/modern-mobile-bazaar/src/hooks/useSupabaseData.ts
 import { useQuery } from '@tanstack/react-query';
-import { supabaseService } from '@/services/supabaseService'; // Import the service
+import { CategoryService, ProductService, BannerService } from '@/services/supabaseService';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Profile } from '@/contexts/AuthContext'; // Assuming Profile type is here
@@ -16,16 +16,19 @@ export const useCategories = () => {
     queryKey: ['categories', language],
     queryFn: async () => {
       console.log('📦 Calling SupabaseService to fetch categories...');
-      const { data, error } = await supabaseService.getCategories(language as Language);
+      const data = await CategoryService.getCategories(language as Language);
 
-      if (error) {
+      if (!data) {
+        const error = new Error('Error fetching categories');
         console.error('❌ Error fetching categories via service:', error);
         throw error; // Re-throw the error for react-query to handle
       }
       console.log('📊 Categories fetched via service:', data);
       return data || []; // Return data or an empty array if null
     },
-    // Add other react-query options if needed (e.g., staleTime, cacheTime)
+    staleTime: 5 * 60 * 1000, // البيانات تعتبر حديثة لمدة 5 دقائق
+    refetchOnWindowFocus: true, // إعادة الجلب عند العودة للنافذة
+    refetchInterval: 60 * 1000, // polling: جلب جديد كل دقيقة
   });
 
   return {
@@ -48,15 +51,19 @@ export const useProducts = (categoryId?: string) => {
     queryFn: async () => {
       console.log('🛍️ Calling SupabaseService to fetch products...');
       const userType = profile?.user_type as Profile['user_type'] | null | undefined;
-      const { data, error } = await supabaseService.getProducts(language as Language, userType, categoryId);
+      const data = await ProductService.getProducts(language as Language, userType, categoryId);
 
-      if (error) {
+      if (!data) {
+        const error = new Error('Error fetching products');
         console.error('❌ Error fetching products via service:', error);
         throw error;
       }
       console.log('📦 Products fetched via service:', data);
       return data || [];
     },
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,
+    refetchInterval: 60 * 1000,
   });
 
   return {
@@ -75,9 +82,10 @@ export const useBanners = () => {
     queryKey: ['banners', language],
     queryFn: async () => {
       console.log('🖼️ Calling SupabaseService to fetch banners...');
-      const { data, error } = await supabaseService.getBanners(language as Language);
+      const data = await BannerService.getBanners(language as Language);
 
-      if (error) {
+      if (!data) {
+        const error = new Error('Error fetching banners');
         console.error('❌ Error fetching banners via service:', error);
         throw error;
       }
