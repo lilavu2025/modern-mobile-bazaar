@@ -181,6 +181,8 @@ export type Database = {
           facebook: string | null
           instagram: string | null
           whatsapp: string | null
+          working_hours: string | null
+          fields_order: Json | null
           updated_at: string
         }
         Insert: {
@@ -191,6 +193,8 @@ export type Database = {
           facebook?: string | null
           instagram?: string | null
           whatsapp?: string | null
+          working_hours?: string | null
+          fields_order?: Json | null
           updated_at?: string
         }
         Update: {
@@ -201,6 +205,8 @@ export type Database = {
           facebook?: string | null
           instagram?: string | null
           whatsapp?: string | null
+          working_hours?: string | null
+          fields_order?: Json | null
           updated_at?: string
         }
         Relationships: []

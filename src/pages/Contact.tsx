@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Mail, Phone, MapPin, Clock } from 'lucide-react';
+import { Mail, Phone, MapPin, Clock, Facebook, Instagram, MessageCircle, Smartphone } from 'lucide-react';
 import { useContactInfo } from '@/hooks/useContactInfo';
 
 const Contact: React.FC = () => {
@@ -52,6 +52,34 @@ const Contact: React.FC = () => {
     }
   };
 
+  const FIELD_ICONS: Record<string, React.ReactNode> = {
+    email: <Mail className="h-5 w-5" />,
+    phone: <Phone className="h-5 w-5" />,
+    address: <MapPin className="h-5 w-5" />,
+    facebook: <Facebook className="h-5 w-5" />,
+    instagram: <Instagram className="h-5 w-5" />,
+    whatsapp: <Smartphone className="h-5 w-5" />,
+    working_hours: <Clock className="h-5 w-5" />,
+  };
+  const FIELD_LABELS: Record<string, string> = {
+    email: t('email'),
+    phone: t('phone'),
+    address: t('address'),
+    facebook: 'Facebook',
+    instagram: 'Instagram',
+    whatsapp: t('phone'),
+    working_hours: t('workingHours') || 'ساعات العمل',
+  };
+  const FIELD_KEYS = [
+    'email',
+    'phone',
+    'address',
+    'facebook',
+    'instagram',
+    'whatsapp',
+    'working_hours',
+  ];
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header 
@@ -71,56 +99,27 @@ const Contact: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Contact Information */}
           <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Mail className="h-5 w-5" />
-                  {t('email')}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">{contactInfo?.email || 'info@mystore.com'}</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Phone className="h-5 w-5" />
-                  {t('phone')}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">{contactInfo?.phone || '+966 12 345 6789'}</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MapPin className="h-5 w-5" />
-                  {t('address')}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">{contactInfo?.address || 'العنوان هنا'}</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Clock className="h-5 w-5" />
-                  {t('workingHours')}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">
-                  {t('sunday')} - {t('thursday')}: 9:00 - 18:00<br />
-                  {t('friday')} - {t('saturday')}: 10:00 - 16:00
-                </p>
-              </CardContent>
-            </Card>
+            {(Array.isArray(contactInfo?.fields_order) ? contactInfo.fields_order.filter((f): f is string => typeof f === 'string') : FIELD_KEYS).map((field) => (
+              contactInfo?.[field as keyof typeof contactInfo] ? (
+                <Card key={field}>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      {FIELD_ICONS[field]}
+                      {FIELD_LABELS[field] || field}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center gap-2">
+                      {field === 'working_hours' && typeof contactInfo[field as keyof typeof contactInfo] === 'string' ? (
+                        <pre className="whitespace-pre-wrap break-words">{contactInfo[field as keyof typeof contactInfo] as string}</pre>
+                      ) : (typeof contactInfo[field as keyof typeof contactInfo] === 'string' || typeof contactInfo[field as keyof typeof contactInfo] === 'number'
+                        ? contactInfo[field as keyof typeof contactInfo]
+                        : '-')}
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : null
+            ))}
           </div>
 
           {/* Contact Form */}
