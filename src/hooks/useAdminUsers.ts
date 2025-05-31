@@ -22,7 +22,7 @@ export const useAdminUsers = () => {
   const [users, setUsers] = useState<UserProfile[]>([]);
 
   // حالة لتحديد ما إذا كانت البيانات قيد التحميل
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   // حالة لتخزين الخطأ إن وُجد
   const [error, setError] = useState<string | null>(null);
