@@ -1,12 +1,11 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/utils/languageContextUtils';
 
 interface NavigationItem {
   path: string;
   label: string;
-  icon?: any;
+  icon?: React.ElementType;
 }
 
 interface DesktopNavigationProps {

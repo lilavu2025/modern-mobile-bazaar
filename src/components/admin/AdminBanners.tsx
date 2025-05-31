@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Eye, EyeOff, Upload, X } from 'lucide-react';
 import { supabase } from '../../integrations/supabase/client';
-import { useLanguage } from '../../contexts/LanguageContext';
+import { useLanguage } from '../../utils/languageContextUtils';
 import { toast } from 'sonner';
 
 // تعريف واجهة البانر (Banner) كما هو مخزن في قاعدة البيانات
@@ -78,9 +78,10 @@ const AdminBanners: React.FC = () => {
       if (error) throw error;
       setBanners(data || []);
       console.log('تم جلب البانرات:', data);
-    } catch (error: any) {
-      console.error('خطأ أثناء جلب البانرات:', error);
-      setError(error.message || 'حدث خطأ أثناء تحميل البانرات');
+    } catch (error: unknown) {
+      const err = error as Error;
+      console.error('خطأ أثناء جلب البانرات:', err);
+      setError(err.message || 'حدث خطأ أثناء تحميل البانرات');
       toast.error('Error loading banners');
     } finally {
       setLoading(false);

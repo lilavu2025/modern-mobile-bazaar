@@ -7,7 +7,7 @@ import CategoryCard from '@/components/CategoryCard';
 import CartSidebar from '@/components/CartSidebar';
 import { Button } from '@/components/ui/button';
 import { useProducts, useCategories, useBanners } from '@/hooks/useSupabaseData';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/utils/languageContextUtils';
 
 const Index = () => {
   const { t } = useLanguage();

@@ -1,7 +1,8 @@
 import React from 'react';
 import { Eye, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/utils/languageContextUtils';
+import { useAuth } from '@/contexts/useAuth';
 import { Product } from '@/types';
 import FavoriteButton from './FavoriteButton';
 

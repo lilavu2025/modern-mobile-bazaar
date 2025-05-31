@@ -1,10 +1,9 @@
-
 import React, { useState, memo, useCallback, useMemo } from 'react';
 import { Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetTrigger } from '@/components/ui/sheet';
-import { useAuth } from '@/contexts/AuthContext';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/useAuth';
+import { useLanguage } from '@/utils/languageContextUtils';
 import { Home } from 'lucide-react';
 import HeaderLogo from './header/HeaderLogo';
 import SearchBar from './header/SearchBar';

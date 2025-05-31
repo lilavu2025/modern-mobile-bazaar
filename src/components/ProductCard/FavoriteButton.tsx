@@ -2,8 +2,8 @@ import React from 'react';
 import { Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useFavorites } from '@/hooks/useFavorites';
-import { useAuth } from '@/contexts/AuthContext';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/useAuth';
+import { useLanguage } from '@/utils/languageContextUtils';
 import { toast } from 'sonner';
 
 export interface FavoriteButtonProps {
@@ -36,11 +36,11 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
     
     try {
       await toggleFavorite(productId);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error toggling favorite:', error);
       
       // Handle specific error cases
-      if (error?.code === '23505') {
+      if (typeof error === 'object' && error && 'code' in error && (error as { code?: string }).code === '23505') {
         // Duplicate key error - item is already in favorites
         toast.info(t('alreadyInFavorites') || 'Item is already in your favorites');
       } else {

@@ -1,6 +1,5 @@
 
 import React, { useState } from 'react';
-import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -14,6 +13,7 @@ import { toast } from 'sonner';
 import EditUserDialogHeader from './edit-user/EditUserDialogHeader';
 import UserInfoDisplay from './edit-user/UserInfoDisplay';
 import EditUserForm from './edit-user/EditUserForm';
+import { useLanguage } from '@/utils/languageContextUtils';
 
 interface UserProfile {
   id: string;

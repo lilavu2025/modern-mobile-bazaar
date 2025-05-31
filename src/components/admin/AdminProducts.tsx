@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '../../utils/languageContextUtils';
 import { useProducts, useCategories } from '@/hooks/useSupabaseData';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -8,15 +7,39 @@ import AdminProductsHeader from './AdminProductsHeader';
 import AdminProductsEmptyState from './AdminProductsEmptyState';
 import AdminProductsTable from './AdminProductsTable';
 import AdminProductsDialogs from './AdminProductsDialogs';
+import { Product, ProductFormData, AdminProductForm } from '@/types/product';
 
 const AdminProducts: React.FC = () => {
   const { t } = useLanguage();
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showViewDialog, setShowViewDialog] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [selectedProduct, setSelectedProduct] = useState<AdminProductForm | null>(null);
   const { data: products = [], isLoading: productsLoading, refetch } = useProducts();
   const { data: categories = [] } = useCategories();
+
+  const mapProductToFormData = (product: Product): AdminProductForm => ({
+    id: product.id,
+    name_ar: product.name || '',
+    name_en: product.nameEn || '',
+    name_he: '', // Map if available
+    description_ar: product.description || '',
+    description_en: product.descriptionEn || '',
+    description_he: '', // Map if available
+    price: product.price,
+    original_price: product.originalPrice || 0,
+    wholesale_price: product.wholesalePrice || 0,
+    category_id: product.category,
+    category: product.category,
+    image: product.image,
+    images: product.images || [],
+    in_stock: product.inStock,
+    stock_quantity: product.stock_quantity || 0,
+    featured: product.featured || false,
+    active: product.active ?? true,
+    discount: product.discount || 0,
+    tags: product.tags || [],
+  });
 
   const handleDeleteProduct = async (productId: string, productName: string) => {
     try {
@@ -38,18 +61,17 @@ const AdminProducts: React.FC = () => {
       toast({
         title: t('error'),
         description: t('errorDeletingProduct'),
-        variant: 'destructive',
       });
     }
   };
 
-  const handleViewProduct = (product: any) => {
-    setSelectedProduct(product);
+  const handleViewProduct = (product: Product) => {
+    setSelectedProduct(mapProductToFormData(product));
     setShowViewDialog(true);
   };
 
-  const handleEditProduct = (product: any) => {
-    setSelectedProduct(product);
+  const handleEditProduct = (product: Product) => {
+    setSelectedProduct(mapProductToFormData(product));
     setShowEditDialog(true);
   };
 

@@ -3,7 +3,7 @@ import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, CheckCircle, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/utils/languageContextUtils';
 
 interface UserProfile {
   id: string;

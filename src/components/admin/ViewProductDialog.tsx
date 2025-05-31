@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '../../utils/languageContextUtils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -10,29 +9,12 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
-
-interface Product {
-  id: string;
-  name_ar: string;
-  name_en: string;
-  name_he: string;
-  description_ar: string;
-  description_en: string;
-  description_he: string;
-  price: number;
-  original_price?: number;
-  wholesale_price?: number;
-  image: string;
-  category: string;
-  in_stock: boolean;
-  discount?: number;
-  featured: boolean;
-}
+import { AdminProductForm } from '@/types/product';
 
 interface ViewProductDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  product: Product;
+  product: AdminProductForm;
 }
 
 const ViewProductDialog: React.FC<ViewProductDialogProps> = ({

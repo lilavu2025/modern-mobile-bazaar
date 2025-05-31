@@ -1,8 +1,8 @@
 // صفحة الدفع والشراء - تتيح للمستخدم إتمام عملية الشراء
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/useAuth';
+import { useLanguage } from '@/utils/languageContextUtils';
 import { useCart } from '@/hooks/useCart';
 import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/Header';
@@ -38,7 +38,6 @@ const Checkout: React.FC = () => {
       toast({
         title: t('error'),
         description: t('pleaseLoginToCheckout') || 'Please login to proceed with checkout',
-        variant: 'destructive',
       });
       navigate('/auth', { replace: true });
     }
@@ -82,7 +81,6 @@ const Checkout: React.FC = () => {
       toast({
         title: t('error'),
         description: t('pleaseLogin'),
-        variant: 'destructive',
       });
       return;
     }
@@ -92,7 +90,6 @@ const Checkout: React.FC = () => {
       toast({
         title: t('error'),
         description: t('cartIsEmpty'),
-        variant: 'destructive',
       });
       return;
     }
@@ -103,7 +100,6 @@ const Checkout: React.FC = () => {
       toast({
         title: t('error'),
         description: t('fillRequiredFields'),
-        variant: 'destructive',
       });
       return;
     }
@@ -159,13 +155,13 @@ const Checkout: React.FC = () => {
 
       // التوجه لصفحة الطلبات
       navigate('/orders');
-    } catch (error: any) {
-      console.error('خطأ في إتمام الطلب:', error);
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
       toast({
         title: t('error'),
-        description: error.message || t('orderFailed'),
-        variant: 'destructive',
+        description: err.message || t('errorPlacingOrder'),
       });
+      setIsLoading(false);
     } finally {
       setIsLoading(false);
     }

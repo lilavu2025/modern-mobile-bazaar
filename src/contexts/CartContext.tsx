@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useReducer, ReactNode } from 'react';
 import { Product } from '@/types';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useState, useEffect } from 'react';
 import type { CartContextType, CartItem, CartState, CartAction } from './CartContext.types';
@@ -271,8 +271,21 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   
   // Aliases for compatibility with old code
   const addToCart = addItem;
-  
-  const value: CartContextType & { addToCart: typeof addItem } = {
+  const cartItems = state.items;
+  const getTotalPrice = () => state.total;
+
+  // buyNow: إضافة منتج وبدء الشراء المباشر
+  const buyNow = (product: Product, quantity = 1, selectedSize?: string, selectedColor?: string) => {
+    clearCart();
+    addItem(product, quantity, selectedSize, selectedColor);
+  };
+
+  const value: CartContextType & {
+    addToCart: typeof addItem;
+    cartItems: typeof state.items;
+    getTotalPrice: () => number;
+    buyNow: typeof buyNow;
+  } = {
     ...{
       state,
       addItem,
@@ -288,6 +301,9 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       },
     },
     addToCart, // alias for backward compatibility
+    cartItems,
+    getTotalPrice,
+    buyNow,
   };
   
   return (

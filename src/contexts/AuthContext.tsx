@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -34,7 +34,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const location = useLocation();
 
   // Fetch profile by userId, return the profile or null
-  const fetchProfile = async (userId: string): Promise<Profile | null> => {
+  const fetchProfile = useCallback(async (userId: string): Promise<Profile | null> => {
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -58,7 +58,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Error fetching profile:', error);
       return null;
     }
-  };
+  }, []);
 
   // Create profile for new user and return it
   const createProfile = async (userId: string): Promise<Profile | null> => {
@@ -94,7 +94,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // توجيه الأدمن دائمًا للوحة الإدارة بعد تسجيل الدخول
-  const handleUserRedirection = (profile: Profile, event: string) => {
+  const handleUserRedirection = useCallback((profile: Profile, event: string) => {
     if (event !== 'SIGNED_IN') return;
     if (profile.user_type === 'admin') {
       navigate('/admin', { replace: true });
@@ -106,7 +106,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
     navigate('/', { replace: true });
-  };
+  }, [navigate]);
 
   // حفظ آخر صفحة زارها المستخدم (عدا صفحات auth)
   useEffect(() => {
@@ -158,7 +158,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     return () => subscription.unsubscribe();
-  }, []); // Remove navigate and location from dependencies
+  }, [fetchProfile, handleUserRedirection]); // Update dependencies
 
   // SignIn function
   const signIn = async (email: string, password: string) => {
@@ -223,7 +223,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // SignOut function
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     try {
       // Clear state immediately for better UX
       setUser(null);
@@ -257,7 +257,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.removeItem('lastLoginTime');
       navigate('/');
     }
-  };
+  }, [navigate]);
 
   // Update profile function
   const updateProfile = async (data: Partial<Profile>) => {
@@ -279,7 +279,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       toast({
         title: "انتهت الجلسة",
         description: "يرجى تسجيل الدخول مجددًا. سيتم إعادة تحميل الصفحة تلقائيًا.",
-        variant: "destructive"
       });
       setTimeout(() => {
         signOut();
@@ -299,7 +298,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             toast({
               title: "فشل تحديث الجلسة",
               description: "يرجى تسجيل الدخول مجددًا.",
-              variant: "destructive"
             });
             setTimeout(() => {
               signOut();
@@ -330,10 +328,4 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
+export { AuthContext };

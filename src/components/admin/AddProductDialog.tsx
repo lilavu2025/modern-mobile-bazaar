@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -6,17 +5,17 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '../../utils/languageContextUtils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import ImageUpload from '@/components/ImageUpload';
 import ProductCategoryField from './ProductCategoryField';
-import { ProductFormData } from '@/types/product';
+import { ProductFormData, Category } from '@/types/product';
 
 interface AddProductDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  categories: any[];
+  categories: Category[];
   onSuccess: () => void;
 }
 
@@ -103,9 +102,10 @@ const AddProductDialog: React.FC<AddProductDialogProps> = ({
         discount: 0,
         tags: [],
       });
-    } catch (error: any) {
-      console.error('Error adding product:', error);
-      toast.error(error.message || t('error'));
+    } catch (error: unknown) {
+      const err = error as Error;
+      console.error('Error adding product:', err);
+      toast.error(err.message || t('error'));
     } finally {
       setLoading(false);
     }

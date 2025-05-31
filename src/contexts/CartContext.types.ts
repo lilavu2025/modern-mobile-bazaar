@@ -24,6 +24,10 @@ export type CartContextType = {
   getCartItem: (productId: string) => CartItem | undefined;
   getTotalItems: () => number;
   getItemQuantity: (productId: string) => number;
+  // Aliases and helpers for compatibility
+  cartItems?: CartItem[];
+  getTotalPrice?: () => number;
+  buyNow?: (product: Product, quantity?: number, selectedSize?: string, selectedColor?: string) => void;
 };
 
 export type CartAction =

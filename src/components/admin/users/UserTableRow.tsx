@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -6,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Mail, Phone, Calendar, CheckCircle, XCircle, Eye, ShoppingBag, MoreVertical } from 'lucide-react';
 import { format } from 'date-fns';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/utils/languageContextUtils';
 import EditUserDialog from '../EditUserDialog';
 import UserDetailsDialog from './UserDetailsDialog';
 import UserOrdersDialog from './UserOrdersDialog';

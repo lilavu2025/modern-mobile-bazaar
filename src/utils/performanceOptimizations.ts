@@ -1,7 +1,7 @@
 // Performance optimization utilities
 
 // Debounce function for search and input optimization
-export const debounce = <T extends (...args: any[]) => any>(
+export const debounce = <T extends (...args: unknown[]) => unknown>(
   func: T,
   wait: number
 ): ((...args: Parameters<T>) => void) => {
@@ -13,7 +13,7 @@ export const debounce = <T extends (...args: any[]) => any>(
 };
 
 // Throttle function for scroll events
-export const throttle = <T extends (...args: any[]) => any>(
+export const throttle = <T extends (...args: unknown[]) => unknown>(
   func: T,
   limit: number
 ): ((...args: Parameters<T>) => void) => {
@@ -28,12 +28,12 @@ export const throttle = <T extends (...args: any[]) => any>(
 };
 
 // Memoization for expensive calculations
-export const memoize = <T extends (...args: any[]) => any>(fn: T): T => {
-  const cache = new Map();
-  return ((...args: any[]) => {
+export const memoize = <T extends (...args: unknown[]) => unknown>(fn: T): T => {
+  const cache = new Map<string, unknown>();
+  return ((...args: unknown[]) => {
     const key = JSON.stringify(args);
     if (cache.has(key)) {
-      return cache.get(key);
+      return cache.get(key) as ReturnType<T>;
     }
     const result = fn(...args);
     cache.set(key, result);
@@ -124,12 +124,14 @@ export const analyzeBundleSize = () => {
 // Memory usage monitoring
 export const monitorMemoryUsage = () => {
   if ('memory' in performance) {
-    const memory = (performance as any).memory;
-    console.log('Memory Usage:', {
-      used: `${Math.round(memory.usedJSHeapSize / 1048576)} MB`,
-      total: `${Math.round(memory.totalJSHeapSize / 1048576)} MB`,
-      limit: `${Math.round(memory.jsHeapSizeLimit / 1048576)} MB`
-    });
+    const memory = (performance as { memory?: { usedJSHeapSize: number; totalJSHeapSize: number; jsHeapSizeLimit: number } }).memory;
+    if (memory) {
+      console.log('Memory Usage:', {
+        used: `${Math.round(memory.usedJSHeapSize / 1048576)} MB`,
+        total: `${Math.round(memory.totalJSHeapSize / 1048576)} MB`,
+        limit: `${Math.round(memory.jsHeapSizeLimit / 1048576)} MB`
+      });
+    }
   }
 };
 

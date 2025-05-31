@@ -1,8 +1,8 @@
-
 import React from 'react';
 import AddProductDialog from './AddProductDialog';
 import EditProductDialog from './EditProductDialog';
 import ViewProductDialog from './ViewProductDialog';
+import { ProductFormData, Category, AdminProductForm } from '@/types/product';
 
 interface AdminProductsDialogsProps {
   showAddDialog: boolean;
@@ -11,8 +11,8 @@ interface AdminProductsDialogsProps {
   setShowEditDialog: (show: boolean) => void;
   showViewDialog: boolean;
   setShowViewDialog: (show: boolean) => void;
-  selectedProduct: any;
-  categories: any[];
+  selectedProduct: AdminProductForm | null;
+  categories: Category[];
   onSuccess: () => void;
 }
 

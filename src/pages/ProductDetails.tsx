@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useProducts } from '@/hooks/useSupabaseData';
 import { useCart } from '@/hooks/useCart';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/utils/languageContextUtils';
 import { toast } from 'sonner';
 import Header from '@/components/Header';
 import CartSidebar from '@/components/CartSidebar';

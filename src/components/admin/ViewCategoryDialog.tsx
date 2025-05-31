@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '../../utils/languageContextUtils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -10,15 +9,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
-
-interface Category {
-  id: string;
-  name: string;
-  nameEn: string;
-  image: string;
-  icon: string;
-  count: number;
-}
+import { Category } from '@/types/product';
 
 interface ViewCategoryDialogProps {
   open: boolean;

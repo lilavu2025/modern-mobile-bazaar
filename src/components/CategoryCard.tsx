@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Category } from '@/types';
 import { useNavigate } from 'react-router-dom';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/utils/languageContextUtils';
 import LazyImage from '@/components/LazyImage';
 
 interface CategoryCardProps {

@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/utils/languageContextUtils';
 import Header from '@/components/Header';
 import CartSidebar from '@/components/CartSidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

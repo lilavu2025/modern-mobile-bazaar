@@ -12,7 +12,7 @@ import { FavoritesProvider } from "@/contexts/FavoritesContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import SEO from "@/components/SEO";
-import { PerformanceMonitorComponent } from "@/components/PerformanceMonitor";
+import PerformanceMonitorComponent from "@/components/PerformanceMonitor";
 import { lazy, Suspense, memo, useEffect } from "react";
 
 // Critical pages - Regular imports for initial load

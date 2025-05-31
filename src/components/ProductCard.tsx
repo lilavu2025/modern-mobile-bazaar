@@ -1,12 +1,11 @@
-
 // مكون كرت المنتج - يعرض معلومات المنتج مع إمكانيات التفاعل
 import React, { useState, memo, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
-import { Product } from '@/types';
+import { Product } from '@/types/product';
 import { useCart } from '@/hooks/useCart';
 import { useFavorites } from '@/hooks/useFavorites';
-import { useAuth } from '@/contexts/AuthContext';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/useAuth';
+import { useLanguage } from '@/utils/languageContextUtils';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import ProductCardImage from './ProductCard/ProductCardImage';
@@ -50,7 +49,7 @@ const ProductCard: React.FC<ProductCardProps> = memo(({ product, onQuickView }) 
     } finally {
       setIsLoading(false);
     }
-  }, [addItem, product, quantity, t, isLoading]);
+  }, [addItem, product, quantity, isLoading, t]);
 
   // وظيفة الشراء المباشر - توجه إلى صفحة الدفع
   const handleBuyNow = useCallback(async () => {
@@ -58,7 +57,6 @@ const ProductCard: React.FC<ProductCardProps> = memo(({ product, onQuickView }) 
     
     try {
       setIsLoading(true);
-      // إضافة المنتج للسلة أولاً ثم التوجه للدفع
       await addItem(product, quantity);
       navigate('/checkout', { 
         state: { 
@@ -73,7 +71,7 @@ const ProductCard: React.FC<ProductCardProps> = memo(({ product, onQuickView }) 
     } finally {
       setIsLoading(false);
     }
-  }, [addItem, product, quantity, navigate, isLoading]);
+  }, [addItem, product, quantity, isLoading, t, navigate]);
 
   // وظيفة فتح العرض السريع للمنتج
   const handleQuickView = useCallback(() => {
@@ -136,7 +134,7 @@ const ProductCard: React.FC<ProductCardProps> = memo(({ product, onQuickView }) 
   }, [product, t]);
 
   // وظيفة التنقل إلى صفحة تفاصيل المنتج
-  const handleProductClick = useCallback(() => {
+  const handleCardClick = useCallback(() => {
     navigate(`/product/${product.id}`);
   }, [navigate, product.id]);
 
@@ -148,7 +146,7 @@ const ProductCard: React.FC<ProductCardProps> = memo(({ product, onQuickView }) 
       {/* كرت المنتج الرئيسي مع تأثيرات التفاعل */}
       <Card 
         className="product-card group relative overflow-hidden bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl transition-all duration-300 hover:shadow-xl hover:-translate-y-1 focus-within:ring-2 focus-within:ring-orange-500 focus-within:ring-offset-2 cursor-pointer"
-        onClick={handleProductClick}
+        onClick={handleCardClick}
       >
         {/* صورة المنتج مع أزرار التفاعل */}
         <ProductCardImage
@@ -169,7 +167,7 @@ const ProductCard: React.FC<ProductCardProps> = memo(({ product, onQuickView }) 
           onAddToCart={handleAddToCart}
           onBuyNow={handleBuyNow}
           isLoading={isLoading}
-          onProductClick={handleProductClick}
+          onProductClick={handleCardClick}
         />
       </Card>
 

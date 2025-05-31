@@ -166,6 +166,7 @@ const DropdownMenuSeparator = React.forwardRef<
 ))
 DropdownMenuSeparator.displayName = DropdownMenuPrimitive.Separator.displayName
 
+// إعادة تعريف DropdownMenuShortcut هنا كمكون React
 const DropdownMenuShortcut = ({
   className,
   ...props
@@ -175,9 +176,9 @@ const DropdownMenuShortcut = ({
       className={cn("ml-auto text-xs tracking-widest opacity-60", className)}
       {...props}
     />
-  )
-}
-DropdownMenuShortcut.displayName = "DropdownMenuShortcut"
+  );
+};
+DropdownMenuShortcut.displayName = "DropdownMenuShortcut";
 
 export {
   DropdownMenu,
@@ -188,7 +189,7 @@ export {
   DropdownMenuRadioItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuShortcut,
+  DropdownMenuShortcut, // يبقى هنا
   DropdownMenuGroup,
   DropdownMenuPortal,
   DropdownMenuSub,

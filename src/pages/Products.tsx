@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useProducts, useCategories } from '@/hooks/useSupabaseData';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/utils/languageContextUtils';
 import Header from '@/components/Header';
 import ProductCard from '@/components/ProductCard';
 import CartSidebar from '@/components/CartSidebar';
@@ -30,7 +30,7 @@ const Products: React.FC = () => {
     if (cat && cat !== selectedCategory) {
       setSelectedCategory(cat);
     }
-  }, [location.search]);
+  }, [location.search, selectedCategory]);
 
   // Filter and sort products
   const filteredProducts = products

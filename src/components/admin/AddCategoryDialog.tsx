@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '../../utils/languageContextUtils';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -78,7 +77,6 @@ const AddCategoryDialog: React.FC<AddCategoryDialogProps> = ({
       toast({
         title: t('error'),
         description: t('errorAddingCategory'),
-        variant: 'destructive',
       });
     } finally {
       setIsSubmitting(false);

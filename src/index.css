@@ -1,9 +1,10 @@
-
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/*
+ملاحظة: تحذيرات @tailwind/@apply في هذا الملف ليست أخطاء فعلية، بل بسبب عدم تعرف محرر VS Code على قواعد Tailwind CSS. يمكن تجاهلها.
+*/
 
 /* Performance optimizations */
 * {
@@ -16,19 +17,10 @@ html {
   text-size-adjust: 100%;
 }
 
-/* Preload critical resources */
-link[rel="preload"] {
-  as: font;
-  type: font/woff2;
-  crossorigin: anonymous;
-}
-
 /* Optimize images */
 img {
   max-width: 100%;
   height: auto;
-  loading: lazy;
-  decoding: async;
 }
 
 /* Reduce motion for accessibility */
@@ -126,10 +118,12 @@ img {
 
 @layer base {
   * {
+    /* Tailwind CSS utility: border color */
     @apply border-border;
   }
 
   body {
+    /* Tailwind CSS utility: background and text color */
     @apply bg-background text-foreground;
     font-family: 'Cairo', sans-serif;
   }
@@ -281,141 +275,53 @@ img {
 
   /* Enhanced mobile navigation */
   .mobile-nav-item {
+    /* Tailwind CSS utility: flex, padding, rounded, transition */
     @apply flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200;
   }
   
   .mobile-nav-item.active {
+    /* Tailwind CSS utility: gradient, text, shadow */
     @apply bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg;
   }
   
   .mobile-nav-item:not(.active) {
+    /* Tailwind CSS utility: text color, hover bg */
     @apply text-gray-600 hover:bg-gray-100;
   }
 
-  /* Product card enhancements */
   .product-card {
+    /* Tailwind CSS utility: transition, shadow */
     @apply transition-all duration-300 hover:shadow-xl;
     will-change: transform;
   }
   
   .product-card:hover {
-    transform: translateY(-2px);
-  }
-  
-  @media (hover: none) {
-    .product-card:hover {
-      transform: none;
-    }
+    /* Tailwind CSS utility: transform */
+    @apply transform -translate-y-1;
   }
 
-  /* Loading states */
   .skeleton {
+    /* Tailwind CSS utility: pulse, bg, rounded */
     @apply animate-pulse bg-gray-200 rounded;
   }
   
   .skeleton-text {
+    /* Tailwind CSS utility: height, bg, rounded, pulse */
     @apply h-4 bg-gray-200 rounded animate-pulse;
   }
   
   .skeleton-avatar {
+    /* Tailwind CSS utility: size, bg, rounded-full, pulse */
     @apply w-12 h-12 bg-gray-200 rounded-full animate-pulse;
   }
 
-  /* Improved scrollbar styling */
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-  
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: hsl(var(--muted));
-    border-radius: 3px;
-  }
-  
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: hsl(var(--muted-foreground));
-    border-radius: 3px;
-  }
-  
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--primary));
-  }
-
-  [dir="rtl"] {
-    text-align: right;
-  }
-
-  [dir="ltr"] {
-    text-align: left;
-  }
-
-  [dir="rtl"] .rtl\:space-x-reverse > :not([hidden]) ~ :not([hidden]) {
-    --tw-space-x-reverse: 1;
-  }
-
-  /* Table RTL Support */
-  [dir="rtl"] table {
-    direction: rtl;
-  }
-
-  [dir="rtl"] th {
-    text-align: right;
-  }
-
-  [dir="rtl"] td {
-    text-align: right;
-  }
-
-  [dir="ltr"] th {
-    text-align: left;
-  }
-
-  [dir="ltr"] td {
-    text-align: left;
-  }
-
-  /* Form RTL Support */
-  [dir="rtl"] .space-y-4 > * {
-    text-align: right;
-  }
-
-  [dir="rtl"] label {
-    text-align: right;
-  }
-
-  [dir="rtl"] input {
-    text-align: right;
-  }
-
-  [dir="rtl"] select {
-    text-align: right;
-  }
-
-  /* Card Content RTL */
-  [dir="rtl"] .space-y-4 div {
-    text-align: right;
-  }
-
-  [dir="rtl"] .space-y-4 p {
-    text-align: right;
-  }
-
-  /* Ensure dropdowns and modals work properly in RTL */
-  [dir="rtl"] .dropdown-content {
-    right: 0;
-    left: auto;
-  }
-
-  [dir="ltr"] .dropdown-content {
-    left: 0;
-    right: auto;
-  }
-
   .product-card {
+    /* Tailwind CSS utility: bg, rounded, shadow, transition, border, overflow */
     @apply bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100;
   }
 
   .product-card:hover {
+    /* Tailwind CSS utility: transform */
     @apply transform -translate-y-1;
   }
 

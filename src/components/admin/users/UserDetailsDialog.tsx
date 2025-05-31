@@ -1,11 +1,10 @@
-
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Calendar, CheckCircle, XCircle, Mail, Phone, User, Shield } from 'lucide-react';
 import { format } from 'date-fns';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/utils/languageContextUtils';
 
 interface UserProfile {
   id: string;

@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { Star } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/utils/languageContextUtils';
 
 interface ProductInfoProps {
   product: {

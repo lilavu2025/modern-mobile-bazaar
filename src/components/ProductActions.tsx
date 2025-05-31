@@ -1,9 +1,8 @@
-
 import React, { useState } from 'react';
 import { Share2, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/utils/languageContextUtils';
 import { useCart } from '@/hooks/useCart';
 import { toast } from 'sonner';
 import { Product } from '@/types';

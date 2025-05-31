@@ -1,81 +1,12 @@
-import React, { createContext, useContext, useReducer, ReactNode } from 'react';
+import React, { createContext, useReducer, ReactNode } from 'react';
 import { Product } from '@/types';
-
-interface FavoritesState {
-  items: Product[];
-  count: number;
-}
-
-type FavoritesAction =
-  | { type: 'ADD_FAVORITE'; payload: Product }
-  | { type: 'REMOVE_FAVORITE'; payload: string }
-  | { type: 'CLEAR_FAVORITES' }
-  | { type: 'LOAD_FAVORITES'; payload: Product[] };
-
-interface FavoritesContextType {
-  state: FavoritesState;
-  addFavorite: (product: Product) => void;
-  removeFavorite: (productId: string) => void;
-  clearFavorites: () => void;
-  isFavorite: (productId: string) => boolean;
-  toggleFavorite: (product: Product) => void;
-}
+import { favoritesReducer, initialFavoritesState } from '../utils/favoritesContextUtils';
+import type { FavoritesContextType, FavoritesState, FavoritesAction } from '../types/favorites';
 
 const FavoritesContext = createContext<FavoritesContextType | undefined>(undefined);
 
-const favoritesReducer = (state: FavoritesState, action: FavoritesAction): FavoritesState => {
-  switch (action.type) {
-    case 'ADD_FAVORITE': {
-      const product = action.payload;
-      
-      // Check if product is already in favorites
-      if (state.items.some(item => item.id === product.id)) {
-        return state;
-      }
-      
-      const updatedItems = [...state.items, product];
-      return {
-        items: updatedItems,
-        count: updatedItems.length
-      };
-    }
-    
-    case 'REMOVE_FAVORITE': {
-      const productId = action.payload;
-      const updatedItems = state.items.filter(item => item.id !== productId);
-      
-      return {
-        items: updatedItems,
-        count: updatedItems.length
-      };
-    }
-    
-    case 'CLEAR_FAVORITES':
-      return {
-        items: [],
-        count: 0
-      };
-    
-    case 'LOAD_FAVORITES': {
-      const items = action.payload;
-      return {
-        items,
-        count: items.length
-      };
-    }
-    
-    default:
-      return state;
-  }
-};
-
-const initialState: FavoritesState = {
-  items: [],
-  count: 0
-};
-
-export const FavoritesProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [state, dispatch] = useReducer(favoritesReducer, initialState);
+const FavoritesProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [state, dispatch] = useReducer(favoritesReducer, initialFavoritesState);
   
   // Load favorites from localStorage on mount
   React.useEffect(() => {
@@ -135,12 +66,5 @@ export const FavoritesProvider: React.FC<{ children: ReactNode }> = ({ children 
   );
 };
 
-export const useFavorites = (): FavoritesContextType => {
-  const context = useContext(FavoritesContext);
-  if (!context) {
-    throw new Error('useFavorites must be used within a FavoritesProvider');
-  }
-  return context;
-};
-
 export default FavoritesContext;
+export { FavoritesProvider };

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ShoppingCart, Heart, User, LogOut } from 'lucide-react';
@@ -13,8 +12,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useCart } from '@/hooks/useCart';
 import { useFavorites } from '@/hooks/useFavorites';
-import { useAuth } from '@/contexts/AuthContext';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/useAuth';
+import { useLanguage } from '@/utils/languageContextUtils';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 interface UserActionsProps {

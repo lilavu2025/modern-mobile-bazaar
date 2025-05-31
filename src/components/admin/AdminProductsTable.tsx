@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '../../utils/languageContextUtils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -24,11 +23,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { Product } from '@/types/product';
 
 interface AdminProductsTableProps {
-  products: any[];
-  onViewProduct: (product: any) => void;
-  onEditProduct: (product: any) => void;
+  products: Product[];
+  onViewProduct: (product: Product) => void;
+  onEditProduct: (product: Product) => void;
   onDeleteProduct: (productId: string, productName: string) => void;
 }
 

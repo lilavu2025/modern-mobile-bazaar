@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Package, Eye, Calendar, CreditCard, ShoppingBag } from 'lucide-react';
 import { format } from 'date-fns';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '../../../utils/languageContextUtils';
 
 interface UserProfile {
   id: string;
@@ -22,13 +21,21 @@ interface UserProfile {
   last_sign_in_at?: string;
 }
 
+interface ShippingAddress {
+  full_name: string;
+  street: string;
+  area: string;
+  city: string;
+  [key: string]: unknown;
+}
+
 interface Order {
   id: string;
   total: number;
   status: string;
   payment_method: string;
   created_at: string;
-  shipping_address: any;
+  shipping_address: ShippingAddress;
   order_items: Array<{
     id: string;
     quantity: number;
@@ -71,10 +78,27 @@ const UserOrdersDialog: React.FC<UserOrdersDialogProps> = ({ user, open, onOpenC
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as Order[];
+      // Map shipping_address from JSON to ShippingAddress
+      return (data || []).map((order: Record<string, unknown>) => ({
+        ...order,
+        shipping_address: typeof order.shipping_address === 'string'
+          ? mapShippingAddressFromDb(JSON.parse(order.shipping_address as string))
+          : mapShippingAddressFromDb(order.shipping_address as Record<string, unknown>),
+      })) as Order[];
     },
     enabled: open,
   });
+
+  // Helper: Convert snake_case to camelCase for ShippingAddress
+  function mapShippingAddressFromDb(dbAddress: Record<string, unknown>): ShippingAddress {
+    return {
+      full_name: dbAddress['full_name'] as string,
+      street: dbAddress['street'] as string,
+      area: dbAddress['area'] as string,
+      city: dbAddress['city'] as string,
+      // Add more fields if needed
+    };
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {

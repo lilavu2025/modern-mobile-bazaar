@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/utils/languageContextUtils';
 import { X, ZoomIn, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface ProductImageGalleryProps {
@@ -24,6 +24,17 @@ const ProductImageGallery = ({ product }: ProductImageGalleryProps) => {
     ? product.images.filter(img => img && img.trim() !== '') 
     : [product.image].filter(img => img && img.trim() !== '');
 
+  // التنقل بين الصور
+  const navigateImage = useCallback((direction: number) => {
+    if (images.length <= 1) return;
+    
+    if (direction === -1) {
+      setSelectedImage(prev => prev === 0 ? images.length - 1 : prev - 1);
+    } else {
+      setSelectedImage(prev => prev === images.length - 1 ? 0 : prev + 1);
+    }
+  }, [images.length]);
+
   // التنقل بين الصور باستخدام لوحة المفاتيح
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -33,26 +44,15 @@ const ProductImageGallery = ({ product }: ProductImageGalleryProps) => {
         setShowModal(false);
         setIsZoomed(false);
       } else if (e.key === 'ArrowLeft') {
-        navigateImage('prev');
+        navigateImage(-1);
       } else if (e.key === 'ArrowRight') {
-        navigateImage('next');
+        navigateImage(1);
       }
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [showModal, selectedImage, images.length]);
-
-  // التنقل بين الصور
-  const navigateImage = (direction: 'prev' | 'next') => {
-    if (images.length <= 1) return;
-    
-    if (direction === 'prev') {
-      setSelectedImage(prev => prev === 0 ? images.length - 1 : prev - 1);
-    } else {
-      setSelectedImage(prev => prev === images.length - 1 ? 0 : prev + 1);
-    }
-  };
+  }, [showModal, selectedImage, images.length, navigateImage]);
 
   // فتح المودال
   const openModal = () => {
@@ -103,7 +103,7 @@ const ProductImageGallery = ({ product }: ProductImageGalleryProps) => {
               className={`absolute top-1/2 -translate-y-1/2 ${isRTL ? 'right-2' : 'left-2'} bg-white/80 hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
               onClick={(e) => {
                 e.stopPropagation();
-                navigateImage('prev');
+                navigateImage(-1);
               }}
             >
               {isRTL ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
@@ -114,7 +114,7 @@ const ProductImageGallery = ({ product }: ProductImageGalleryProps) => {
               className={`absolute top-1/2 -translate-y-1/2 ${isRTL ? 'left-2' : 'right-2'} bg-white/80 hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
               onClick={(e) => {
                 e.stopPropagation();
-                navigateImage('next');
+                navigateImage(1);
               }}
             >
               {isRTL ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
@@ -160,7 +160,7 @@ const ProductImageGallery = ({ product }: ProductImageGalleryProps) => {
                   className={`absolute top-1/2 -translate-y-1/2 ${isRTL ? 'right-4' : 'left-4'} z-10 bg-white/20 hover:bg-white/30 text-white`}
                   onClick={(e) => {
                     e.stopPropagation();
-                    navigateImage('prev');
+                    navigateImage(-1);
                   }}
                 >
                   {isRTL ? <ChevronRight className="h-8 w-8" /> : <ChevronLeft className="h-8 w-8" />}
@@ -171,7 +171,7 @@ const ProductImageGallery = ({ product }: ProductImageGalleryProps) => {
                   className={`absolute top-1/2 -translate-y-1/2 ${isRTL ? 'left-4' : 'right-4'} z-10 bg-white/20 hover:bg-white/30 text-white`}
                   onClick={(e) => {
                     e.stopPropagation();
-                    navigateImage('next');
+                    navigateImage(1);
                   }}
                 >
                   {isRTL ? <ChevronLeft className="h-8 w-8" /> : <ChevronRight className="h-8 w-8" />}

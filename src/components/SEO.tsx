@@ -1,5 +1,5 @@
 import { Helmet } from 'react-helmet-async';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/utils/languageContextUtils';
 
 interface SEOProps {
   title?: string;

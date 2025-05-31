@@ -1,17 +1,16 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, User, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { useAuth } from '@/contexts/AuthContext';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/useAuth';
+import { useLanguage } from '@/utils/languageContextUtils';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 interface MobileNavigationProps {
   mobileMenuOpen: boolean;
   setMobileMenuOpen: (open: boolean) => void;
-  navigationItems: Array<{ path: string; label: string; icon?: any }>;
+  navigationItems: Array<{ path: string; label: string; icon?: React.ElementType }>;
 }
 
 const MobileNavigation: React.FC<MobileNavigationProps> = ({

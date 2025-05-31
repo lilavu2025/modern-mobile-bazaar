@@ -1,8 +1,8 @@
 // /home/ubuntu/modern-mobile-bazaar/src/hooks/useAddresses.ts
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabaseService } from "@/services/supabaseService"; // Import the service
-import { useAuth } from "@/contexts/AuthContext";
-import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/useAuth";
+import { useLanguage } from "@/utils/languageContextUtils";
+import { AddressService } from "@/services/supabaseService";
 import { toast } from "sonner";
 
 // Address interface (assuming it's defined elsewhere or keep it here)
@@ -33,16 +33,10 @@ export const useAddresses = () => {
       console.log("[useAddresses] Calling service to fetch addresses for user:", user?.id);
       if (!user?.id) return [];
 
-      const { data, error } = await supabaseService.getUserAddresses(user.id);
+      const addresses = await AddressService.getUserAddresses(user.id);
 
-      if (error) {
-        console.error("[useAddresses] Error fetching addresses via service:", error);
-        // Consider showing a user-friendly error message here
-        throw error; // Re-throw for react-query
-      }
-
-      console.log("[useAddresses] Addresses fetched via service:", data);
-      return data || [];
+      console.log("[useAddresses] Addresses fetched via service:", addresses);
+      return addresses || [];
     },
     enabled: !!user?.id,
   });
@@ -53,23 +47,18 @@ export const useAddresses = () => {
       if (!user?.id) throw new Error("User not authenticated");
 
       console.log("[useAddresses] Calling service to create address:", addressData);
-      const { data, error } = await supabaseService.createAddress(user.id, addressData);
+      const address = await AddressService.createAddress(user.id, addressData);
 
-      if (error) {
-        console.error("[useAddresses] Error creating address via service:", error);
-        throw error;
-      }
-
-      console.log("[useAddresses] Address created via service:", data);
-      return data;
+      console.log("[useAddresses] Address created via service:", address);
+      return address;
     },
     onSuccess: () => {
       console.log("[useAddresses] Invalidating addresses query after creation");
       queryClient.invalidateQueries({ queryKey: ["addresses", user?.id] });
       toast.success(t("addressAdded"));
     },
-    onError: (error: any) => {
-      console.error("[useAddresses] Create address error:", error.message);
+    onError: (error: unknown) => {
+      console.error("[useAddresses] Create address error:", error);
       // Use a generic error message or parse the specific error
       toast.error(t("errorCreatingAddress")); 
     },
@@ -84,15 +73,10 @@ export const useAddresses = () => {
       // Exclude id and user_id from the data sent for update
       const { id, user_id, ...updateData } = addressData;
 
-      const { data, error } = await supabaseService.updateAddress(id, updateData);
+      const updatedAddress = await AddressService.updateAddress(id, updateData);
 
-      if (error) {
-        console.error("[useAddresses] Error updating address via service:", error);
-        throw error;
-      }
-
-      console.log("[useAddresses] Address updated via service:", data);
-      return data;
+      console.log("[useAddresses] Address updated via service:", updatedAddress);
+      return updatedAddress;
     },
     onSuccess: (data, variables) => {
       console.log("[useAddresses] Invalidating addresses query after update");
@@ -103,8 +87,8 @@ export const useAddresses = () => {
       // );
       toast.success(t("addressUpdated"));
     },
-    onError: (error: any) => {
-      console.error("[useAddresses] Update address error:", error.message);
+    onError: (error: unknown) => {
+      console.error("[useAddresses] Update address error:", error);
       toast.error(t("errorUpdatingAddress"));
     },
   });
@@ -113,12 +97,7 @@ export const useAddresses = () => {
   const deleteAddressMutation = useMutation({
     mutationFn: async (addressId: string) => {
       console.log("[useAddresses] Calling service to delete address:", addressId);
-      const { error } = await supabaseService.deleteAddress(addressId);
-
-      if (error) {
-        console.error("[useAddresses] Error deleting address via service:", error);
-        throw error;
-      }
+      const deleted = await AddressService.deleteAddress(addressId);
 
       console.log("[useAddresses] Address deleted via service");
       return addressId; // Return ID for potential cache updates
@@ -132,8 +111,8 @@ export const useAddresses = () => {
       // );
       toast.success(t("addressDeleted"));
     },
-    onError: (error: any) => {
-      console.error("[useAddresses] Delete address error:", error.message);
+    onError: (error: unknown) => {
+      console.error("[useAddresses] Delete address error:", error);
       toast.error(t("errorDeletingAddress"));
     },
   });

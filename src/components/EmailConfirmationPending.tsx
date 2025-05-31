@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Mail, RefreshCw } from 'lucide-react';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/utils/languageContextUtils';
+import { useAuth } from '@/contexts/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -85,12 +85,11 @@ const EmailConfirmationPending: React.FC<EmailConfirmationPendingProps> = ({ ema
       // Reset countdown
       setCountdown(60);
       setCanResend(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error resending email:', error);
       toast({
         title: t('error'),
-        description: error.message || t('resendEmailError'),
-        variant: 'destructive',
+        description: typeof error === 'object' && error && 'message' in error ? (error as { message?: string }).message || t('resendEmailError') : t('resendEmailError'),
       });
     } finally {
       setIsResending(false);

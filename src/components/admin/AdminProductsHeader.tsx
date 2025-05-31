@@ -1,8 +1,7 @@
-
 import React from 'react';
-import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
+import { useLanguage } from '@/utils/languageContextUtils';
 
 interface AdminProductsHeaderProps {
   productCount: number;

@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/utils/languageContextUtils';
+import { useAuth } from '@/contexts/useAuth';
 
 interface ProductCardBadgesProps {
   product: {

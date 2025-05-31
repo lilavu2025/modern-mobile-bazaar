@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/utils/languageContextUtils';
 import Header from '@/components/Header';
 import CartSidebar from '@/components/CartSidebar';
 import { Badge } from '@/components/ui/badge';

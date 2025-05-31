@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useProducts } from '@/hooks/useSupabaseData';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/utils/languageContextUtils';
+import { useAuth } from '@/contexts/useAuth';
 import Header from '@/components/Header';
 import ProductCard from '@/components/ProductCard';
 import CartSidebar from '@/components/CartSidebar';
@@ -12,12 +12,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Heart, ShoppingBag, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import type { Tables } from '@/integrations/supabase/types';
+import { Product } from '@/types/product';
 
 const Favorites: React.FC = () => {
   const { t, isRTL } = useLanguage();
   const { user } = useAuth();
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [favoriteProducts, setFavoriteProducts] = useState<any[]>([]);
+  const [favoriteProducts, setFavoriteProducts] = useState<Product[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
   const { favorites, isLoading: isFavoritesLoading, error: favoritesError, clearFavorites } = useFavorites();
   const { data: allProducts = [], isLoading: isLoadingAllProducts } = useProducts();
@@ -45,12 +47,34 @@ const Favorites: React.FC = () => {
             toast.error(t('errorLoadingFavorites'));
             setFavoriteProducts([]);
           } else {
-            setFavoriteProducts(data || []);
+            // تحويل بيانات قاعدة البيانات إلى النوع الموحد Product
+            const mappedProducts = (data || []).map((p: Tables<'products'>) => ({
+              id: p.id,
+              name: p[`name_${t('lang')}` as keyof Tables<'products'>] as string || p.name_en || '',
+              nameEn: p.name_en || '',
+              description: p[`description_${t('lang')}` as keyof Tables<'products'>] as string || p.description_en || '',
+              descriptionEn: p.description_en || '',
+              price: Number(p.price),
+              originalPrice: p.original_price ?? undefined,
+              wholesalePrice: p.wholesale_price ?? undefined,
+              image: p.image,
+              images: p.images ?? [],
+              category: p.category_id,
+              inStock: p.in_stock ?? false,
+              rating: Number(p.rating) || 0,
+              reviews: p.reviews_count || 0,
+              discount: p.discount ?? undefined,
+              featured: p.featured ?? false,
+              tags: p.tags ?? [],
+              stock_quantity: p.stock_quantity ?? 0,
+              active: p.active ?? true,
+            }));
+            setFavoriteProducts(mappedProducts);
           }
         } else {
           // للضيوف، فلترة من المنتجات المحملة
           if (allProducts && allProducts.length > 0) {
-            const filtered = allProducts.filter((p: any) => favorites.includes(p.id));
+            const filtered = allProducts.filter((p: Product) => favorites.includes(p.id));
             setFavoriteProducts(filtered);
           }
         }
@@ -62,12 +86,9 @@ const Favorites: React.FC = () => {
         setIsLoadingProducts(false);
       }
     };
-
-    // تأكد من أن favorites محملة قبل محاولة جلب المنتجات
-    if (!isFavoritesLoading) {
-      loadFavoriteProducts();
-    }
-  }, [favorites, allProducts, user?.id, t, isFavoritesLoading]);
+    loadFavoriteProducts();
+    // إضافة user كـ dependency
+  }, [favorites, allProducts, user, t, isFavoritesLoading]);
 
   // مسح جميع المفضلة
   const handleClearAll = async () => {
@@ -187,7 +208,7 @@ const Favorites: React.FC = () => {
                     </div>
                     <div>
                       <p className="text-2xl font-bold text-green-600">
-                        {favoriteProducts.filter(p => p.in_stock).length}
+                        {favoriteProducts.filter(p => p.inStock).length}
                       </p>
                       <p className="text-sm text-gray-600">{t('inStock')}</p>
                     </div>
@@ -221,7 +242,7 @@ const Favorites: React.FC = () => {
             </Card>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {favoriteProducts.map((product: any) => (
+              {favoriteProducts.map((product: Product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>

@@ -1,11 +1,10 @@
-
 import React from 'react';
 import { Star, ShoppingCart } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { CardContent } from '@/components/ui/card';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/utils/languageContextUtils';
+import { useAuth } from '@/contexts/useAuth';
 import { Product } from '@/types';
 import QuantitySelector from '@/components/QuantitySelector';
 

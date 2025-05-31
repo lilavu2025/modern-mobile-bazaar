@@ -1,9 +1,9 @@
 
 import React from 'react';
-import { useLanguage } from '@/contexts/LanguageContext';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { ProductFormData } from '@/types/product';
+import { useLanguage } from '@/utils/languageContextUtils';
 
 interface ProductDescriptionFieldsProps {
   formData: ProductFormData;

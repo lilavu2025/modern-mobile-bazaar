@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '../../utils/languageContextUtils';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,28 +16,7 @@ import ProductDescriptionFields from './ProductDescriptionFields';
 import ProductPricingFields from './ProductPricingFields';
 import ProductCategoryField from './ProductCategoryField';
 import ProductToggleFields from './ProductToggleFields';
-
-interface Product {
-  active: any;
-  tags: any[];
-  stock_quantity: number;
-  id: string;
-  name_ar: string;
-  name_en: string;
-  name_he: string;
-  description_ar: string;
-  description_en: string;
-  description_he: string;
-  price: number;
-  original_price?: number;
-  wholesale_price?: number;
-  image: string;
-  images?: string[];
-  category_id: string;
-  in_stock: boolean;
-  discount?: number;
-  featured: boolean;
-}
+import { ProductFormData, AdminProductForm } from '@/types/product';
 
 interface Category {
   id: string;
@@ -49,31 +27,10 @@ interface Category {
   count: number;
 }
 
-interface ProductFormData {
-  name_ar: string;
-  name_en: string;
-  name_he: string;
-  description_ar: string;
-  description_en: string;
-  description_he: string;
-  price: number;
-  original_price: number;
-  wholesale_price: number;
-  image: string;
-  images: string[];
-  category_id: string;
-  in_stock: boolean;
-  discount: number;
-  featured: boolean;
-  active: boolean;
-  tags: string[];
-  stock_quantity: number;
-}
-
 interface EditProductDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  product: Product;
+  product: AdminProductForm;
   categories: Category[];
   onSuccess: () => void;
 }
@@ -182,7 +139,6 @@ const EditProductDialog: React.FC<EditProductDialogProps> = ({
       toast({
         title: t('error'),
         description: t('errorUpdatingProduct'),
-        variant: 'destructive',
       });
     } finally {
       setIsSubmitting(false);

@@ -5,7 +5,7 @@ export const emailSchema = z.string().email('Invalid email address');
 
 export const phoneSchema = z.string()
   .min(10, 'Phone number must be at least 10 digits')
-  .regex(/^[\d\s\-\+\(\)]+$/, 'Invalid phone number format');
+  .regex(/^[\d\s\-+()]+$/, 'Invalid phone number format');
 
 export const passwordSchema = z.string()
   .min(8, 'Password must be at least 8 characters')
@@ -73,7 +73,7 @@ export const sanitizeInput = (input: string): string => {
 };
 
 export const sanitizePhone = (phone: string): string => {
-  return phone.replace(/[^\d\+]/g, '');
+  return phone.replace(/[^\d+]/g, '');
 };
 
 export const sanitizeEmail = (email: string): string => {

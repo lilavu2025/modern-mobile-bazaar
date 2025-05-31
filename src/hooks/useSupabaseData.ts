@@ -1,8 +1,8 @@
 // /home/ubuntu/modern-mobile-bazaar/src/hooks/useSupabaseData.ts
 import { useQuery } from '@tanstack/react-query';
 import { CategoryService, ProductService, BannerService } from '@/services/supabaseService';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/utils/languageContextUtils';
+import { useAuth } from '@/contexts/useAuth';
 import { Profile } from '@/contexts/AuthContext'; // Assuming Profile type is here
 import { Language } from '@/types/language'; // Assuming Language type is defined
 

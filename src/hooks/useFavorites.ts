@@ -1,7 +1,7 @@
 // /home/ubuntu/modern-mobile-bazaar/src/hooks/useFavorites.ts
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from '@/contexts/useAuth';
+import { useLanguage } from '@/utils/languageContextUtils';
 import { toast } from "sonner";
 import { FavoriteService } from "@/services/supabaseService";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";

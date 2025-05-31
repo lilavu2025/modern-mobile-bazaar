@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/useAuth';
 
 // تعريف الواجهة التي تمثل مستخدم النظام
 interface UserProfile {
@@ -35,7 +35,7 @@ export const useAdminUsers = () => {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   // دالة تحميل بيانات المستخدمين من Supabase
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       console.log('⏳ بدء تحميل بيانات المستخدمين...');
       setIsLoading(true);
@@ -80,28 +80,27 @@ export const useAdminUsers = () => {
 
       // تحديث الحالة
       setUsers(allUsers);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('❌ فشل تحميل المستخدمين:', err);
-      setError(err.message || 'حدث خطأ أثناء تحميل المستخدمين');
+      setError((err as Error).message || 'حدث خطأ أثناء تحميل المستخدمين');
     } finally {
       console.log('✅ الانتهاء من تحميل المستخدمين');
       setIsLoading(false);
     }
-  };
+  }, [profile]);
 
   // تشغيل الدالة عند تحميل الصفحة أو عند تغير المستخدم الحالي
   useEffect(() => {
     if (profile) {
-      console.log('👤 تم تحميل الملف الشخصي للمستخدم الحالي، البدء بتحميل المستخدمين...');
       fetchUsers();
     }
-  }, [profile]);
+  }, [profile, fetchUsers]);
 
   // تصفية وفرز المستخدمين بحسب الحالات
   const filteredAndSortedUsers = useMemo(() => {
     console.log('🔍 تطبيق الفلاتر والفرز...');
     
-    let filtered = users.filter(user => {
+    const filtered = users.filter(user => {
       const matchesSearch =
         user.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         user.email?.toLowerCase().includes(searchQuery.toLowerCase());
@@ -121,13 +120,13 @@ export const useAdminUsers = () => {
 
     // تطبيق الفرز
     filtered.sort((a, b) => {
-      let aValue: any = a[sortBy as keyof UserProfile];
-      let bValue: any = b[sortBy as keyof UserProfile];
+      let aValue = a[sortBy as keyof UserProfile];
+      let bValue = b[sortBy as keyof UserProfile];
 
       // التعامل مع التواريخ
       if (sortBy === 'created_at' || sortBy === 'last_sign_in_at') {
-        aValue = new Date(aValue || 0).getTime();
-        bValue = new Date(bValue || 0).getTime();
+        aValue = new Date(aValue || 0).getTime().toString();
+        bValue = new Date(bValue || 0).getTime().toString();
       } else if (typeof aValue === 'string') {
         aValue = aValue.toLowerCase();
         bValue = bValue?.toLowerCase() || '';

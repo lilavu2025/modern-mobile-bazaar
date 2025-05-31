@@ -1,10 +1,9 @@
-
 export interface Product {
   id: string;
   name: string;
-  nameEn?: string;
+  nameEn: string;
   description: string;
-  descriptionEn?: string;
+  descriptionEn: string;
   price: number;
   originalPrice?: number;
   wholesalePrice?: number;
@@ -12,8 +11,8 @@ export interface Product {
   images?: string[];
   category: string;
   inStock: boolean;
-  rating?: number;
-  reviews?: number;
+  rating: number;
+  reviews: number;
   discount?: number;
   featured?: boolean;
   tags?: string[];
@@ -42,6 +41,8 @@ export interface ProductFormData {
   stock_quantity: number;
 }
 
+export type AdminProductForm = ProductFormData & { id: string; category_id: string; category: string };
+
 export interface CartItem {
   id: string;
   product: Product;
@@ -51,7 +52,7 @@ export interface CartItem {
 export interface Category {
   id: string;
   name: string;
-  nameEn?: string;
+  nameEn: string;
   image: string;
   icon: string;
   count: number;

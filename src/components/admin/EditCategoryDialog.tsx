@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '../../utils/languageContextUtils';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,15 +13,7 @@ import {
 } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
 import ImageUpload from '@/components/ImageUpload';
-
-interface Category {
-  id: string;
-  name: string;
-  nameEn: string;
-  image: string;
-  icon: string;
-  count: number;
-}
+import { Category } from '@/types/product';
 
 interface EditCategoryDialogProps {
   open: boolean;
@@ -87,7 +78,6 @@ const EditCategoryDialog: React.FC<EditCategoryDialogProps> = ({
       toast({
         title: t('error'),
         description: t('errorUpdatingCategory'),
-        variant: 'destructive',
       });
     } finally {
       setIsSubmitting(false);

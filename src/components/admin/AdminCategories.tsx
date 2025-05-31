@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '../../utils/languageContextUtils';
 import { useCategories } from '@/hooks/useSupabaseData';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -36,13 +35,14 @@ import { toast } from '@/hooks/use-toast';
 import AddCategoryDialog from './AddCategoryDialog';
 import EditCategoryDialog from './EditCategoryDialog';
 import ViewCategoryDialog from './ViewCategoryDialog';
+import { Category } from '@/types/product';
 
 const AdminCategories: React.FC = () => {
   const { t } = useLanguage();
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showViewDialog, setShowViewDialog] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<any>(null);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const { data: categories = [], isLoading, refetch } = useCategories();
 
   const handleDeleteCategory = async (categoryId: string, categoryName: string) => {
@@ -60,22 +60,22 @@ const AdminCategories: React.FC = () => {
       });
 
       refetch();
-    } catch (error) {
-      console.error('Error deleting category:', error);
+    } catch (error: unknown) {
+      const err = error as Error;
+      console.error('Error deleting category:', err);
       toast({
         title: t('error'),
         description: t('errorDeletingCategory'),
-        variant: 'destructive',
       });
     }
   };
 
-  const handleViewCategory = (category: any) => {
+  const handleViewCategory = (category: Category) => {
     setSelectedCategory(category);
     setShowViewDialog(true);
   };
 
-  const handleEditCategory = (category: any) => {
+  const handleEditCategory = (category: Category) => {
     setSelectedCategory(category);
     setShowEditDialog(true);
   };

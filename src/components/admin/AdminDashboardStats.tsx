@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '../../utils/languageContextUtils';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BarChart, Bar, XAxis, YAxis, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { Package, ShoppingCart, Users, BarChart3 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+
+// Helper types
+interface UsersByType { [key: string]: number; }
+interface ProductsByCategoryStats { total: number; inStock: number; outOfStock: number; }
 
 interface AdminDashboardStatsProps {
   onFilterUsers?: (userType: string) => void;
@@ -33,7 +37,7 @@ const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
 
       if (error) throw error;
 
-      const usersByType = data.reduce((acc: any, user) => {
+      const usersByType: UsersByType = data.reduce((acc: UsersByType, user: { user_type: string }) => {
         acc[user.user_type] = (acc[user.user_type] || 0) + 1;
         return acc;
       }, {});
@@ -64,25 +68,21 @@ const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
 
       if (productsError || categoriesError) throw productsError || categoriesError;
 
-      const productsByCategory = products.reduce((acc: any, product) => {
-        const category = categories.find(cat => cat.id === product.category_id);
+      const productsByCategory: Record<string, ProductsByCategoryStats> = products.reduce((acc: Record<string, ProductsByCategoryStats>, product: { category_id: string; in_stock: boolean; active: boolean }) => {
+        const category = categories.find((cat: { id: string }) => cat.id === product.category_id);
         const categoryName = category?.name_ar || 'غير محدد';
-        
         if (!acc[categoryName]) {
           acc[categoryName] = { total: 0, inStock: 0, outOfStock: 0 };
         }
-        
         acc[categoryName].total += 1;
         if (product.in_stock) {
           acc[categoryName].inStock += 1;
         } else {
           acc[categoryName].outOfStock += 1;
         }
-        
         return acc;
       }, {});
-
-      return Object.entries(productsByCategory).map(([name, stats]: [string, any]) => ({
+      return Object.entries(productsByCategory).map(([name, stats]: [string, ProductsByCategoryStats]) => ({
         name,
         total: stats.total,
         inStock: stats.inStock,
@@ -105,12 +105,11 @@ const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
 
       if (error) throw error;
 
-      const ordersByStatus = data.reduce((acc: any, order) => {
+      const ordersByStatus: Record<string, number> = data.reduce((acc: Record<string, number>, order: { status: string }) => {
         acc[order.status] = (acc[order.status] || 0) + 1;
         return acc;
       }, {});
-
-      const revenueByStatus = data.reduce((acc: any, order) => {
+      const revenueByStatus: Record<string, number> = data.reduce((acc: Record<string, number>, order: { status: string; total: number }) => {
         if (!acc[order.status]) acc[order.status] = 0;
         // لا نحسب الإيرادات للطلبات الملغية
         if (order.status !== 'cancelled') {
@@ -197,14 +196,13 @@ const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
 
       if (error) throw error;
 
-      const monthlyStats = data.reduce((acc: any, order) => {
+      const monthlyStats: Record<number, { month: string; orders: number; revenue: number }> = data.reduce((acc: Record<number, { month: string; orders: number; revenue: number }>, order: { created_at: string; status: string; total: number }) => {
         const date = new Date(order.created_at);
         const monthKey = date.getMonth();
         const monthNames = [
           'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
           'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
         ];
-        
         if (!acc[monthKey]) {
           acc[monthKey] = {
             month: monthNames[monthKey],
@@ -212,12 +210,10 @@ const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
             revenue: 0
           };
         }
-        
         acc[monthKey].orders += 1;
         if (order.status !== 'cancelled') {
           acc[monthKey].revenue += order.total || 0;
         }
-        
         return acc;
       }, {});
 

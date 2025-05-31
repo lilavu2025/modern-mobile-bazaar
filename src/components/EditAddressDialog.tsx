@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/utils/languageContextUtils';
 import { useAddresses, Address } from '@/hooks/useAddresses';
 import {
   Dialog,

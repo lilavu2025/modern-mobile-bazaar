@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
 import { useCategories } from '@/hooks/useSupabaseData';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/utils/languageContextUtils';
 import Header from '@/components/Header';
 import CategoryCard from '@/components/CategoryCard';
 import CartSidebar from '@/components/CartSidebar';

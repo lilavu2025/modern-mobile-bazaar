@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import { useLanguage } from '@/contexts/LanguageContext';
 import { useAdminUsers } from '@/hooks/useAdminUsers';
 import { useLocation } from 'react-router-dom';
 import AdminUsersHeader from './users/AdminUsersHeader';
@@ -7,6 +6,7 @@ import UserStatsCards from './users/UserStatsCards';
 import UserFilters from './users/UserFilters';
 import UsersTable from './users/UsersTable';
 import UserErrorDisplay from './users/UserErrorDisplay';
+import { useLanguage } from '@/utils/languageContextUtils';
 
 const AdminUsers: React.FC = () => {
   const { isRTL } = useLanguage();

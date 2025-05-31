@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/useAuth';
+import { useLanguage } from '@/utils/languageContextUtils';
 import { useAddresses } from '@/hooks/useAddresses';
 import Header from '@/components/Header';
 import CartSidebar from '@/components/CartSidebar';
@@ -35,8 +35,8 @@ const Profile: React.FC = () => {
     try {
       await updateProfile(profileData);
       toast.success(t('profileUpdated'));
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (error: unknown) {
+      toast.error(typeof error === 'object' && error && 'message' in error ? (error as { message?: string }).message : 'Error updating profile');
     } finally {
       setIsLoading(false);
     }

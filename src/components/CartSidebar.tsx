@@ -5,8 +5,10 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { useCart } from '@/hooks/useCart';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/utils/languageContextUtils';
 import { Link } from 'react-router-dom';
+import { useAuth } from '@/contexts/useAuth';
+import { useToast } from '@/hooks/use-toast';
 
 interface CartSidebarProps {
   isOpen: boolean;
@@ -17,6 +19,21 @@ const CartSidebar: React.FC<CartSidebarProps> = ({ isOpen, onClose }) => {
   const { state, updateQuantity, removeItem, getTotalItems } = useCart();
   const cartItems = state.items;
   const { t, isRTL } = useLanguage();
+  const { user } = useAuth();
+  const { toast } = useToast();
+
+  // دالة مخصصة للتعامل مع الدفع
+  const handleCheckoutClick = (e: React.MouseEvent) => {
+    if (!user) {
+      e.preventDefault();
+      toast({
+        title: t('error'),
+        description: t('pleaseLoginToCheckout') || t('pleaseLogin'),
+      });
+    } else {
+      onClose();
+    }
+  };
 
   return (
     <>
@@ -143,10 +160,9 @@ const CartSidebar: React.FC<CartSidebarProps> = ({ isOpen, onClose }) => {
                   <Button 
                     className="w-full" 
                     size="lg"
-                    onClick={onClose}
                     asChild
                   >
-                    <Link to="/checkout">
+                    <Link to="/checkout" onClick={handleCheckoutClick}>
                       {t('checkout')}
                     </Link>
                   </Button>

@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/utils/languageContextUtils';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { ProductFormData } from '@/types/product';

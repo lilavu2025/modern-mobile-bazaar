@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, memo } from 'react';
 import { cn } from '@/lib/utils';
 import { getOptimizedImageUrl, supportsWebP, createImageObserver } from '@/utils/imageOptimization';
+import { useImagePreloader } from '@/utils/imagePreloader';
 
 interface LazyImageProps {
   src: string;
@@ -173,32 +174,3 @@ const LazyImage = memo(function LazyImage({
 });
 
 export default LazyImage;
-
-// Hook for preloading images
-export const useImagePreloader = () => {
-  const preloadImage = (src: string): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => resolve();
-      img.onerror = reject;
-      img.src = src;
-    });
-  };
-
-  const preloadImages = async (sources: string[]): Promise<void[]> => {
-    return Promise.all(sources.map(preloadImage));
-  };
-
-  return { preloadImage, preloadImages };
-};
-
-// Component for preloading critical images
-export const ImagePreloader: React.FC<{ sources: string[] }> = ({ sources }) => {
-  const { preloadImages } = useImagePreloader();
-
-  useEffect(() => {
-    preloadImages(sources).catch(console.error);
-  }, [sources, preloadImages]);
-
-  return null;
-};

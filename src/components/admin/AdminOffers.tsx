@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Edit, Trash, Trash2, Calendar, Percent, Image as ImageIcon, Eye, EyeOff } from 'lucide-react';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '../../utils/languageContextUtils';
 import {
   Dialog,
   DialogContent,
@@ -31,7 +31,7 @@ const AdminOffers: React.FC = () => {
   const [selectedOffer, setSelectedOffer] = useState<Database['public']['Tables']['offers']['Row'] | null>(null);
   
   // نموذج العرض مع جميع الحقول المطلوبة
-  const initialForm = {
+  const initialForm = useMemo(() => ({
     title_en: '',
     title_ar: '',
     title_he: '',
@@ -43,7 +43,7 @@ const AdminOffers: React.FC = () => {
     start_date: '',
     end_date: '',
     active: true
-  };
+  }), []);
   
   const [form, setForm] = useState(initialForm);
   const [loading, setLoading] = useState(false);
@@ -237,7 +237,7 @@ const AdminOffers: React.FC = () => {
   };
 
   // تحديث النموذج عند تحديد عرض للتعديل
-  React.useEffect(() => {
+  useEffect(() => {
     if (showEdit && selectedOffer) {
       setForm({
         title_en: selectedOffer.title_en || '',
@@ -255,7 +255,7 @@ const AdminOffers: React.FC = () => {
     } else if (!showEdit && !showAdd) {
       setForm(initialForm);
     }
-  }, [showEdit, selectedOffer, showAdd]);
+  }, [showEdit, selectedOffer, showAdd, initialForm]);
 
   return (
     <div className={`space-y-6 ${isRTL ? 'rtl' : 'ltr'}`}>

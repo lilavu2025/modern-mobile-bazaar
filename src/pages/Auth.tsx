@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,8 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useAuth } from '@/contexts/AuthContext';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/useAuth';
+import { useLanguage } from '@/utils/languageContextUtils';
 import { useToast } from '@/hooks/use-toast';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import EmailConfirmationPending from '@/components/EmailConfirmationPending';
@@ -65,21 +64,17 @@ const Auth: React.FC = () => {
         title: t('success'),
         description: t('loginSuccess'),
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Login error:', error);
-      
-      // Check if it's an email not confirmed error
-      if (error.message?.includes('Email not confirmed')) {
+      if (typeof error === 'object' && error && 'message' in error && typeof (error as { message?: string }).message === 'string' && (error as { message: string }).message.includes('Email not confirmed')) {
         toast({
           title: t('error'),
           description: t('emailNotConfirmed'),
-          variant: 'destructive',
         });
       } else {
         toast({
           title: t('error'),
-          description: error.message || t('loginError'),
-          variant: 'destructive',
+          description: typeof error === 'object' && error && 'message' in error ? (error as { message?: string }).message || t('loginError') : t('loginError'),
         });
       }
     } finally {
@@ -118,13 +113,11 @@ const Auth: React.FC = () => {
         title: t('success'),
         description: t('signupSuccess'),
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Signup error:', error);
-      
       toast({
         title: t('error'),
-        description: error.message || t('signupError'),
-        variant: 'destructive',
+        description: typeof error === 'object' && error && 'message' in error ? (error as { message?: string }).message || t('signupError') : t('signupError'),
       });
     } finally {
       setIsLoading(false);
