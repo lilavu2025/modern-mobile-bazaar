@@ -10,17 +10,18 @@ const Categories: React.FC = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { data: categories = [], isLoading, error } = useCategories();
+  const { data, loading, error } = useCategories();
+  const categories = data?.data ?? [];
 
   console.log('Categories page - data:', categories);
-  console.log('Categories page - loading:', isLoading);
+  console.log('Categories page - loading:', loading);
   console.log('Categories page - error:', error);
 
   const filteredCategories = categories.filter(category =>
     category.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -32,6 +33,10 @@ const Categories: React.FC = () => {
   }
 
   if (error) {
+    let errorMsg = t('errorLoadingData');
+    if (typeof error === 'object' && error !== null && 'message' in error && typeof (error as { message?: string }).message === 'string') {
+      errorMsg = (error as { message?: string }).message || errorMsg;
+    }
     return (
       <div className="min-h-screen bg-gray-50">
         <Header 
@@ -41,7 +46,7 @@ const Categories: React.FC = () => {
         />
         <div className="container mx-auto px-4 py-6">
           <div className="text-center py-12">
-            <p className="text-red-500 text-lg">خطأ في تحميل الفئات: {error.message}</p>
+            <p className="text-red-500 text-lg">خطأ في تحميل الفئات: {errorMsg}</p>
             <button 
               onClick={() => window.location.reload()} 
               className="mt-4 bg-primary text-white px-4 py-2 rounded"

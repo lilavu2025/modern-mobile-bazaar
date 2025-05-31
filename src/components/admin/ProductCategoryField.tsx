@@ -15,13 +15,14 @@ const ProductCategoryField: React.FC<ProductCategoryFieldProps> = ({
   setFormData,
 }) => {
   const { t } = useLanguage();
-  const { data: categories = [], isLoading, error } = useCategories();
+  const { data, loading, error } = useCategories();
+  const categories = data?.data ?? [];
 
   console.log('ProductCategoryField - categories:', categories);
-  console.log('ProductCategoryField - loading:', isLoading);
+  console.log('ProductCategoryField - loading:', loading);
   console.log('ProductCategoryField - error:', error);
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div>
         <Label htmlFor="category">{t('category')}</Label>
