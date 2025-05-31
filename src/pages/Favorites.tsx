@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useFavorites } from '@/hooks/useFavorites';
-import { useProducts } from '@/hooks/useSupabaseData';
 import { useLanguage } from '@/utils/languageContextUtils';
 import { useAuth } from '@/contexts/useAuth';
 import Header from '@/components/Header';
@@ -11,7 +10,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Heart, ShoppingBag, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
 import type { Tables } from '@/integrations/supabase/types';
 import { Product } from '@/types/product';
 
@@ -19,93 +17,18 @@ const Favorites: React.FC = () => {
   const { t, isRTL } = useLanguage();
   const { user } = useAuth();
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [favoriteProducts, setFavoriteProducts] = useState<Product[]>([]);
-  const [isLoadingProducts, setIsLoadingProducts] = useState(false);
-  const { favorites, isLoading: isFavoritesLoading, error: favoritesError, clearFavorites } = useFavorites();
-  const { data: allProducts = [], isLoading: isLoadingAllProducts } = useProducts();
-
-  // جلب المنتجات المفضلة
-  useEffect(() => {
-    const loadFavoriteProducts = async () => {
-      if (!favorites || favorites.length === 0) {
-        setFavoriteProducts([]);
-        setIsLoadingProducts(false);
-        return;
-      }
-
-      setIsLoadingProducts(true);
-      try {
-        if (user) {
-          // للمستخدمين المسجلين، جلب من قاعدة البيانات
-          const { data, error } = await supabase
-            .from('products')
-            .select('*')
-            .in('id', favorites);
-          
-          if (error) {
-            console.error('خطأ في جلب المنتجات المفضلة:', error);
-            toast.error(t('errorLoadingFavorites'));
-            setFavoriteProducts([]);
-          } else {
-            // تحويل بيانات قاعدة البيانات إلى النوع الموحد Product
-            const mappedProducts = (data || []).map((p: Tables<'products'>) => ({
-              id: p.id,
-              name: p[`name_${t('lang')}` as keyof Tables<'products'>] as string || p.name_en || '',
-              nameEn: p.name_en || '',
-              description: p[`description_${t('lang')}` as keyof Tables<'products'>] as string || p.description_en || '',
-              descriptionEn: p.description_en || '',
-              price: Number(p.price),
-              originalPrice: p.original_price ?? undefined,
-              wholesalePrice: p.wholesale_price ?? undefined,
-              image: p.image,
-              images: p.images ?? [],
-              category: p.category_id,
-              inStock: p.in_stock ?? false,
-              rating: Number(p.rating) || 0,
-              reviews: p.reviews_count || 0,
-              discount: p.discount ?? undefined,
-              featured: p.featured ?? false,
-              tags: p.tags ?? [],
-              stock_quantity: p.stock_quantity ?? 0,
-              active: p.active ?? true,
-            }));
-            setFavoriteProducts(mappedProducts);
-          }
-        } else {
-          // للضيوف، فلترة من المنتجات المحملة
-          if (allProducts && allProducts.length > 0) {
-            const filtered = allProducts.filter((p: Product) => favorites.includes(p.id));
-            setFavoriteProducts(filtered);
-          }
-        }
-      } catch (error) {
-        console.error('خطأ في جلب المنتجات المفضلة:', error);
-        toast.error(t('errorLoadingFavorites'));
-        setFavoriteProducts([]);
-      } finally {
-        setIsLoadingProducts(false);
-      }
-    };
-    loadFavoriteProducts();
-    // إضافة user كـ dependency
-  }, [favorites, allProducts, user, t, isFavoritesLoading]);
+  // استخدم favoriteProducts و isLoading مباشرة من useFavorites
+  const { favorites, favoriteProducts, isLoading, error: favoritesError, clearFavorites } = useFavorites();
 
   // مسح جميع المفضلة
   const handleClearAll = async () => {
     if (!favorites || favorites.length === 0) return;
-    
     try {
       await clearFavorites();
-      setFavoriteProducts([]);
-      toast.success(t('favoritesCleared'));
     } catch (error) {
       console.error('خطأ في مسح المفضلة:', error);
-      toast.error(t('errorClearingFavorites'));
     }
   };
-
-  // حالة التحميل
-  const isLoading = isFavoritesLoading || (isLoadingAllProducts && !user) || isLoadingProducts;
 
   // مكون الـ Loading
   const LoadingComponent = () => (
@@ -135,7 +58,34 @@ const Favorites: React.FC = () => {
     </div>
   );
 
+  // mapping للمنتجات المفضلة لتوحيد النوع
+  const mappedFavoriteProducts: Product[] = (favoriteProducts as Tables<'products'>[]).map((p) => ({
+    id: p.id,
+    name: p.name_en || '',
+    nameEn: p.name_en || '',
+    description: p.description_en || '',
+    descriptionEn: p.description_en || '',
+    price: Number(p.price),
+    originalPrice: p.original_price ?? undefined,
+    wholesalePrice: p.wholesale_price ?? undefined,
+    image: p.image,
+    images: p.images ?? [],
+    category: p.category_id,
+    inStock: p.in_stock ?? false,
+    rating: Number(p.rating) || 0,
+    reviews: p.reviews_count || 0,
+    discount: p.discount ?? undefined,
+    featured: p.featured ?? false,
+    tags: p.tags ?? [],
+    stock_quantity: p.stock_quantity ?? 0,
+    active: p.active ?? true,
+  }));
+
   if (favoritesError) {
+    let errorMsg = t('errorLoadingFavorites');
+    if (typeof favoritesError === 'object' && favoritesError !== null && 'message' in favoritesError && typeof (favoritesError as { message?: string }).message === 'string') {
+      errorMsg = (favoritesError as { message?: string }).message || errorMsg;
+    }
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -145,7 +95,7 @@ const Favorites: React.FC = () => {
             </svg>
           </div>
           <h2 className="text-xl font-bold mb-2">{t('error')}</h2>
-          <p className="mb-4">{favoritesError.message || t('errorLoadingFavorites')}</p>
+          <p className="mb-4">{errorMsg}</p>
           <Button onClick={() => window.location.reload()}>{t('retry')}</Button>
         </div>
       </div>
@@ -160,7 +110,6 @@ const Favorites: React.FC = () => {
         onCartClick={() => setIsCartOpen(true)}
         onMenuClick={() => {}}
       />
-      
       {isLoading ? (
         <LoadingComponent />
       ) : (
@@ -173,8 +122,8 @@ const Favorites: React.FC = () => {
                 <div>
                   <h1 className="text-3xl font-bold">{t('favorites')}</h1>
                   <p className="text-gray-600 mt-1">
-                    {favoriteProducts.length > 0 
-                      ? `${favoriteProducts.length} ${t('products')}`
+                    {mappedFavoriteProducts.length > 0 
+                      ? `${mappedFavoriteProducts.length} ${t('products')}`
                       : t('noFavoritesYet')
                     }
                   </p>
@@ -182,7 +131,7 @@ const Favorites: React.FC = () => {
               </div>
               
               {/* أزرار الإجراءات */}
-              {favoriteProducts.length > 0 && (
+              {mappedFavoriteProducts.length > 0 && (
                 <div className={`flex gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
                   <Button
                     variant="outline"
@@ -198,23 +147,23 @@ const Favorites: React.FC = () => {
             </div>
             
             {/* إحصائيات سريعة */}
-            {favoriteProducts.length > 0 && (
+            {mappedFavoriteProducts.length > 0 && (
               <Card className="mb-6">
                 <CardContent className="p-4">
                   <div className={`grid grid-cols-1 md:grid-cols-3 gap-4 text-center ${isRTL ? 'text-right' : 'text-left'}`}>
                     <div>
-                      <p className="text-2xl font-bold text-primary">{favoriteProducts.length}</p>
+                      <p className="text-2xl font-bold text-primary">{mappedFavoriteProducts.length}</p>
                       <p className="text-sm text-gray-600">{t('favoriteProducts')}</p>
                     </div>
                     <div>
                       <p className="text-2xl font-bold text-green-600">
-                        {favoriteProducts.filter(p => p.inStock).length}
+                        {mappedFavoriteProducts.filter(p => p.inStock).length}
                       </p>
                       <p className="text-sm text-gray-600">{t('inStock')}</p>
                     </div>
                     <div>
                       <p className="text-2xl font-bold text-orange-600">
-                        {favoriteProducts.filter(p => p.discount && p.discount > 0).length}
+                        {mappedFavoriteProducts.filter(p => p.discount && p.discount > 0).length}
                       </p>
                       <p className="text-sm text-gray-600">{t('onSale')}</p>
                     </div>
@@ -225,7 +174,7 @@ const Favorites: React.FC = () => {
           </div>
 
           {/* محتوى الصفحة */}
-          {favoriteProducts.length === 0 ? (
+          {mappedFavoriteProducts.length === 0 ? (
             <Card className="text-center py-16">
               <CardContent>
                 <Heart className="h-20 w-20 text-gray-300 mx-auto mb-6" />
@@ -242,7 +191,7 @@ const Favorites: React.FC = () => {
             </Card>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {favoriteProducts.map((product: Product) => (
+              {mappedFavoriteProducts.map((product: Product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>

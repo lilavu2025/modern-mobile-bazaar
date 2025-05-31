@@ -21,8 +21,18 @@ const Products: React.FC = () => {
   const [showFilters, setShowFilters] = useState(false);
   const location = useLocation();
 
-  const { data: categories = [], isLoading: categoriesLoading, error: categoriesError } = useCategories();
-  const { data: products = [], isLoading: productsLoading, error: productsError } = useProducts(selectedCategory === 'all' ? undefined : selectedCategory);
+  const { data: categoriesData, loading: categoriesLoading, error: categoriesError } = useCategories();
+  const { data: productsData, loading: productsLoading, error: productsError } = useProducts(selectedCategory === 'all' ? undefined : selectedCategory);
+
+  const categories = categoriesData?.data ?? [];
+  const products = productsData?.data ?? [];
+
+  useEffect(() => {
+    console.log('[Products] mounted at', new Date().toISOString());
+    return () => {
+      console.log('[Products] unmounted at', new Date().toISOString());
+    };
+  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -37,10 +47,8 @@ const Products: React.FC = () => {
     .filter(product => {
       const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                            product.description.toLowerCase().includes(searchQuery.toLowerCase());
-      
       const matchesPrice = (!priceRange.min || product.price >= Number(priceRange.min)) &&
                           (!priceRange.max || product.price <= Number(priceRange.max));
-      
       return matchesSearch && matchesPrice;
     })
     .sort((a, b) => {
@@ -82,6 +90,15 @@ const Products: React.FC = () => {
     );
   }
 
+  let productsErrorMsg = t('errorLoadingData');
+  if (typeof productsError === 'object' && productsError !== null && 'message' in productsError && typeof (productsError as { message?: string }).message === 'string') {
+    productsErrorMsg = (productsError as { message?: string }).message || productsErrorMsg;
+  }
+  let categoriesErrorMsg = t('errorLoadingData');
+  if (typeof categoriesError === 'object' && categoriesError !== null && 'message' in categoriesError && typeof (categoriesError as { message?: string }).message === 'string') {
+    categoriesErrorMsg = (categoriesError as { message?: string }).message || categoriesErrorMsg;
+  }
+
   if (productsError || categoriesError) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -92,7 +109,7 @@ const Products: React.FC = () => {
             </svg>
           </div>
           <h2 className="text-xl font-bold mb-2">{t('error')}</h2>
-          <p className="mb-4">{productsError?.message || categoriesError?.message || t('errorLoadingData')}</p>
+          <p className="mb-4">{productsErrorMsg || categoriesErrorMsg}</p>
           <Button onClick={() => window.location.reload()}>{t('retry')}</Button>
         </div>
       </div>

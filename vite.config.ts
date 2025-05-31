@@ -12,58 +12,12 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    historyApiFallback: true,
   },
   plugins: [
     react(),
     mode === 'development' && componentTagger(),
-    VitePWA({
-      registerType: 'autoUpdate',
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,jpg,jpeg}'],
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/.*\.(png|jpg|jpeg|svg|webp)$/,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'images',
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
-              },
-            },
-          },
-          {
-            urlPattern: /^https:\/\/api\./,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'api-cache',
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 5 * 60, // 5 minutes
-              },
-            },
-          },
-        ],
-      },
-      manifest: {
-        name: 'Modern Mobile Bazaar',
-        short_name: 'Bazaar',
-        description: 'Best products at best prices',
-        theme_color: '#ff6b35',
-        background_color: '#ffffff',
-        display: 'standalone',
-        orientation: 'portrait',
-        scope: '/',
-        start_url: '/',
-        icons: [
-          {
-            src: '/favicon.ico',
-            sizes: '64x64 32x32 24x24 16x16',
-            type: 'image/x-icon'
-          }
-        ]
-      }
-    })
+    // VitePWA({ ... }) معطل مؤقتاً
   ].filter(Boolean),
   resolve: {
     alias: {
@@ -136,9 +90,6 @@ export default defineConfig(({ mode }) => ({
       'clsx',
       'tailwind-merge',
       '@supabase/supabase-js'
-    ],
-    exclude: [
-      '@tanstack/react-query'
     ]
   },
 }));

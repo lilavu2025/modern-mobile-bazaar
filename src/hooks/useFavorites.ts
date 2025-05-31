@@ -7,6 +7,7 @@ import { FavoriteService } from "@/services/supabaseService";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Product } from "@/types"; // Assuming Product type is defined
 import { Language } from "@/types/language";
+import { useLiveSupabaseQuery } from './useLiveSupabaseQuery';
 
 export const useFavorites = () => {
   const { user } = useAuth();
@@ -29,9 +30,9 @@ export const useFavorites = () => {
       }
       return await FavoriteService.getUserFavorites(user.id);
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 0,
     refetchOnWindowFocus: true,
-    refetchInterval: 60 * 1000,
+    refetchInterval: false,
   });
   const favoriteIds: string[] = useMemo(() => favoriteIdsRaw || [], [favoriteIdsRaw]);
 
@@ -201,21 +202,16 @@ export const useFavorites = () => {
     return favoriteIds.length;
   }, [favoriteIds]);
 
-  // تفعيل polling وتحديث عند العودة للنافذة في جلب تفاصيل المنتجات المفضلة
-  const { data: favoriteProductsRaw = [], isLoading: isLoadingProducts, error: productsError } = useQuery({
-    queryKey: ["favoriteProducts", user?.id, language, favoriteIds], // Include language and IDs
+  // تفعيل polling دائم لجلب تفاصيل المنتجات المفضلة
+  const { data: favoriteProductsRaw = [], loading: isLoadingProducts, error: productsError } = useLiveSupabaseQuery({
     queryFn: async () => {
-      console.log("[useFavorites] Fetching favorite product details...");
       if (favoriteIds.length === 0) return [];
-      
       const { data, error } = await FavoriteService.getFavoriteProductDetails(favoriteIds, language as Language);
       if (error) return [];
       return data || [];
     },
-    enabled: favoriteIds.length > 0, // Only run if there are favorite IDs
-    staleTime: 5 * 60 * 1000, 
-    refetchOnWindowFocus: true,
-    refetchInterval: 60 * 1000,
+    interval: 10000,
+    retryInterval: 5000,
   });
 
   return {

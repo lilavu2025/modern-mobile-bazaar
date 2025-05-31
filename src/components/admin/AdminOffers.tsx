@@ -49,7 +49,7 @@ const AdminOffers: React.FC = () => {
   const [loading, setLoading] = useState(false);
 
   // جلب العروض من قاعدة البيانات
-  const { data: offers = [], refetch, isLoading: isLoadingOffers } = useQuery({
+  const { data: offers = [], refetch, isLoading: isLoadingOffers } = useQuery<Database['public']['Tables']['offers']['Row'][]>({
     queryKey: ["admin-offers"],
     queryFn: async () => {
       try {
@@ -71,9 +71,9 @@ const AdminOffers: React.FC = () => {
         throw error;
       }
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
     refetchOnWindowFocus: true,
-    refetchInterval: 60 * 1000,
+    refetchInterval: false,
   });
 
   // حذف عرض

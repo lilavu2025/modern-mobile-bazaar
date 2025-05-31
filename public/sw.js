@@ -79,7 +79,7 @@ self.addEventListener('fetch', (event) => {
   
   // Handle different types of requests
   if (url.pathname.startsWith('/api/')) {
-    // API requests - Network First with fallback to cache
+    // API requests - Network Only (no cache)
     event.respondWith(handleApiRequest(request));
   } else if (request.destination === 'image') {
     // Images - Cache First with network fallback
@@ -93,24 +93,14 @@ self.addEventListener('fetch', (event) => {
   }
 });
 
-// Handle API requests with Network First strategy
+// Handle API requests with Network Only strategy (no cache)
 async function handleApiRequest(request) {
   try {
-    // Try network first
-    const networkResponse = await fetch(request);
-    
-    if (networkResponse.ok) {
-      // Cache successful responses
-      const cache = await caches.open(API_CACHE);
-      cache.put(request, networkResponse.clone());
-      return networkResponse;
-    }
-    
-    // If network fails, try cache
-    return await getCachedResponse(request, API_CACHE);
+    // Always fetch from network, never cache
+    return await fetch(request);
   } catch (error) {
-    console.log('Service Worker: Network failed, trying cache for API request');
-    return await getCachedResponse(request, API_CACHE);
+    console.log('Service Worker: Network failed for API request');
+    return new Response('API unavailable', { status: 503 });
   }
 }
 

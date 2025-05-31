@@ -183,7 +183,9 @@ const Auth: React.FC = () => {
                       <Label htmlFor="login-email">{t('email')}</Label>
                       <Input
                         id="login-email"
+                        name="login-email"
                         type="email"
+                        autoComplete="username"
                         value={loginData.email}
                         onChange={(e) => setLoginData(prev => ({ ...prev, email: e.target.value }))}
                         required
@@ -194,7 +196,9 @@ const Auth: React.FC = () => {
                       <Label htmlFor="login-password">{t('password')}</Label>
                       <Input
                         id="login-password"
+                        name="login-password"
                         type="password"
+                        autoComplete="current-password"
                         value={loginData.password}
                         onChange={(e) => setLoginData(prev => ({ ...prev, password: e.target.value }))}
                         required
@@ -213,7 +217,9 @@ const Auth: React.FC = () => {
                       <Label htmlFor="signup-name">{t('fullName')}</Label>
                       <Input
                         id="signup-name"
+                        name="signup-name"
                         type="text"
+                        autoComplete="name"
                         value={signupData.fullName}
                         onChange={(e) => setSignupData(prev => ({ ...prev, fullName: e.target.value }))}
                         required
@@ -224,7 +230,9 @@ const Auth: React.FC = () => {
                       <Label htmlFor="signup-phone">{t('phone')}</Label>
                       <Input
                         id="signup-phone"
+                        name="signup-phone"
                         type="tel"
+                        autoComplete="tel"
                         value={signupData.phone}
                         onChange={(e) => setSignupData(prev => ({ ...prev, phone: e.target.value }))}
                         required
@@ -235,7 +243,9 @@ const Auth: React.FC = () => {
                       <Label htmlFor="signup-email">{t('email')}</Label>
                       <Input
                         id="signup-email"
+                        name="signup-email"
                         type="email"
+                        autoComplete="email"
                         value={signupData.email}
                         onChange={(e) => setSignupData(prev => ({ ...prev, email: e.target.value }))}
                         required
@@ -246,7 +256,9 @@ const Auth: React.FC = () => {
                       <Label htmlFor="signup-password">{t('password')}</Label>
                       <Input
                         id="signup-password"
+                        name="signup-password"
                         type="password"
+                        autoComplete="new-password"
                         value={signupData.password}
                         onChange={(e) => setSignupData(prev => ({ ...prev, password: e.target.value }))}
                         required
@@ -257,7 +269,9 @@ const Auth: React.FC = () => {
                       <Label htmlFor="signup-confirm">{t('confirmPassword')}</Label>
                       <Input
                         id="signup-confirm"
+                        name="signup-confirm"
                         type="password"
+                        autoComplete="new-password"
                         value={signupData.confirmPassword}
                         onChange={(e) => setSignupData(prev => ({ ...prev, confirmPassword: e.target.value }))}
                         required

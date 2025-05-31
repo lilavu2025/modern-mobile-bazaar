@@ -25,7 +25,7 @@ import AdminOffers from '@/components/admin/AdminOffers';
 import AdminBanners from '@/components/admin/AdminBanners';
 
 const AdminDashboard: React.FC = () => {
-  const { profile, signOut } = useAuth();
+  const { profile, signOut, loading, user } = useAuth();
   const { t, isRTL } = useLanguage();
   const location = useLocation();
   const navigate = useNavigate();
@@ -49,13 +49,21 @@ const AdminDashboard: React.FC = () => {
   };
 
   // لا تقم بعمل redirect إذا كان profile غير موجود (أي أثناء التحميل)، أو إذا كان المستخدم أدمن فعليًا
+  // الحل: انتظر حتى ينتهي التحميل، ثم إذا كان البروفايل موجود وليس أدمن فقط أعد التوجيه
   useEffect(() => {
-    if (!profile) return; // انتظر حتى يتم تحميل البروفايل
+    // إذا لم يوجد مستخدم (أي لا يوجد session)، أعد التوجيه للهوم
+    if (!user && !loading) {
+      navigate('/', { replace: true });
+      return;
+    }
+    // إذا كان هناك مستخدم لكن البروفايل لم يصل بعد، انتظر
+    if (loading || !profile) return;
+    // إذا انتهى التحميل والبروفايل موجود لكن ليس أدمن
     if (profile.user_type !== 'admin') {
       navigate('/', { replace: true });
     }
-    // إذا كان أدمن، لا تفعل أي شيء
-  }, [profile, navigate]);
+    // إذا كان أدمن، لا تفعل شيء
+  }, [profile, loading, user, navigate]);
 
   return (
     <div className={`min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>

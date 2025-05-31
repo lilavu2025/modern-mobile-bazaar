@@ -15,8 +15,10 @@ const AdminProducts: React.FC = () => {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showViewDialog, setShowViewDialog] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<AdminProductForm | null>(null);
-  const { data: products = [], isLoading: productsLoading, refetch } = useProducts();
-  const { data: categories = [] } = useCategories();
+  const { data: productsData, loading: productsLoading, refetch } = useProducts();
+  const products = productsData && Array.isArray(productsData.data) ? productsData.data : [];
+  const { data: categoriesData } = useCategories();
+  const categories = categoriesData && Array.isArray(categoriesData.data) ? categoriesData.data : [];
 
   const mapProductToFormData = (product: Product): AdminProductForm => ({
     id: product.id,

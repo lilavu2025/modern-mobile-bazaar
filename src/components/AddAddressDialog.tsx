@@ -71,6 +71,8 @@ const AddAddressDialog: React.FC<AddAddressDialogProps> = ({ trigger }) => {
               <Label htmlFor="full_name">{t('fullName')}</Label>
               <Input
                 id="full_name"
+                name="full_name"
+                autoComplete="name"
                 value={formData.full_name}
                 onChange={(e) => setFormData(prev => ({ ...prev, full_name: e.target.value }))}
                 required
@@ -82,6 +84,9 @@ const AddAddressDialog: React.FC<AddAddressDialogProps> = ({ trigger }) => {
               <Label htmlFor="phone">{t('phone')}</Label>
               <Input
                 id="phone"
+                name="phone"
+                type="tel"
+                autoComplete="tel"
                 value={formData.phone}
                 onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
                 required
@@ -96,6 +101,8 @@ const AddAddressDialog: React.FC<AddAddressDialogProps> = ({ trigger }) => {
               <Label htmlFor="city">{t('city')}</Label>
               <Input
                 id="city"
+                name="city"
+                autoComplete="address-level2"
                 value={formData.city}
                 onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
                 required
@@ -107,6 +114,8 @@ const AddAddressDialog: React.FC<AddAddressDialogProps> = ({ trigger }) => {
               <Label htmlFor="area">{t('area')}</Label>
               <Input
                 id="area"
+                name="area"
+                autoComplete="address-level3"
                 value={formData.area}
                 onChange={(e) => setFormData(prev => ({ ...prev, area: e.target.value }))}
                 required
@@ -120,6 +129,8 @@ const AddAddressDialog: React.FC<AddAddressDialogProps> = ({ trigger }) => {
             <Label htmlFor="street">{t('street')}</Label>
             <Input
               id="street"
+              name="street"
+              autoComplete="street-address"
               value={formData.street}
               onChange={(e) => setFormData(prev => ({ ...prev, street: e.target.value }))}
               required
@@ -133,6 +144,8 @@ const AddAddressDialog: React.FC<AddAddressDialogProps> = ({ trigger }) => {
               <Label htmlFor="building">{t('building')}</Label>
               <Input
                 id="building"
+                name="building"
+                autoComplete="address-line2"
                 value={formData.building}
                 onChange={(e) => setFormData(prev => ({ ...prev, building: e.target.value }))}
                 required
@@ -144,6 +157,8 @@ const AddAddressDialog: React.FC<AddAddressDialogProps> = ({ trigger }) => {
               <Label htmlFor="floor">{t('floor')}</Label>
               <Input
                 id="floor"
+                name="floor"
+                autoComplete="off"
                 value={formData.floor}
                 onChange={(e) => setFormData(prev => ({ ...prev, floor: e.target.value }))}
                 className={isRTL ? 'text-right' : 'text-left'}
@@ -154,6 +169,8 @@ const AddAddressDialog: React.FC<AddAddressDialogProps> = ({ trigger }) => {
               <Label htmlFor="apartment">{t('apartment')}</Label>
               <Input
                 id="apartment"
+                name="apartment"
+                autoComplete="off"
                 value={formData.apartment}
                 onChange={(e) => setFormData(prev => ({ ...prev, apartment: e.target.value }))}
                 className={isRTL ? 'text-right' : 'text-left'}

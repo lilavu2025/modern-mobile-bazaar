@@ -253,6 +253,8 @@ const Checkout: React.FC = () => {
                     <Label htmlFor="fullName">{t('fullName')} *</Label>
                     <Input
                       id="fullName"
+                      name="fullName"
+                      autoComplete="name"
                       value={shippingAddress.fullName}
                       onChange={(e) => setShippingAddress(prev => ({ ...prev, fullName: e.target.value }))}
                       required
@@ -262,7 +264,9 @@ const Checkout: React.FC = () => {
                     <Label htmlFor="phone">{t('phone')} *</Label>
                     <Input
                       id="phone"
+                      name="phone"
                       type="tel"
+                      autoComplete="tel"
                       value={shippingAddress.phone}
                       onChange={(e) => setShippingAddress(prev => ({ ...prev, phone: e.target.value }))}
                       required
@@ -275,6 +279,8 @@ const Checkout: React.FC = () => {
                     <Label htmlFor="city">{t('city')} *</Label>
                     <Input
                       id="city"
+                      name="city"
+                      autoComplete="address-level2"
                       value={shippingAddress.city}
                       onChange={(e) => setShippingAddress(prev => ({ ...prev, city: e.target.value }))}
                       required
@@ -284,6 +290,8 @@ const Checkout: React.FC = () => {
                     <Label htmlFor="area">{t('area')} *</Label>
                     <Input
                       id="area"
+                      name="area"
+                      autoComplete="address-level3"
                       value={shippingAddress.area}
                       onChange={(e) => setShippingAddress(prev => ({ ...prev, area: e.target.value }))}
                       required
@@ -296,6 +304,8 @@ const Checkout: React.FC = () => {
                     <Label htmlFor="street">{t('street')} *</Label>
                     <Input
                       id="street"
+                      name="street"
+                      autoComplete="street-address"
                       value={shippingAddress.street}
                       onChange={(e) => setShippingAddress(prev => ({ ...prev, street: e.target.value }))}
                       required
@@ -305,6 +315,8 @@ const Checkout: React.FC = () => {
                     <Label htmlFor="building">{t('building')} *</Label>
                     <Input
                       id="building"
+                      name="building"
+                      autoComplete="address-line2"
                       value={shippingAddress.building}
                       onChange={(e) => setShippingAddress(prev => ({ ...prev, building: e.target.value }))}
                       required
@@ -317,6 +329,8 @@ const Checkout: React.FC = () => {
                     <Label htmlFor="floor">{t('floor')}</Label>
                     <Input
                       id="floor"
+                      name="floor"
+                      autoComplete="off"
                       value={shippingAddress.floor}
                       onChange={(e) => setShippingAddress(prev => ({ ...prev, floor: e.target.value }))}
                     />
@@ -325,6 +339,8 @@ const Checkout: React.FC = () => {
                     <Label htmlFor="apartment">{t('apartment')}</Label>
                     <Input
                       id="apartment"
+                      name="apartment"
+                      autoComplete="off"
                       value={shippingAddress.apartment}
                       onChange={(e) => setShippingAddress(prev => ({ ...prev, apartment: e.target.value }))}
                     />
@@ -335,6 +351,8 @@ const Checkout: React.FC = () => {
                   <Label htmlFor="notes">{t('orderNotes')}</Label>
                   <Textarea
                     id="notes"
+                    name="notes"
+                    autoComplete="off"
                     placeholder={t('orderNotesPlaceholder')}
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
@@ -352,7 +370,7 @@ const Checkout: React.FC = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <RadioGroup value={paymentMethod} onValueChange={(value: 'cash' | 'card') => setPaymentMethod(value)}>
+                <RadioGroup name="paymentMethod" value={paymentMethod} onValueChange={(value: 'cash' | 'card') => setPaymentMethod(value)}>
                   <div className="flex items-center space-x-2 p-4 border rounded-lg hover:bg-gray-50 transition-colors">
                     <RadioGroupItem value="cash" id="cash" />
                     <Label htmlFor="cash" className="flex items-center gap-2 cursor-pointer flex-1">

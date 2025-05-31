@@ -136,6 +136,8 @@ const Contact: React.FC = () => {
                     <Label htmlFor="name">{t('fullName')}</Label>
                     <Input
                       id="name"
+                      name="name"
+                      autoComplete="name"
                       value={formData.name}
                       onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                       required
@@ -146,7 +148,9 @@ const Contact: React.FC = () => {
                     <Label htmlFor="email">{t('email')}</Label>
                     <Input
                       id="email"
+                      name="email"
                       type="email"
+                      autoComplete="email"
                       value={formData.email}
                       onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                       required
@@ -159,7 +163,9 @@ const Contact: React.FC = () => {
                     <Label htmlFor="phone">{t('phone')}</Label>
                     <Input
                       id="phone"
+                      name="phone"
                       type="tel"
+                      autoComplete="tel"
                       value={formData.phone}
                       onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
                     />
@@ -169,6 +175,8 @@ const Contact: React.FC = () => {
                     <Label htmlFor="subject">{t('subject')}</Label>
                     <Input
                       id="subject"
+                      name="subject"
+                      autoComplete="off"
                       value={formData.subject}
                       onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
                       required
@@ -180,7 +188,9 @@ const Contact: React.FC = () => {
                   <Label htmlFor="message">{t('message')}</Label>
                   <Textarea
                     id="message"
+                    name="message"
                     rows={6}
+                    autoComplete="off"
                     value={formData.message}
                     onChange={(e) => setFormData(prev => ({ ...prev, message: e.target.value }))}
                     required

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import ProductCard from '@/components/ProductCard';
@@ -14,9 +14,13 @@ const Index = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { data: banners = [], isLoading: bannersLoading } = useBanners();
-  const { data: categories = [], isLoading: categoriesLoading, error: categoriesError } = useCategories();
-  const { data: products = [], isLoading: productsLoading, error: productsError } = useProducts();
+  const { data: bannersData, loading: bannersLoading } = useBanners();
+  const { data: categoriesData, loading: categoriesLoading, error: categoriesError } = useCategories();
+  const { data: productsData, loading: productsLoading, error: productsError } = useProducts();
+
+  const banners = bannersData?.data ?? [];
+  const categories = categoriesData?.data ?? [];
+  const products = productsData?.data ?? [];
 
   // إزالة console.log من الإنتاج
   if (process.env.NODE_ENV !== 'production') {
@@ -29,8 +33,23 @@ const Index = () => {
   const filteredProducts = products.filter(product => 
     searchQuery === '' || product.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
   const displayProducts = searchQuery ? filteredProducts : featuredProducts;
+
+  useEffect(() => {
+    console.log('[Index] mounted at', new Date().toISOString());
+    return () => {
+      console.log('[Index] unmounted at', new Date().toISOString());
+    };
+  }, []);
+
+  let productsErrorMsg = t('errorLoadingData');
+  if (typeof productsError === 'object' && productsError !== null && 'message' in productsError && typeof (productsError as { message?: string }).message === 'string') {
+    productsErrorMsg = (productsError as { message?: string }).message || productsErrorMsg;
+  }
+  let categoriesErrorMsg = t('errorLoadingData');
+  if (typeof categoriesError === 'object' && categoriesError !== null && 'message' in categoriesError && typeof (categoriesError as { message?: string }).message === 'string') {
+    categoriesErrorMsg = (categoriesError as { message?: string }).message || categoriesErrorMsg;
+  }
 
   if (productsError) {
     return (
@@ -42,7 +61,7 @@ const Index = () => {
             </svg>
           </div>
           <h2 className="text-xl font-bold mb-2">{t('error')}</h2>
-          <p className="mb-4">{productsError.message || t('errorLoadingData')}</p>
+          <p className="mb-4">{productsErrorMsg}</p>
           <Button onClick={() => window.location.reload()} aria-label={t('retry')}>{t('retry')}</Button>
         </div>
       </div>
@@ -105,7 +124,8 @@ const Index = () => {
               </div>
             ) : categoriesError ? (
               <div className="text-center py-8">
-                <p className="text-red-500">خطأ في تحميل الفئات: {categoriesError.message}</p>
+                <p className="text-red-500">
+                  خطأ في تحميل الفئات: {categoriesErrorMsg}</p>
               </div>
             ) : categories.length === 0 ? (
               <div className="text-center py-8">

@@ -13,7 +13,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import SEO from "@/components/SEO";
 import PerformanceMonitorComponent from "@/components/PerformanceMonitor";
-import { lazy, Suspense, memo, useEffect } from "react";
+import { lazy, Suspense, memo, useEffect, useRef } from "react";
 
 // Critical pages - Regular imports for initial load
 import Index from "./pages/Index";
@@ -100,46 +100,64 @@ const RoutePreloader = memo(() => {
   return null;
 });
 
-// Optimized QueryClient with better defaults
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 10 * 60 * 1000, // 10 minutes
-      retry: (failureCount: number, error: unknown) => {
-        if (typeof error === 'object' && error !== null && 'status' in error && (error as { status?: number }).status === 404) return false;
-        return failureCount < 3;
-      },
-      refetchOnWindowFocus: false,
-      refetchOnMount: true,
-      refetchOnReconnect: 'always',
-      networkMode: 'offlineFirst',
-    },
-    mutations: {
-      retry: 1,
-      networkMode: 'offlineFirst',
-    },
-  },
-});
+const App = () => {
+  const queryClientRef = useRef<QueryClient>();
+  if (!queryClientRef.current) {
+    queryClientRef.current = new QueryClient();
+  }
+  const queryClient = queryClientRef.current;
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <HelmetProvider>
-      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <ErrorBoundary>
-          <LanguageProvider>
-            <AuthProvider>
-              <CartProvider>
-                <FavoritesProvider>
-                  <TooltipProvider>
-                    <div className="min-h-screen bg-background font-sans antialiased">
-                      <SEO />
-                      <Toaster />
-                      <Sonner />
-                      <PerformanceMonitorComponent />
-                      <RoutePreloader />
-                      <Suspense fallback={<LoadingSpinner />}>
-                        <Routes>
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval> | null = null;
+    const refetchAll = (source?: string) => {
+      console.log(`[refetchAll] called from: ${source || 'manual/interval'} at`, new Date().toISOString());
+      queryClient.refetchQueries({ type: 'all' });
+    };
+    const clickHandler = () => refetchAll('click');
+    const focusHandler = () => refetchAll('focus');
+    const visibilityHandler = () => {
+      if (document.visibilityState === 'visible') {
+        refetchAll('visibilitychange');
+      }
+    };
+    document.addEventListener('click', clickHandler, true);
+    window.addEventListener('focus', focusHandler);
+    document.addEventListener('visibilitychange', visibilityHandler);
+    // fallback: refetch كل 10 ثواني
+    interval = setInterval(() => {
+      console.log('[setInterval] tick at', new Date().toISOString());
+      refetchAll('interval');
+    }, 10000);
+    console.log('[setInterval] started at', new Date().toISOString());
+    return () => {
+      document.removeEventListener('click', clickHandler, true);
+      window.removeEventListener('focus', focusHandler);
+      document.removeEventListener('visibilitychange', visibilityHandler);
+      if (interval) {
+        clearInterval(interval);
+        console.log('[setInterval] cleared at', new Date().toISOString());
+      }
+    };
+  }, [queryClient]);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <HelmetProvider>
+        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+          <ErrorBoundary>
+            <LanguageProvider>
+              <AuthProvider>
+                <CartProvider>
+                  <FavoritesProvider>
+                    <TooltipProvider>
+                      <div className="min-h-screen bg-background font-sans antialiased">
+                        <SEO />
+                        <Toaster />
+                        <Sonner />
+                        <PerformanceMonitorComponent />
+                        <RoutePreloader />
+                        <Suspense fallback={<LoadingSpinner />}>
+                          <Routes>
                       <Route path="/" element={<Index />} />
                       <Route path="/auth" element={<Auth />} />
                       <Route path="/email-confirmation" element={<EmailConfirmation />} />
@@ -204,6 +222,7 @@ const App = () => (
       </BrowserRouter>
     </HelmetProvider>
   </QueryClientProvider>
-);
+  );
+};
 
 export default App;

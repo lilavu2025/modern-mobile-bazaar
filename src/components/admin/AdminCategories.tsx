@@ -43,7 +43,8 @@ const AdminCategories: React.FC = () => {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showViewDialog, setShowViewDialog] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
-  const { data: categories = [], isLoading, refetch } = useCategories();
+  const { data: categoriesData, loading: isLoading, refetch } = useCategories();
+  const categories = categoriesData && Array.isArray(categoriesData.data) ? categoriesData.data : [];
 
   const handleDeleteCategory = async (categoryId: string, categoryName: string) => {
     try {

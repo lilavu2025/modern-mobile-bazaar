@@ -112,6 +112,8 @@ const Profile: React.FC = () => {
                       <Label htmlFor="full_name" className={`block ${isRTL ? 'text-right' : 'text-left'}`}>{t('fullName')}</Label>
                       <Input
                         id="full_name"
+                        name="full_name"
+                        autoComplete="name"
                         value={profileData.full_name}
                         onChange={(e) => setProfileData(prev => ({ ...prev, full_name: e.target.value }))}
                         required
@@ -124,7 +126,9 @@ const Profile: React.FC = () => {
                       <Label htmlFor="phone" className={`block ${isRTL ? 'text-right' : 'text-left'}`}>{t('phone')}</Label>
                       <Input
                         id="phone"
+                        name="phone"
                         type="tel"
+                        autoComplete="tel"
                         value={profileData.phone}
                         onChange={(e) => setProfileData(prev => ({ ...prev, phone: e.target.value }))}
                         className={`w-full ${isRTL ? 'text-right' : 'text-left'}`}
@@ -136,7 +140,9 @@ const Profile: React.FC = () => {
                       <Label htmlFor="email" className={`block ${isRTL ? 'text-right' : 'text-left'}`}>{t('email')}</Label>
                       <Input
                         id="email"
+                        name="email"
                         type="email"
+                        autoComplete="email"
                         value={user?.email || ''}
                         disabled
                         className={`bg-gray-100 w-full ${isRTL ? 'text-right' : 'text-left'}`}

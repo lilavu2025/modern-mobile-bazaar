@@ -49,9 +49,9 @@ const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
       ];
     },
     retry: 3,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
     refetchOnWindowFocus: true,
-    refetchInterval: 60 * 1000,
+    refetchInterval: false,
   });
 
   // Fetch products statistics
@@ -90,9 +90,9 @@ const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
       }));
     },
     retry: 3,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
     refetchOnWindowFocus: true,
-    refetchInterval: 60 * 1000,
+    refetchInterval: false,
   });
 
   // Fetch orders statistics
@@ -165,9 +165,9 @@ const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
       };
     },
     retry: 3,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
     refetchOnWindowFocus: true,
-    refetchInterval: 60 * 1000,
+    refetchInterval: false,
   });
 
   const handleUserTypeClick = (userType: string) => {
@@ -220,9 +220,9 @@ const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
       return Object.values(monthlyStats);
     },
     retry: 3,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
     refetchOnWindowFocus: true,
-    refetchInterval: 60 * 1000,
+    refetchInterval: false,
   });
 
   // Fetch recent activity data
@@ -291,9 +291,9 @@ const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
         .slice(0, 4);
     },
     retry: 3,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
     refetchOnWindowFocus: true,
-    refetchInterval: 60 * 1000,
+    refetchInterval: false,
   });
 
   const chartConfig = {

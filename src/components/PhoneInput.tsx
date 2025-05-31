@@ -22,7 +22,9 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
       <Label htmlFor="phone">{label}</Label>
       <Input
         id="phone"
+        name="phone"
         type="tel"
+        autoComplete="tel"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}

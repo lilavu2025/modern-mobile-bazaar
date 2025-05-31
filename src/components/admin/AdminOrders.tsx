@@ -130,7 +130,8 @@ const AdminOrders: React.FC = () => {
   const [showAddOrder, setShowAddOrder] = useState(false);
   const [isAddingOrder, setIsAddingOrder] = useState(false);
   const [orderForm, setOrderForm] = useState<NewOrderForm>(initialOrderForm);
-  const { data: products = [] } = useProducts();
+  const { data: productsData } = useProducts();
+  const products = productsData && Array.isArray(productsData.data) ? productsData.data : [];
   const { users, isLoading: usersLoading } = useAdminUsers();
 
   // Handle filter from dashboard navigation
@@ -151,9 +152,9 @@ const AdminOrders: React.FC = () => {
       if (error) throw error;
       return (data || []).map(mapOrderFromDb);
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
     refetchOnWindowFocus: true,
-    refetchInterval: 60 * 1000,
+    refetchInterval: false,
   });
   
   // تحديث حالة الطلب
@@ -323,11 +324,11 @@ const AdminOrders: React.FC = () => {
   };
   
   // Filter orders based on status - moved before early returns to maintain hook order
-  const filteredOrders = useMemo(() => {
+  const filteredOrders: Order[] = useMemo(() => {
     if (statusFilter === 'all') {
-      return orders;
+      return orders as Order[];
     }
-    return orders.filter(order => order.status === statusFilter);
+    return (orders as Order[]).filter(order => order.status === statusFilter);
   }, [orders, statusFilter]);
 
   if (isLoading) {
@@ -382,11 +383,8 @@ const AdminOrders: React.FC = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="user_id">العميل *</Label>
-                    <Select 
-                      value={orderForm.user_id} 
-                      onValueChange={(value) => setOrderForm(prev => ({ ...prev, user_id: value }))}
-                    >
-                      <SelectTrigger>
+                    <Select value={orderForm.user_id} onValueChange={(value) => setOrderForm(prev => ({ ...prev, user_id: value }))}>
+                      <SelectTrigger id="user_id">
                         <SelectValue placeholder="اختر العميل" />
                       </SelectTrigger>
                       <SelectContent>
@@ -401,11 +399,8 @@ const AdminOrders: React.FC = () => {
                   
                   <div>
                     <Label htmlFor="payment_method">طريقة الدفع</Label>
-                    <Select 
-                      value={orderForm.payment_method} 
-                      onValueChange={(value) => setOrderForm(prev => ({ ...prev, payment_method: value }))}
-                    >
-                      <SelectTrigger>
+                    <Select value={orderForm.payment_method} onValueChange={(value) => setOrderForm(prev => ({ ...prev, payment_method: value }))}>
+                      <SelectTrigger id="payment_method">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -490,12 +485,12 @@ const AdminOrders: React.FC = () => {
                       <Label htmlFor="apartment">رقم الشقة</Label>
                       <Input
                         id="apartment"
-                        value={orderForm.shipping_address.apartment || ''}
+                        value={orderForm.shipping_address.apartment}
                         onChange={(e) => setOrderForm(prev => ({
                           ...prev,
                           shipping_address: { ...prev.shipping_address, apartment: e.target.value }
                         }))}
-                        placeholder="أدخل رقم الشقة (اختياري)"
+                        placeholder="أدخل رقم الشقة"
                       />
                     </div>
                   </div>
@@ -581,8 +576,7 @@ const AdminOrders: React.FC = () => {
                     id="notes"
                     value={orderForm.notes}
                     onChange={(e) => setOrderForm(prev => ({ ...prev, notes: e.target.value }))}
-                    placeholder="أدخل أي ملاحظات إضافية"
-                    rows={3}
+                    placeholder="أدخل ملاحظات إضافية (اختياري)"
                   />
                 </div>
                 
@@ -620,16 +614,16 @@ const AdminOrders: React.FC = () => {
           <div className="flex gap-4 items-center">
             <Label htmlFor="status-filter">فلترة حسب الحالة:</Label>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-48">
+              <SelectTrigger id="status-filter">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">جميع الطلبات</SelectItem>
-                <SelectItem value="pending">في الانتظار</SelectItem>
-                <SelectItem value="processing">قيد المعالجة</SelectItem>
+                <SelectItem value="all">الكل</SelectItem>
+                <SelectItem value="pending">قيد الانتظار</SelectItem>
+                <SelectItem value="processing">قيد التنفيذ</SelectItem>
                 <SelectItem value="shipped">تم الشحن</SelectItem>
-                <SelectItem value="delivered">تم التسليم</SelectItem>
-                <SelectItem value="cancelled">ملغية</SelectItem>
+                <SelectItem value="delivered">تم التوصيل</SelectItem>
+                <SelectItem value="cancelled">ملغي</SelectItem>
               </SelectContent>
             </Select>
             <div className="text-sm text-muted-foreground">
