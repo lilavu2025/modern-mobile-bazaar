@@ -172,6 +172,39 @@ export type Database = {
         }
         Relationships: []
       }
+      contact_info: {
+        Row: {
+          id: string
+          email: string
+          phone: string | null
+          address: string | null
+          facebook: string | null
+          instagram: string | null
+          whatsapp: string | null
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          email: string
+          phone?: string | null
+          address?: string | null
+          facebook?: string | null
+          instagram?: string | null
+          whatsapp?: string | null
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          email?: string
+          phone?: string | null
+          address?: string | null
+          facebook?: string | null
+          instagram?: string | null
+          whatsapp?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       favorites: {
         Row: {
           added_at: string | null
@@ -484,7 +517,7 @@ export type Tables<
   }
     ? keyof (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never,
 > = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
   ? (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
       Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {

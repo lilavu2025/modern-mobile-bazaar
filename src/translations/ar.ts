@@ -1,4 +1,3 @@
-
 export const arTranslations = {
   // Store & Brand
   storeName: 'متجر المدينة',
@@ -69,6 +68,7 @@ export const arTranslations = {
   // Admin Panel
   adminDashboard: 'لوحة التحكم الإدارية',
   adminPanel: 'لوحة الإدارة',
+  manageContactInfo: 'معلومات الاتصال',
   managementPanel: 'لوحة الإدارة',
   manageProducts: 'إدارة المنتجات',
   manageCategories: 'إدارة الفئات',

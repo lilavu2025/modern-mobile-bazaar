@@ -1,4 +1,3 @@
-
 export const heTranslations = {
   // Store & Brand
   storeName: 'חנות העיר',
@@ -66,6 +65,7 @@ export const heTranslations = {
   // Admin Panel
   adminDashboard: 'לוח בקרה מנהל',
   adminPanel: 'לוח ניהול',
+  manageContactInfo: 'פרטי יצירת קשר',
   managementPanel: 'לוח ניהול',
   manageProducts: 'נהל מוצרים',
   manageCategories: 'נהל קטגוריות',

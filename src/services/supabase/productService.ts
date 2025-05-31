@@ -7,7 +7,7 @@ export class ProductService {
   /** جلب المنتجات */
   static async getProducts(
     language: Language,
-    userType: Tables<"profiles">["user_type"] | null,
+    userType: Tables<{schema: "public"}, "profiles">["user_type"] | null,
     categoryId?: string
   ): Promise<AppProduct[]> {
     console.log('[ProductService.getProducts] called with', { language, userType, categoryId });
@@ -28,14 +28,14 @@ export class ProductService {
       return [];
     }
 
-    const mapped = data.map((p: Tables<"products">) => {
+    const mapped = data.map((p: Tables<{schema: "public"}, "products">) => {
       const isWholesale = userType === "wholesale";
       const price = isWholesale && p.wholesale_price ? p.wholesale_price : p.price;
       return {
         id: p.id,
-        name: p[`name_${language}` as keyof Tables<"products">] as string,
+        name: p[`name_${language}` as keyof Tables<{schema: "public"}, "products">] as string,
         nameEn: p.name_en,
-        description: p[`description_${language}` as keyof Tables<"products">] as string,
+        description: p[`description_${language}` as keyof Tables<{schema: "public"}, "products">] as string,
         descriptionEn: p.description_en,
         price: Number(price),
         originalPrice: p.original_price ?? undefined,

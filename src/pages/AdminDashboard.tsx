@@ -13,7 +13,8 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
-  Image
+  Image,
+  Mail
 } from 'lucide-react';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import AdminProducts from '@/components/admin/AdminProducts';
@@ -23,6 +24,7 @@ import AdminUsers from '@/components/admin/AdminUsers';
 import AdminDashboardStats from '@/components/admin/AdminDashboardStats';
 import AdminOffers from '@/components/admin/AdminOffers';
 import AdminBanners from '@/components/admin/AdminBanners';
+import AdminContactInfo from '@/components/admin/AdminContactInfo';
 
 const AdminDashboard: React.FC = () => {
   const { profile, signOut, loading, user } = useAuth();
@@ -40,6 +42,7 @@ const AdminDashboard: React.FC = () => {
     { path: '/admin/users', label: t('manageUsers'), icon: Users },
     { path: '/admin/offers', label: t('manageOffers'), icon: Package },
     { path: '/admin/banners', label: t('manageBanners'), icon: Image },
+    { path: '/admin/contact-info', label: t('manageContactInfo') || 'معلومات الاتصال', icon: Mail },
   ];
 
   const isActive = (path: string) => {
@@ -221,6 +224,7 @@ const AdminDashboard: React.FC = () => {
                 <Route path="/users" element={<AdminUsers />} />
                 <Route path="/offers" element={<AdminOffers />} />
                 <Route path="/banners" element={<AdminBanners />} />
+                <Route path="/contact-info" element={<AdminContactInfo />} />
               </Routes>
             </div>
           </div>

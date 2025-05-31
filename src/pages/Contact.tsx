@@ -9,12 +9,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Mail, Phone, MapPin, Clock } from 'lucide-react';
+import { useContactInfo } from '@/hooks/useContactInfo';
 
 const Contact: React.FC = () => {
   const { t } = useLanguage();
   const { toast } = useToast();
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const { contactInfo, loading: contactLoading } = useContactInfo();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -27,24 +29,27 @@ const Contact: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-
-    // Simulate form submission
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    toast({
-      title: t('success'),
-      description: t('messageSubmitted'),
-    });
-
-    setFormData({
-      name: '',
-      email: '',
-      phone: '',
-      subject: '',
-      message: '',
-    });
-
-    setIsLoading(false);
+    try {
+      // إرسال البيانات إلى البريد الافتراضي عبر mailto (فتح برنامج البريد عند المستخدم)
+      if (contactInfo?.email) {
+        const mailto = `mailto:${contactInfo.email}?subject=${encodeURIComponent(formData.subject)}&body=${encodeURIComponent(
+          `الاسم: ${formData.name}\nالبريد: ${formData.email}\nالهاتف: ${formData.phone}\n\n${formData.message}`
+        )}`;
+        window.location.href = mailto;
+      }
+      toast({
+        title: t('success'),
+        description: t('messageSubmitted'),
+      });
+      setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
+    } catch (err) {
+      toast({
+        title: t('error'),
+        description: t('errorSendingMessage'),
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -74,8 +79,7 @@ const Contact: React.FC = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600">info@mystore.com</p>
-                <p className="text-gray-600">support@mystore.com</p>
+                <p className="text-gray-600">{contactInfo?.email || 'info@mystore.com'}</p>
               </CardContent>
             </Card>
 
@@ -87,8 +91,7 @@ const Contact: React.FC = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600">+966 12 345 6789</p>
-                <p className="text-gray-600">+966 50 123 4567</p>
+                <p className="text-gray-600">{contactInfo?.phone || '+966 12 345 6789'}</p>
               </CardContent>
             </Card>
 
@@ -100,11 +103,7 @@ const Contact: React.FC = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600">
-                  شارع الملك فهد<br />
-                  الرياض، المملكة العربية السعودية<br />
-                  12345
-                </p>
+                <p className="text-gray-600">{contactInfo?.address || 'العنوان هنا'}</p>
               </CardContent>
             </Card>
 

@@ -1,4 +1,3 @@
-
 export const enTranslations = {
   // Store & Brand
   storeName: 'City Store',
@@ -66,6 +65,7 @@ export const enTranslations = {
   // Admin Panel
   adminDashboard: 'Admin Dashboard',
   adminPanel: 'Admin Panel',
+  manageContactInfo: 'Contact Info',
   managementPanel: 'Management Panel',
   manageProducts: 'Manage Products',
   manageCategories: 'Manage Categories',
