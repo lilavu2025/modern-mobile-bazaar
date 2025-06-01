@@ -12,6 +12,7 @@ import ProductInfo from '@/components/ProductInfo';
 import ProductActions from '@/components/ProductActions';
 import ProductBreadcrumb from '@/components/ProductBreadcrumb';
 import RelatedProducts from '@/components/RelatedProducts';
+import type { Product } from '@/types/product';
 
 const ProductDetails = () => {
   const { id } = useParams();
@@ -21,11 +22,19 @@ const ProductDetails = () => {
   const [searchQuery, setSearchQuery] = useState('');
   
   const { buyNow } = useCart();
-  const { data: products = [], isLoading, error: productsError } = useProducts();
+  // استخدم الاسم الصحيح للخاصية من useLiveSupabaseQuery
+  const { data: products = [], loading, error } = useProducts();
 
-  const product = products.find(p => p.id === id);
-  
-  if (isLoading) {
+  // Defensive extraction for products array
+  let productsArray: Product[] = [];
+  if (Array.isArray(products)) {
+    productsArray = products;
+  } else if (products && typeof products === 'object' && 'data' in products && Array.isArray((products as { data?: unknown }).data)) {
+    productsArray = (products as { data: Product[] }).data;
+  }
+  const product = productsArray.find((p) => p.id === id);
+
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -35,8 +44,8 @@ const ProductDetails = () => {
       </div>
     );
   }
-  
-  if (productsError) {
+
+  if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -46,7 +55,7 @@ const ProductDetails = () => {
             </svg>
           </div>
           <h2 className="text-xl font-bold mb-2">{t('error')}</h2>
-          <p className="mb-4">{productsError.message || t('errorLoadingData')}</p>
+          <p className="mb-4">{error instanceof Error ? error.message : t('errorLoadingData')}</p>
           <Button onClick={() => window.location.reload()}>{t('retry')}</Button>
         </div>
       </div>
@@ -66,9 +75,7 @@ const ProductDetails = () => {
     );
   }
 
-  const relatedProducts = products
-    .filter(p => p.category === product.category && p.id !== product.id)
-    .slice(0, 4);
+  const relatedProducts = product ? productsArray.filter(p => p.category === product.category && p.id !== product.id).slice(0, 4) : [];
 
   const handleBuyNow = async () => {
     console.log('Buy now clicked');

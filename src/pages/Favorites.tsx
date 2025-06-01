@@ -59,7 +59,7 @@ const Favorites: React.FC = () => {
   );
 
   // mapping للمنتجات المفضلة لتوحيد النوع
-  const mappedFavoriteProducts: Product[] = (favoriteProducts as Tables<{schema: "public"}, "products">[]).map((p) => ({
+  const mappedFavoriteProducts: Product[] = (favoriteProducts as Tables<'products'>[]).map((p) => ({
     id: p.id,
     name: p.name_en || '',
     nameEn: p.name_en || '',

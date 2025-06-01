@@ -9,6 +9,7 @@ import { useLanguage } from '@/utils/languageContextUtils';
 import EditUserDialog from '../EditUserDialog';
 import UserDetailsDialog from './UserDetailsDialog';
 import UserOrdersDialog from './UserOrdersDialog';
+import { useAdminUsers } from '@/hooks/useAdminUsers';
 
 interface UserProfile {
   id: string;
@@ -16,11 +17,13 @@ interface UserProfile {
   phone: string | null;
   user_type: 'admin' | 'wholesale' | 'retail';
   created_at: string;
+  updated_at: string; // إضافة الحقل المطلوب لحل الخطأ
   email?: string;
   email_confirmed_at?: string;
   last_sign_in_at?: string;
   last_order_date?: string;
   highest_order_value?: number;
+  disabled?: boolean | null;
 }
 
 interface UserTableRowProps {
@@ -32,6 +35,8 @@ const UserTableRow: React.FC<UserTableRowProps> = ({ user, index }) => {
   const { t } = useLanguage();
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [showOrdersDialog, setShowOrdersDialog] = useState(false);
+  const { disableUser, deleteUser } = useAdminUsers();
+  const [actionLoading, setActionLoading] = useState(false);
 
   const getUserTypeColor = (userType: string) => {
     switch (userType) {
@@ -65,7 +70,7 @@ const UserTableRow: React.FC<UserTableRowProps> = ({ user, index }) => {
 
   return (
     <>
-      <TableRow className="hover:bg-gray-50 transition-colors duration-200">
+      <TableRow className={`hover:bg-gray-50 transition-colors duration-200 ${user.disabled ? 'opacity-50 bg-red-50' : ''}`}>
         <TableCell className="font-medium p-2 lg:p-4">
           <div className="flex items-center gap-2 lg:gap-3">
             <div className="w-8 h-8 lg:w-10 lg:h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold text-xs lg:text-sm flex-shrink-0">
@@ -106,33 +111,7 @@ const UserTableRow: React.FC<UserTableRowProps> = ({ user, index }) => {
         
         <TableCell className="p-2 lg:p-4">
           <div className="flex items-center gap-1 lg:gap-2">
-            {user.email_confirmed_at ? (
-              <>
-                <CheckCircle className="h-3 w-3 lg:h-4 lg:w-4 text-green-500 flex-shrink-0" />
-                <span className="text-xs lg:text-sm text-green-600 font-medium">{t('confirmed')}</span>
-              </>
-            ) : (
-              <>
-                <XCircle className="h-3 w-3 lg:h-4 lg:w-4 text-orange-500 flex-shrink-0" />
-                <span className="text-xs lg:text-sm text-orange-600 font-medium">{t('unconfirmed')}</span>
-              </>
-            )}
-          </div>
-        </TableCell>
-        
-        <TableCell className="hidden lg:table-cell p-2 lg:p-4">
-          <div className="flex items-center gap-2 text-gray-600">
-            <Calendar className="h-4 w-4 flex-shrink-0" />
-            <span className="text-sm">
-              {format(new Date(user.created_at), 'PPP')}
-            </span>
-          </div>
-        </TableCell>
-        
-        <TableCell className="p-2 lg:p-4">
-          <div className="flex items-center gap-1 lg:gap-2">
             <EditUserDialog user={user} />
-            
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="h-6 w-6 lg:h-8 lg:w-8 p-0">
@@ -147,6 +126,28 @@ const UserTableRow: React.FC<UserTableRowProps> = ({ user, index }) => {
                 <DropdownMenuItem onClick={handleViewOrders} className="text-xs lg:text-sm cursor-pointer">
                   <ShoppingBag className="h-3 w-3 lg:h-4 lg:w-4 mr-2" />
                   {t('viewOrders')}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={async () => {
+                    setActionLoading(true);
+                    await disableUser(user.id, !user.disabled);
+                    setActionLoading(false);
+                  }}
+                  className={`text-xs lg:text-sm cursor-pointer ${user.disabled ? 'text-green-600' : 'text-yellow-600'}`}
+                >
+                  {user.disabled ? t('enableUser') || 'تفعيل المستخدم' : t('disableUser') || 'تعطيل المستخدم'}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={async () => {
+                    if (window.confirm(t('confirmDeleteUser') || 'هل أنت متأكد من حذف المستخدم؟')) {
+                      setActionLoading(true);
+                      await deleteUser(user.id);
+                      setActionLoading(false);
+                    }
+                  }}
+                  className="text-xs lg:text-sm cursor-pointer text-red-600"
+                >
+                  {t('deleteUser') || 'حذف المستخدم'}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

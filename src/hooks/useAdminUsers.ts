@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/useAuth';
+import type { Json } from '@/integrations/supabase/types';
 
 // تعريف الواجهة التي تمثل مستخدم النظام
 interface UserProfile {
@@ -12,7 +13,19 @@ interface UserProfile {
   email?: string;
   email_confirmed_at?: string;
   last_sign_in_at?: string;
+  last_order_date?: string | null;
+  highest_order_value?: number | null;
 }
+
+// Supabase type for deleted_users (مؤقت حتى تحديث الأنواع)
+type DeletedUserInsert = {
+  user_id: string;
+  full_name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  deleted_by?: string | null;
+  original_data?: Json;
+};
 
 // هوك مخصص لإدارة المستخدمين من قبل الأدمن
 export const useAdminUsers = () => {
@@ -73,6 +86,10 @@ export const useAdminUsers = () => {
           user_type: profile.user_type || 'retail',
           created_at: profile.created_at,
           email: profile.email || 'غير محدد',
+          email_confirmed_at: profile.email_confirmed_at,
+          last_sign_in_at: profile.last_sign_in_at,
+          last_order_date: profile.last_order_date,
+          highest_order_value: profile.highest_order_value,
         });
       });
 
@@ -124,12 +141,12 @@ export const useAdminUsers = () => {
       let bValue = b[sortBy as keyof UserProfile];
 
       // التعامل مع التواريخ
-      if (sortBy === 'created_at' || sortBy === 'last_sign_in_at') {
-        aValue = new Date(aValue || 0).getTime().toString();
-        bValue = new Date(bValue || 0).getTime().toString();
-      } else if (typeof aValue === 'string') {
+      if (sortBy === 'created_at' || sortBy === 'last_sign_in_at' || sortBy === 'last_order_date') {
+        aValue = new Date(aValue || 0).getTime();
+        bValue = new Date(bValue || 0).getTime();
+      } else if (typeof aValue === 'string' && typeof bValue === 'string') {
         aValue = aValue.toLowerCase();
-        bValue = bValue?.toLowerCase() || '';
+        bValue = bValue.toLowerCase();
       }
 
       return sortOrder === 'asc'
@@ -141,17 +158,84 @@ export const useAdminUsers = () => {
     return filtered;
   }, [users, searchQuery, userTypeFilter, statusFilter, sortBy, sortOrder]);
 
+  // دالة تسجيل النشاط
+  const logUserActivity = async (userId: string, action: string, details: Record<string, unknown> = {}) => {
+    if (!profile?.id) return;
+    await supabase.from('user_activity_log').insert([
+      {
+        admin_id: profile.id,
+        user_id: userId,
+        action,
+        details: details as Json,
+      }
+    ]);
+  };
+
+  // دالة تعطيل مستخدم
+  const disableUser = async (userId: string, disabled: boolean) => {
+    const { error } = await supabase
+      .from('profiles')
+      .update({ disabled })
+      .eq('id', userId);
+    if (error) throw error;
+    await logUserActivity(userId, disabled ? 'disable' : 'enable');
+    await fetchUsers();
+  };
+
+  // دالة حذف مستخدم
+  const deleteUser = async (userId: string) => {
+    // جلب بيانات المستخدم قبل الحذف
+    const { data: userData, error: fetchError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+    if (fetchError || !userData) throw fetchError || new Error('User not found');
+
+    // أرشفة بيانات المستخدم في جدول deleted_users
+    const adminName = profile?.full_name || profile?.id || null;
+    await supabase.from('deleted_users').insert([
+      {
+        user_id: userData.id,
+        full_name: userData.full_name,
+        email: userData.email,
+        phone: userData.phone,
+        address: userData.address ?? null,
+        deleted_by: adminName,
+        original_data: userData as Json,
+        last_sign_in_at: userData.last_sign_in_at ?? null,
+      }
+    ]);
+
+    // حذف المستخدم من profiles
+    const { error } = await supabase
+      .from('profiles')
+      .delete()
+      .eq('id', userId);
+    if (error) throw error;
+    await logUserActivity(userId, 'delete');
+    await fetchUsers();
+  };
+
+  // حساب عدد حسابات الجملة والمفرق
+  const wholesaleCount = users.filter(u => u.user_type === 'wholesale').length;
+  const retailCount = users.filter(u => u.user_type === 'retail').length;
+
   // القيم التي يتم إرجاعها من الهوك
   return {
-    users,                         // جميع المستخدمين بدون فلترة
-    filteredAndSortedUsers,       // المستخدمين بعد الفلترة والفرز
-    isLoading,                    // هل البيانات قيد التحميل
-    error,                        // هل يوجد خطأ
-    searchQuery, setSearchQuery, // البحث
-    userTypeFilter, setUserTypeFilter, // فلترة حسب نوع المستخدم
-    statusFilter, setStatusFilter,     // فلترة حسب حالة التفعيل
-    sortBy, setSortBy,                 // الترتيب حسب
-    sortOrder, setSortOrder,          // ترتيب تصاعدي أو تنازلي
-    refetch: fetchUsers,              // دالة إعادة تحميل البيانات
+    users,
+    filteredAndSortedUsers,
+    isLoading,
+    error,
+    searchQuery, setSearchQuery,
+    userTypeFilter, setUserTypeFilter,
+    statusFilter, setStatusFilter,
+    sortBy, setSortBy,
+    sortOrder, setSortOrder,
+    refetch: fetchUsers,
+    disableUser,
+    deleteUser,
+    wholesaleCount,
+    retailCount,
   };
 };

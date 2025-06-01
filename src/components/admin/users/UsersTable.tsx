@@ -11,9 +11,12 @@ interface UserProfile {
   phone: string | null;
   user_type: 'admin' | 'wholesale' | 'retail';
   created_at: string;
+  updated_at: string; // <-- add this line to match required type
   email?: string;
   email_confirmed_at?: string;
   last_sign_in_at?: string;
+  last_order_date?: string | null;
+  highest_order_value?: number | null;
 }
 
 interface UsersTableProps {
@@ -93,12 +96,10 @@ const UsersTable: React.FC<UsersTableProps> = ({ users, isLoading, error }) => {
           <Table>
             <TableHeader>
               <TableRow className="bg-gray-50 hover:bg-gray-50">
-                <TableHead className="font-semibold text-gray-700 text-xs lg:text-sm p-2 lg:p-4">{t('user')}</TableHead>
-                <TableHead className="font-semibold text-gray-700 text-xs lg:text-sm p-2 lg:p-4">{t('contact')}</TableHead>
-                <TableHead className="font-semibold text-gray-700 text-xs lg:text-sm p-2 lg:p-4">{t('type')}</TableHead>
-                <TableHead className="font-semibold text-gray-700 text-xs lg:text-sm p-2 lg:p-4">{t('status')}</TableHead>
-                <TableHead className="font-semibold text-gray-700 text-xs lg:text-sm p-2 lg:p-4 hidden lg:table-cell">{t('registrationDate')}</TableHead>
-                <TableHead className="font-semibold text-gray-700 text-xs lg:text-sm p-2 lg:p-4">{t('actions')}</TableHead>
+                <TableHead className="font-semibold text-gray-700 text-xs lg:text-sm p-2 lg:p-4 text-center">{t('user')}</TableHead>
+                <TableHead className="font-semibold text-gray-700 text-xs lg:text-sm p-2 lg:p-4 text-center">{t('contact')}</TableHead>
+                <TableHead className="font-semibold text-gray-700 text-xs lg:text-sm p-2 lg:p-4 text-center">{t('type')}</TableHead>
+                <TableHead className="font-semibold text-gray-700 text-xs lg:text-sm p-2 lg:p-4 text-center">{t('actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

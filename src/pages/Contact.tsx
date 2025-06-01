@@ -99,8 +99,10 @@ const Contact: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Contact Information */}
           <div className="space-y-6">
-            {(Array.isArray(contactInfo?.fields_order) ? contactInfo.fields_order.filter((f): f is string => typeof f === 'string') : FIELD_KEYS).map((field) => (
-              contactInfo?.[field as keyof typeof contactInfo] ? (
+            {(Array.isArray(contactInfo?.fields_order) ? contactInfo.fields_order.filter((f): f is string => typeof f === 'string') : FIELD_KEYS).map((field) => {
+              const value = contactInfo?.[field as keyof typeof contactInfo];
+              if (!value) return null;
+              return (
                 <Card key={field}>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -110,16 +112,14 @@ const Contact: React.FC = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="flex items-center gap-2">
-                      {field === 'working_hours' && typeof contactInfo[field as keyof typeof contactInfo] === 'string' ? (
-                        <pre className="whitespace-pre-wrap break-words">{contactInfo[field as keyof typeof contactInfo] as string}</pre>
-                      ) : (typeof contactInfo[field as keyof typeof contactInfo] === 'string' || typeof contactInfo[field as keyof typeof contactInfo] === 'number'
-                        ? contactInfo[field as keyof typeof contactInfo]
-                        : '-')}
+                      {field === 'working_hours' && typeof value === 'string' ? (
+                        <pre className="whitespace-pre-wrap break-words">{value}</pre>
+                      ) : (typeof value === 'string' || typeof value === 'number' ? value : '-')}
                     </div>
                   </CardContent>
                 </Card>
-              ) : null
-            ))}
+              );
+            })}
           </div>
 
           {/* Contact Form */}

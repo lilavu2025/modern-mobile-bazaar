@@ -162,13 +162,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // SignIn function
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
-
     if (error) throw error;
-
+    // بعد تسجيل الدخول، تحقق إذا كان الحساب معطل
+    if (data.user) {
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('disabled')
+        .eq('id', data.user.id)
+        .single();
+      if (profileData?.disabled) {
+        await supabase.auth.signOut();
+        throw new Error('تم تعطيل حسابك من قبل الإدارة. يرجى التواصل مع الدعم.');
+      }
+    }
     localStorage.setItem('lastLoginTime', Date.now().toString());
   };
 

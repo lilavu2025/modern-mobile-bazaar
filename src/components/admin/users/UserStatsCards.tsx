@@ -31,17 +31,17 @@ const UserStatsCards: React.FC<UserStatsCardsProps> = ({ users }) => {
       iconColor: 'text-blue-600'
     },
     {
-      title: 'المستخدمين المؤكدين',
-      value: users.filter(user => user.email_confirmed_at).length,
-      icon: UserCheck,
+      title: 'تجار الجملة',
+      value: users.filter(user => user.user_type === 'wholesale').length,
+      icon: TrendingUp,
       color: 'from-green-500 to-green-600',
       bgColor: 'bg-green-50',
       iconColor: 'text-green-600'
     },
     {
-      title: 'غير المؤكدين',
-      value: users.filter(user => !user.email_confirmed_at).length,
-      icon: XCircle,
+      title: 'تجار التجزئة',
+      value: users.filter(user => user.user_type === 'retail').length,
+      icon: UserCheck,
       color: 'from-orange-500 to-orange-600',
       bgColor: 'bg-orange-50',
       iconColor: 'text-orange-600'

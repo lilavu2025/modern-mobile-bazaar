@@ -476,5 +476,16 @@ export const arTranslations = {
   errorUpdatingBannerStatus: 'خطأ في تحديث حالة البنر',
   deleteBannerConfirmation: 'هل أنت متأكد من حذف هذا البنر؟ لا يمكن التراجع عن هذا الإجراء.',
   updateBanner: 'تحديث البنر',
-  optional: 'اختياري'
+  optional: 'اختياري',
+  disableUser: 'تعطيل المستخدم',
+  enableUser: 'تفعيل المستخدم',
+  deleteUser: 'حذف المستخدم',
+  confirmDeleteUser: 'هل أنت متأكد من حذف المستخدم؟',
+  disabled: 'معطل',
+  enabled: 'مفعل',
+  showActivityLog: 'عرض سجل النشاط',
+  hideActivityLog: 'إخفاء سجل النشاط',
+  activityLog: 'سجل نشاط الأدمن',
+  details: 'تفاصيل',
+  date: 'التاريخ'
 };
