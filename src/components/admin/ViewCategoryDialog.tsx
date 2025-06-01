@@ -48,6 +48,7 @@ const ViewCategoryDialog: React.FC<ViewCategoryDialogProps> = ({
             <div className="space-y-1">
               <p><strong>{t('arabic')}:</strong> {category.name}</p>
               <p><strong>{t('english')}:</strong> {category.nameEn}</p>
+              <p><strong>{t('hebrew')}:</strong> {category.nameHe}</p>
             </div>
           </div>
 

@@ -15,10 +15,11 @@ export class CategoryService {
       console.error("Error fetching categories:", error);
       return [];
     }
-    return data.map((cat: Tables<"categories">) => ({
+    return (data as import("@/integrations/supabase/types").Database["public"]["Tables"]["categories"]["Row"][]).map((cat) => ({
       id: cat.id,
-      name: cat[`name_${language}` as keyof Tables<"categories">] as string,
+      name: cat[`name_${language}` as keyof typeof cat] as string,
       nameEn: cat.name_en,
+      nameHe: cat.name_he,
       image: cat.image,
       icon: cat.icon,
       count: 0,

@@ -42,7 +42,7 @@ const EditCategoryDialog: React.FC<EditCategoryDialogProps> = ({
       setFormData({
         name_ar: category.name || '',
         name_en: category.nameEn || '',
-        name_he: category.name || '', // fallback to name for Hebrew
+        name_he: category.nameHe || '',
         image: category.image || '',
 
       });

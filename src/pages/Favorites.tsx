@@ -59,27 +59,31 @@ const Favorites: React.FC = () => {
   );
 
   // mapping للمنتجات المفضلة لتوحيد النوع
-  const mappedFavoriteProducts: Product[] = (favoriteProducts as Tables<'products'>[]).map((p) => ({
-    id: p.id,
-    name: p.name_en || '',
-    nameEn: p.name_en || '',
-    description: p.description_en || '',
-    descriptionEn: p.description_en || '',
-    price: Number(p.price),
-    originalPrice: p.original_price ?? undefined,
-    wholesalePrice: p.wholesale_price ?? undefined,
-    image: p.image,
-    images: p.images ?? [],
-    category: p.category_id,
-    inStock: p.in_stock ?? false,
-    rating: Number(p.rating) || 0,
-    reviews: p.reviews_count || 0,
-    discount: p.discount ?? undefined,
-    featured: p.featured ?? false,
-    tags: p.tags ?? [],
-    stock_quantity: p.stock_quantity ?? 0,
-    active: p.active ?? true,
-  }));
+  const mappedFavoriteProducts: Product[] = Array.isArray(favoriteProducts)
+    ? (favoriteProducts as Tables<'products'>[]).map((p) => ({
+        id: p.id,
+        name: p.name_en || '',
+        nameEn: p.name_en || '',
+        nameHe: p.name_he || '',
+        description: p.description_ar || '',
+        descriptionEn: p.description_en || '',
+        descriptionHe: p.description_he || '',
+        price: Number(p.price),
+        originalPrice: p.original_price ?? undefined,
+        wholesalePrice: p.wholesale_price ?? undefined,
+        image: p.image,
+        images: p.images ?? [],
+        category: p.category_id,
+        inStock: p.in_stock ?? false,
+        rating: Number(p.rating) || 0,
+        reviews: p.reviews_count || 0,
+        discount: p.discount ?? undefined,
+        featured: p.featured ?? false,
+        tags: p.tags ?? [],
+        stock_quantity: p.stock_quantity ?? 0,
+        active: p.active ?? true,
+      }))
+    : [];
 
   if (favoritesError) {
     let errorMsg = t('errorLoadingFavorites');

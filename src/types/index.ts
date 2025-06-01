@@ -1,4 +1,3 @@
-
 export interface Product {
   id: string;
   name: string;
@@ -107,4 +106,17 @@ export interface DatabaseCategory {
   image: string;
   icon: string;
   active: boolean;
+}
+
+// تحويل كائن Category من النوع الموحد إلى النوع المطلوب في types/product.ts
+export function mapCategoryToProductCategory(category: import('./index').Category & { nameHe?: string }): import('./product').Category {
+  return {
+    id: category.id,
+    name: category.name,
+    nameEn: category.nameEn,
+    nameHe: category.nameHe,
+    image: category.image,
+    icon: category.icon,
+    count: category.count,
+  };
 }

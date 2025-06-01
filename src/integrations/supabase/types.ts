@@ -152,6 +152,39 @@ export type Database = {
         Update: Partial<Database['public']['Tables']['addresses']['Row']>;
         Relationships: [];
       };
+      banners: {
+        Row: {
+          id: string;
+          title_en: string;
+          title_ar: string;
+          title_he: string;
+          subtitle_en: string;
+          subtitle_ar: string;
+          subtitle_he: string;
+          image: string;
+          link?: string;
+          active: boolean;
+          sort_order?: number;
+        };
+        Insert: Partial<Omit<Database['public']['Tables']['banners']['Row'], 'id'>> & { id?: string };
+        Update: Partial<Database['public']['Tables']['banners']['Row']>;
+        Relationships: [];
+      };
+      categories: {
+        Row: {
+          id: string;
+          name_en: string;
+          name_ar: string;
+          name_he: string;
+          image: string;
+          icon: string;
+          active: boolean;
+          created_at?: string;
+        };
+        Insert: Partial<Omit<Database['public']['Tables']['categories']['Row'], 'id'>> & { id?: string };
+        Update: Partial<Database['public']['Tables']['categories']['Row']>;
+        Relationships: [];
+      };
     };
   };
 };

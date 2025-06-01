@@ -8,6 +8,7 @@ import AdminProductsEmptyState from './AdminProductsEmptyState';
 import AdminProductsTable from './AdminProductsTable';
 import AdminProductsDialogs from './AdminProductsDialogs';
 import { Product, ProductFormData, AdminProductForm } from '@/types/product';
+import { mapCategoryToProductCategory } from '@/types/index';
 
 const AdminProducts: React.FC = () => {
   const { t } = useLanguage();
@@ -19,6 +20,8 @@ const AdminProducts: React.FC = () => {
   const products = productsData && Array.isArray(productsData.data) ? productsData.data : [];
   const { data: categoriesData } = useCategories();
   const categories = categoriesData && Array.isArray(categoriesData.data) ? categoriesData.data : [];
+  // تحويل قائمة الفئات إلى النوع الصحيح قبل تمريرها للمكونات الفرعية
+  const productCategories = categories.map(mapCategoryToProductCategory);
 
   const mapProductToFormData = (product: Product): AdminProductForm => ({
     id: product.id,
@@ -111,7 +114,7 @@ const AdminProducts: React.FC = () => {
         showViewDialog={showViewDialog}
         setShowViewDialog={setShowViewDialog}
         selectedProduct={selectedProduct}
-        categories={categories}
+        categories={productCategories}
         onSuccess={() => refetch()}
       />
     </div>

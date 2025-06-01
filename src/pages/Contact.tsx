@@ -8,8 +8,9 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Mail, Phone, MapPin, Clock, Facebook, Instagram, MessageCircle, Smartphone } from 'lucide-react';
+import { Mail, Phone, MapPin, Clock } from 'lucide-react';
 import { useContactInfo } from '@/hooks/useContactInfo';
+//import emailjs from '@emailjs/browser';
 
 const Contact: React.FC = () => {
   const { t } = useLanguage();
@@ -29,19 +30,35 @@ const Contact: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+
     try {
-      // إرسال البيانات إلى البريد الافتراضي عبر mailto (فتح برنامج البريد عند المستخدم)
+      // إرسال الرسالة عبر EmailJS إلى البريد الموجود في contactInfo
       if (contactInfo?.email) {
-        const mailto = `mailto:${contactInfo.email}?subject=${encodeURIComponent(formData.subject)}&body=${encodeURIComponent(
-          `الاسم: ${formData.name}\nالبريد: ${formData.email}\nالهاتف: ${formData.phone}\n\n${formData.message}`
-        )}`;
-        window.location.href = mailto;
+        await emailjs.send(
+          'service_xxx', // ضع هنا ID خدمة EmailJS
+          'template_xxx', // ضع هنا ID القالب
+          {
+            from_name: formData.name,
+            from_email: formData.email,
+            phone: formData.phone,
+            subject: formData.subject,
+            message: formData.message,
+            to_email: contactInfo.email,
+          },
+          'user_xxx' // ضع هنا Public Key الخاص بك في EmailJS
+        );
       }
       toast({
         title: t('success'),
         description: t('messageSubmitted'),
       });
-      setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        subject: '',
+        message: '',
+      });
     } catch (err) {
       toast({
         title: t('error'),
@@ -51,34 +68,6 @@ const Contact: React.FC = () => {
       setIsLoading(false);
     }
   };
-
-  const FIELD_ICONS: Record<string, React.ReactNode> = {
-    email: <Mail className="h-5 w-5" />,
-    phone: <Phone className="h-5 w-5" />,
-    address: <MapPin className="h-5 w-5" />,
-    facebook: <Facebook className="h-5 w-5" />,
-    instagram: <Instagram className="h-5 w-5" />,
-    whatsapp: <Smartphone className="h-5 w-5" />,
-    working_hours: <Clock className="h-5 w-5" />,
-  };
-  const FIELD_LABELS: Record<string, string> = {
-    email: t('email'),
-    phone: t('phone'),
-    address: t('address'),
-    facebook: 'Facebook',
-    instagram: 'Instagram',
-    whatsapp: t('phone'),
-    working_hours: t('workingHours') || 'ساعات العمل',
-  };
-  const FIELD_KEYS = [
-    'email',
-    'phone',
-    'address',
-    'facebook',
-    'instagram',
-    'whatsapp',
-    'working_hours',
-  ];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -99,27 +88,56 @@ const Contact: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Contact Information */}
           <div className="space-y-6">
-            {(Array.isArray(contactInfo?.fields_order) ? contactInfo.fields_order.filter((f): f is string => typeof f === 'string') : FIELD_KEYS).map((field) => {
-              const value = contactInfo?.[field as keyof typeof contactInfo];
-              if (!value) return null;
-              return (
-                <Card key={field}>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      {FIELD_ICONS[field]}
-                      {FIELD_LABELS[field] || field}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center gap-2">
-                      {field === 'working_hours' && typeof value === 'string' ? (
-                        <pre className="whitespace-pre-wrap break-words">{value}</pre>
-                      ) : (typeof value === 'string' || typeof value === 'number' ? value : '-')}
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Mail className="h-5 w-5" />
+                  {t('email')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-600">{contactInfo?.email || 'info@mystore.com'}</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Phone className="h-5 w-5" />
+                  {t('phone')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-600">{contactInfo?.phone || '+966 12 345 6789'}</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MapPin className="h-5 w-5" />
+                  {t('address')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-600">{contactInfo?.address || 'العنوان هنا'}</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="h-5 w-5" />
+                  {t('workingHours')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-600">
+                  {t('sunday')} - {t('thursday')}: 9:00 - 18:00<br />
+                  {t('friday')} - {t('saturday')}: 10:00 - 16:00
+                </p>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Contact Form */}

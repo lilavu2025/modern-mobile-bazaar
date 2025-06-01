@@ -36,6 +36,7 @@ import AddCategoryDialog from './AddCategoryDialog';
 import EditCategoryDialog from './EditCategoryDialog';
 import ViewCategoryDialog from './ViewCategoryDialog';
 import { Category } from '@/types/product';
+import { mapCategoryToProductCategory } from '@/types/index';
 
 const AdminCategories: React.FC = () => {
   const { t } = useLanguage();
@@ -71,13 +72,14 @@ const AdminCategories: React.FC = () => {
     }
   };
 
+  // عند تمرير category لأي مكون يتوقع النوع من types/product.ts
   const handleViewCategory = (category: Category) => {
-    setSelectedCategory(category);
+    setSelectedCategory(mapCategoryToProductCategory(category));
     setShowViewDialog(true);
   };
 
   const handleEditCategory = (category: Category) => {
-    setSelectedCategory(category);
+    setSelectedCategory(mapCategoryToProductCategory(category));
     setShowEditDialog(true);
   };
 
@@ -154,7 +156,7 @@ const AdminCategories: React.FC = () => {
                           variant="ghost" 
                           size="sm" 
                           title={t('view')}
-                          onClick={() => handleViewCategory(category)}
+                          onClick={() => handleViewCategory(mapCategoryToProductCategory(category))}
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
@@ -162,7 +164,7 @@ const AdminCategories: React.FC = () => {
                           variant="ghost" 
                           size="sm" 
                           title={t('edit')}
-                          onClick={() => handleEditCategory(category)}
+                          onClick={() => handleEditCategory(mapCategoryToProductCategory(category))}
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
