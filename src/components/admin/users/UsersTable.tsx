@@ -4,28 +4,16 @@ import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components
 import { Users } from 'lucide-react';
 import { useLanguage } from '@/utils/languageContextUtils';
 import UserTableRow from './UserTableRow';
-
-interface UserProfile {
-  id: string;
-  full_name: string;
-  phone: string | null;
-  user_type: 'admin' | 'wholesale' | 'retail';
-  created_at: string;
-  updated_at: string; // <-- add this line to match required type
-  email?: string;
-  email_confirmed_at?: string;
-  last_sign_in_at?: string;
-  last_order_date?: string | null;
-  highest_order_value?: number | null;
-}
+import type { UserProfile } from '@/types/profile';
 
 interface UsersTableProps {
   users: UserProfile[];
   isLoading: boolean;
   error?: string | null;
+  refetch: () => void;
 }
 
-const UsersTable: React.FC<UsersTableProps> = ({ users, isLoading, error }) => {
+const UsersTable: React.FC<UsersTableProps> = ({ users, isLoading, error, refetch }) => {
   const { t } = useLanguage();
 
   if (isLoading) {
@@ -94,7 +82,7 @@ const UsersTable: React.FC<UsersTableProps> = ({ users, isLoading, error }) => {
       <CardContent className="p-0">
         <div className="overflow-x-auto">
           <Table>
-            <TableHeader>
+            <TableHeader className="text-center">
               <TableRow className="bg-gray-50 hover:bg-gray-50">
                 <TableHead className="font-semibold text-gray-700 text-xs lg:text-sm p-2 lg:p-4 text-center">{t('user')}</TableHead>
                 <TableHead className="font-semibold text-gray-700 text-xs lg:text-sm p-2 lg:p-4 text-center">{t('contact')}</TableHead>
@@ -104,7 +92,7 @@ const UsersTable: React.FC<UsersTableProps> = ({ users, isLoading, error }) => {
             </TableHeader>
             <TableBody>
               {users.map((user, index) => (
-                <UserTableRow key={user.id} user={user} index={index} />
+                <UserTableRow key={user.id} user={user} index={index} refetch={refetch} />
               ))}
             </TableBody>
           </Table>

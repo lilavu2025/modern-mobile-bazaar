@@ -47,15 +47,15 @@ const AdminProductsTable: React.FC<AdminProductsTableProps> = ({
       </CardHeader>
       <CardContent>
         <Table>
-          <TableHeader>
+          <TableHeader className="text-center">
             <TableRow>
-              <TableHead>{t('productImage')}</TableHead>
-              <TableHead>{t('productName')}</TableHead>
-              <TableHead>{t('category')}</TableHead>
-              <TableHead>{t('price')}</TableHead>
-              <TableHead>{t('stockQuantity')}</TableHead>
-              <TableHead>{t('inStock')}</TableHead>
-              <TableHead className="text-right">{t('actions')}</TableHead>
+              <TableHead className="text-center">{t('productImage')}</TableHead>
+              <TableHead className="text-center">{t('productName')}</TableHead>
+              <TableHead className="text-center">{t('category')}</TableHead>
+              <TableHead className="text-center">{t('price')}</TableHead>
+              <TableHead className="text-center">{t('stockQuantity')}</TableHead>
+              <TableHead className="text-center">{t('inStock')}</TableHead>
+              <TableHead className="text-center">{t('actions')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useLanguage } from '../../utils/languageContextUtils';
 import { useAuth } from '@/contexts/useAuth';
@@ -18,6 +18,7 @@ import { toast } from 'sonner';
 import { useProducts } from '@/hooks/useSupabaseData';
 import { useAdminUsers } from '@/hooks/useAdminUsers';
 import { Address, Product } from '@/types';
+import { useOrdersRealtime } from '@/hooks/useOrdersRealtime';
 
 // واجهة الطلب
 interface Order {
@@ -142,20 +143,7 @@ const AdminOrders: React.FC = () => {
   }, [location.state]);
   
   // استعلام الطلبات مع تفعيل polling وتحديث البيانات عند العودة للنافذة
-  const { data: orders = [], isLoading, error, refetch } = useQuery<Order[]>({
-    queryKey: ["admin-orders"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('orders')
-        .select(`*, profiles:user_id (full_name, email, phone)`)
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      return (data || []).map(mapOrderFromDb);
-    },
-    staleTime: 0,
-    refetchOnWindowFocus: true,
-    refetchInterval: false,
-  });
+  const { orders, loading: ordersLoading, error: ordersError, refetch: refetchOrders } = useOrdersRealtime();
   
   // تحديث حالة الطلب
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
@@ -171,6 +159,7 @@ const AdminOrders: React.FC = () => {
       if (error) throw error;
       
       toast.success('تم تحديث حالة الطلب بنجاح');
+      refetchOrders(); // تحديث الطلبات مباشرة بعد التغيير
     } catch (err: unknown) {
       console.error('خطأ في تحديث حالة الطلب:', err);
       toast.error('فشل في تحديث حالة الطلب');
@@ -289,7 +278,7 @@ const AdminOrders: React.FC = () => {
       toast.success('تم إضافة الطلب بنجاح');
       setShowAddOrder(false);
       setOrderForm(initialOrderForm);
-      refetch(); // إعادة جلب الطلبات
+      refetchOrders(); // إعادة جلب الطلبات
       
     } catch (error: unknown) {
       console.error('خطأ في إضافة الطلب:', error);
@@ -331,7 +320,7 @@ const AdminOrders: React.FC = () => {
     return (orders as Order[]).filter(order => order.status === statusFilter);
   }, [orders, statusFilter]);
 
-  if (isLoading) {
+  if (ordersLoading) {
     return (
       <div className="space-y-6">
         <h1 className="text-3xl font-bold">{t('manageOrders')}</h1>
@@ -343,7 +332,7 @@ const AdminOrders: React.FC = () => {
     );
   }
   
-  if (error) {
+  if (ordersError) {
     return (
       <div className="space-y-6">
         <h1 className="text-3xl font-bold">{t('manageOrders')}</h1>
@@ -352,8 +341,8 @@ const AdminOrders: React.FC = () => {
             <div className="text-center">
               <XCircle className="h-16 w-16 text-red-300 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-red-900 mb-2">خطأ في تحميل الطلبات</h3>
-              <p className="text-red-600 mb-4">{error.message}</p>
-              <Button onClick={() => refetch()}>إعادة المحاولة</Button>
+              <p className="text-red-600 mb-4">{ordersError.message}</p>
+              <Button onClick={() => refetchOrders()}>إعادة المحاولة</Button>
             </div>
           </CardContent>
         </Card>
@@ -602,7 +591,7 @@ const AdminOrders: React.FC = () => {
             </DialogContent>
           </Dialog>
           
-          <Button onClick={() => refetch()} variant="outline">
+          <Button onClick={() => refetchOrders()} variant="outline">
             تحديث
           </Button>
         </div>

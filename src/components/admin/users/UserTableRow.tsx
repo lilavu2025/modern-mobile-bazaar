@@ -10,28 +10,15 @@ import EditUserDialog from '../EditUserDialog';
 import UserDetailsDialog from './UserDetailsDialog';
 import UserOrdersDialog from './UserOrdersDialog';
 import { useAdminUsers } from '@/hooks/useAdminUsers';
-
-interface UserProfile {
-  id: string;
-  full_name: string;
-  phone: string | null;
-  user_type: 'admin' | 'wholesale' | 'retail';
-  created_at: string;
-  updated_at: string; // إضافة الحقل المطلوب لحل الخطأ
-  email?: string;
-  email_confirmed_at?: string;
-  last_sign_in_at?: string;
-  last_order_date?: string;
-  highest_order_value?: number;
-  disabled?: boolean | null;
-}
+import type { UserProfile } from '@/types/profile';
 
 interface UserTableRowProps {
   user: UserProfile;
   index: number;
+  refetch: () => void;
 }
 
-const UserTableRow: React.FC<UserTableRowProps> = ({ user, index }) => {
+const UserTableRow: React.FC<UserTableRowProps> = ({ user, index, refetch }) => {
   const { t } = useLanguage();
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [showOrdersDialog, setShowOrdersDialog] = useState(false);
@@ -111,7 +98,7 @@ const UserTableRow: React.FC<UserTableRowProps> = ({ user, index }) => {
         
         <TableCell className="p-2 lg:p-4">
           <div className="flex items-center gap-1 lg:gap-2">
-            <EditUserDialog user={user} />
+            <EditUserDialog user={user} refetch={refetch} />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="h-6 w-6 lg:h-8 lg:w-8 p-0">
@@ -131,6 +118,7 @@ const UserTableRow: React.FC<UserTableRowProps> = ({ user, index }) => {
                   onClick={async () => {
                     setActionLoading(true);
                     await disableUser(user.id, !user.disabled);
+                    if (refetch) refetch();
                     setActionLoading(false);
                   }}
                   className={`text-xs lg:text-sm cursor-pointer ${user.disabled ? 'text-green-600' : 'text-yellow-600'}`}

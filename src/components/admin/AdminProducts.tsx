@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useLanguage } from '../../utils/languageContextUtils';
-import { useProducts, useCategories } from '@/hooks/useSupabaseData';
+import { useProductsRealtime } from '@/hooks/useProductsRealtime';
+import { useCategories } from '@/hooks/useSupabaseData';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import AdminProductsHeader from './AdminProductsHeader';
@@ -16,8 +17,7 @@ const AdminProducts: React.FC = () => {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showViewDialog, setShowViewDialog] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<AdminProductForm | null>(null);
-  const { data: productsData, loading: productsLoading, refetch } = useProducts();
-  const products = productsData && Array.isArray(productsData.data) ? productsData.data : [];
+  const { products, loading: productsLoading, error: productsError, refetch: refetchProducts } = useProductsRealtime();
   const { data: categoriesData } = useCategories();
   const categories = categoriesData && Array.isArray(categoriesData.data) ? categoriesData.data : [];
   // تحويل قائمة الفئات إلى النوع الصحيح قبل تمريرها للمكونات الفرعية
@@ -60,7 +60,7 @@ const AdminProducts: React.FC = () => {
         description: `${t('productDeletedSuccessfully')} ${productName}`,
       });
 
-      refetch();
+      refetchProducts();
     } catch (error) {
       console.error('Error deleting product:', error);
       toast({
@@ -88,18 +88,21 @@ const AdminProducts: React.FC = () => {
     );
   }
 
+  // استبدل productsData?.data بـ products مباشرة
+  const productsList = products;
+
   return (
     <div className="space-y-6">
       <AdminProductsHeader
-        productCount={products.length}
+        productCount={productsList.length}
         onAddProduct={() => setShowAddDialog(true)}
       />
 
-      {products.length === 0 ? (
+      {productsList.length === 0 ? (
         <AdminProductsEmptyState onAddProduct={() => setShowAddDialog(true)} />
       ) : (
         <AdminProductsTable
-          products={products}
+          products={productsList}
           onViewProduct={handleViewProduct}
           onEditProduct={handleEditProduct}
           onDeleteProduct={handleDeleteProduct}
@@ -115,7 +118,7 @@ const AdminProducts: React.FC = () => {
         setShowViewDialog={setShowViewDialog}
         selectedProduct={selectedProduct}
         categories={productCategories}
-        onSuccess={() => refetch()}
+        onSuccess={() => refetchProducts()}
       />
     </div>
   );

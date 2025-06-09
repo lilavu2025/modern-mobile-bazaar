@@ -51,7 +51,8 @@ const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
     retry: 3,
     staleTime: 0,
     refetchOnWindowFocus: true,
-    refetchInterval: false,
+    refetchInterval: false, // تم تعطيل polling (refetchInterval) لأن المتصفح يوقفه بالخلفية،
+    // والاعتماد على WebSocket أو إعادة الجلب عند العودة للواجهة أفضل
   });
 
   // Fetch products statistics
@@ -92,7 +93,8 @@ const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
     retry: 3,
     staleTime: 0,
     refetchOnWindowFocus: true,
-    refetchInterval: false,
+    refetchInterval: false, // تم تعطيل polling (refetchInterval) لأن المتصفح يوقفه بالخلفية،
+    // والاعتماد على WebSocket أو إعادة الجلب عند العودة للواجهة أفضل
   });
 
   // Fetch orders statistics
@@ -167,7 +169,8 @@ const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
     retry: 3,
     staleTime: 0,
     refetchOnWindowFocus: true,
-    refetchInterval: false,
+    refetchInterval: false, // تم تعطيل polling (refetchInterval) لأن المتصفح يوقفه بالخلفية،
+    // والاعتماد على WebSocket أو إعادة الجلب عند العودة للواجهة أفضل
   });
 
   const handleUserTypeClick = (userType: string) => {
@@ -222,7 +225,8 @@ const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
     retry: 3,
     staleTime: 0,
     refetchOnWindowFocus: true,
-    refetchInterval: false,
+    refetchInterval: false, // تم تعطيل polling (refetchInterval) لأن المتصفح يوقفه بالخلفية،
+    // والاعتماد على WebSocket أو إعادة الجلب عند العودة للواجهة أفضل
   });
 
   // Fetch recent activity data
@@ -293,7 +297,8 @@ const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
     retry: 3,
     staleTime: 0,
     refetchOnWindowFocus: true,
-    refetchInterval: false,
+    refetchInterval: false, // تم تعطيل polling (refetchInterval) لأن المتصفح يوقفه بالخلفية،
+    // والاعتماد على WebSocket أو إعادة الجلب عند العودة للواجهة أفضل
   });
 
   const chartConfig = {
@@ -618,3 +623,5 @@ const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
 };
 
 export default AdminDashboardStats;
+
+// ملاحظة: للحصول على إحصائيات حية، يمكنك استخدام useProductsRealtime/useCategoriesRealtime لجلب المنتجات والفئات ثم حساب الإحصائيات منها مباشرة، أو إضافة اشتراك Realtime مخصص لجداول الإحصائيات إذا لزم الأمر.

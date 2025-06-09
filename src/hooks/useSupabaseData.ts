@@ -17,6 +17,9 @@ import { supabase } from '@/integrations/supabase/client';
  * - staleTime: تعتبر البيانات طازجة لمدة 5 دقائق
  * - refetchOnWindowFocus: إعادة الجلب عند العودة للنافذة
  * - refetchInterval: polling كل دقيقة (60000 ms)
+ *
+ * تم تعطيل polling (refetchInterval) في كل الاستعلامات لأن المتصفح يوقفه بالخلفية،
+ * والاعتماد على WebSocket أو إعادة الجلب عند العودة للواجهة أفضل.
  */
 // إلغاء الكاش نهائياً: كل استعلام يعتبر قديم دائماً
 const COMMON_OPTIONS = {
@@ -36,7 +39,6 @@ export const useCategories = () => {
       if (!data) throw new Error('Error fetching categories');
       return { data };
     },
-    interval: 10000,
     retryInterval: 5000,
   });
   return { ...query, error: query.error };
@@ -55,7 +57,6 @@ export const useProducts = (categoryId?: string) => {
       if (!data) throw new Error('Error fetching products');
       return { data };
     },
-    interval: 10000,
     retryInterval: 5000,
   });
   return { ...query, error: query.error };
@@ -72,7 +73,6 @@ export const useBanners = () => {
       if (!data) throw new Error('Error fetching banners');
       return { data };
     },
-    interval: 10000,
     retryInterval: 5000,
   });
   return { ...query, error: query.error };
@@ -88,7 +88,6 @@ export const useUsers = () => {
       if (error) throw new Error('Error fetching users');
       return { data };
     },
-    interval: 10000,
     retryInterval: 5000,
   });
   return { ...query, error: query.error };

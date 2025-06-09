@@ -108,9 +108,9 @@ const App = () => {
   const queryClient = queryClientRef.current;
 
   useEffect(() => {
-    let interval: ReturnType<typeof setInterval> | null = null;
+    // حذف setInterval، والإبقاء فقط على التحديث عند التفاعل
     const refetchAll = (source?: string) => {
-      console.log(`[refetchAll] called from: ${source || 'manual/interval'} at`, new Date().toISOString());
+      console.log(`[refetchAll] called from: ${source || 'manual'} at`, new Date().toISOString());
       queryClient.refetchQueries({ type: 'all' });
     };
     const clickHandler = () => refetchAll('click');
@@ -123,20 +123,12 @@ const App = () => {
     document.addEventListener('click', clickHandler, true);
     window.addEventListener('focus', focusHandler);
     document.addEventListener('visibilitychange', visibilityHandler);
-    // fallback: refetch كل 10 ثواني
-    interval = setInterval(() => {
-      console.log('[setInterval] tick at', new Date().toISOString());
-      refetchAll('interval');
-    }, 10000);
-    console.log('[setInterval] started at', new Date().toISOString());
+    console.log('[refetchAll] event listeners added');
     return () => {
       document.removeEventListener('click', clickHandler, true);
       window.removeEventListener('focus', focusHandler);
       document.removeEventListener('visibilitychange', visibilityHandler);
-      if (interval) {
-        clearInterval(interval);
-        console.log('[setInterval] cleared at', new Date().toISOString());
-      }
+      console.log('[refetchAll] event listeners removed');
     };
   }, [queryClient]);
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useOffersRealtime } from '@/hooks/useOffersRealtime';
 import { useLanguage } from '@/utils/languageContextUtils';
 import Header from '@/components/Header';
 import CartSidebar from '@/components/CartSidebar';
@@ -21,23 +21,8 @@ const Offers: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const { addToCart } = useCart();
 
-  // جلب العروض من قاعدة البيانات
-  const { data: offers = [], isLoading, error, refetch } = useQuery<Array<Database['public']['Tables']['offers']['Row']>>({
-    queryKey: ['offers'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('offers')
-        .select('*')
-        .eq('active', true)
-        .gte('end_date', new Date().toISOString())
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      return data as Array<Database['public']['Tables']['offers']['Row']>;
-    },
-    staleTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: true,
-    refetchInterval: 60 * 1000,
-  });
+  // استخدم hook الجديد لجلب العروض مع التحديث الفوري
+  const { offers, loading: isLoading, error, refetch } = useOffersRealtime();
 
   // تصفية العروض حسب البحث
   const filteredOffers = offers.filter((offer: Database['public']['Tables']['offers']['Row']) =>

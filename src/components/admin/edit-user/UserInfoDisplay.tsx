@@ -1,20 +1,9 @@
-
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, CheckCircle, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { useLanguage } from '@/utils/languageContextUtils';
-
-interface UserProfile {
-  id: string;
-  full_name: string;
-  phone: string | null;
-  user_type: 'admin' | 'wholesale' | 'retail';
-  created_at: string;
-  email?: string;
-  email_confirmed_at?: string;
-  last_sign_in_at?: string;
-}
+import type { UserProfile } from '@/types/profile';
 
 interface UserInfoDisplayProps {
   user: UserProfile;

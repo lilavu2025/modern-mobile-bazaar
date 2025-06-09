@@ -26,7 +26,8 @@ const AdminUsers: React.FC = () => {
     sortBy,
     setSortBy,
     sortOrder,
-    setSortOrder
+    setSortOrder,
+    refetch
   } = useAdminUsers();
 
   // Handle filter from dashboard navigation
@@ -75,7 +76,7 @@ const AdminUsers: React.FC = () => {
           setSortOrder={handleSortOrderChange}
         />
 
-        <UsersTable users={filteredAndSortedUsers} isLoading={isLoading} error={error} />
+        <UsersTable users={filteredAndSortedUsers} isLoading={isLoading} error={error} refetch={refetch} />
       </div>
     </div>
   );

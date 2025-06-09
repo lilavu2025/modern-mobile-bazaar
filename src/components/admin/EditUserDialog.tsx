@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
@@ -14,24 +13,17 @@ import EditUserDialogHeader from './edit-user/EditUserDialogHeader';
 import UserInfoDisplay from './edit-user/UserInfoDisplay';
 import EditUserForm from './edit-user/EditUserForm';
 import { useLanguage } from '@/utils/languageContextUtils';
-
-interface UserProfile {
-  id: string;
-  full_name: string;
-  phone: string | null;
-  user_type: 'admin' | 'wholesale' | 'retail';
-  created_at: string;
-  email?: string;
-  email_confirmed_at?: string;
-  last_sign_in_at?: string;
-}
+import { useAuth } from '@/contexts/useAuth';
+import type { UserProfile } from '@/types/profile';
 
 interface EditUserDialogProps {
   user: UserProfile;
+  refetch: () => void;
 }
 
-const EditUserDialog: React.FC<EditUserDialogProps> = ({ user }) => {
+const EditUserDialog: React.FC<EditUserDialogProps> = ({ user, refetch }) => {
   const { isRTL } = useLanguage();
+  const { profile } = useAuth();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -40,6 +32,19 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({ user }) => {
     phone: user.phone || '',
     user_type: user.user_type,
   });
+
+  // دالة تسجيل النشاط
+  const logUserActivity = async (userId: string, action: string, details: Record<string, unknown> = {}) => {
+    if (!profile?.id) return;
+    await supabase.from('user_activity_log').insert([
+      {
+        admin_id: profile.id,
+        user_id: userId,
+        action,
+        details,
+      }
+    ]);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,8 +62,16 @@ const EditUserDialog: React.FC<EditUserDialogProps> = ({ user }) => {
 
       if (error) throw error;
 
+      // تسجيل النشاط
+      await logUserActivity(user.id, 'update', {
+        full_name: formData.full_name,
+        phone: formData.phone,
+        user_type: formData.user_type,
+      });
+
       toast.success('تم تحديث بيانات المستخدم بنجاح');
       queryClient.invalidateQueries({ queryKey: ['admin-users-extended'] });
+      if (refetch) refetch();
       setOpen(false);
     } catch (error) {
       console.error('Error updating user:', error);

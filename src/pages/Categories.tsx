@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useCategories } from '@/hooks/useSupabaseData';
+import { useCategoriesRealtime } from '@/hooks/useCategoriesRealtime';
 import { useLanguage } from '@/utils/languageContextUtils';
 import Header from '@/components/Header';
 import CategoryCard from '@/components/CategoryCard';
@@ -10,8 +10,7 @@ const Categories: React.FC = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { data, loading, error } = useCategories();
-  const categories = data?.data ?? [];
+  const { categories, loading, error, refetch } = useCategoriesRealtime();
 
   console.log('Categories page - data:', categories);
   console.log('Categories page - loading:', loading);

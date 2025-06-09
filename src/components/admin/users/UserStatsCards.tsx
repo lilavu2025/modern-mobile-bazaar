@@ -2,17 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, UserCheck, XCircle, TrendingUp } from 'lucide-react';
 import { useLanguage } from '@/utils/languageContextUtils';
-
-interface UserProfile {
-  id: string;
-  full_name: string;
-  phone: string | null;
-  user_type: 'admin' | 'wholesale' | 'retail';
-  created_at: string;
-  email?: string;
-  email_confirmed_at?: string;
-  last_sign_in_at?: string;
-}
+import type { UserProfile } from '@/types/profile';
 
 interface UserStatsCardsProps {
   users: UserProfile[];

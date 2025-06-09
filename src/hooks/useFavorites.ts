@@ -32,7 +32,9 @@ export const useFavorites = () => {
     },
     staleTime: 0,
     refetchOnWindowFocus: true,
-    refetchInterval: false,
+    // تم تعطيل polling (refetchInterval) لأن المتصفح يوقفه بالخلفية،
+    // والاعتماد على WebSocket أو إعادة الجلب عند العودة للواجهة أفضل.
+    // refetchInterval: false,
   });
   const favoriteIds: string[] = useMemo(() => favoriteIdsRaw || [], [favoriteIdsRaw]);
 
@@ -210,7 +212,6 @@ export const useFavorites = () => {
       if (error) return [];
       return data || [];
     },
-    interval: 10000,
     retryInterval: 5000,
   });
 

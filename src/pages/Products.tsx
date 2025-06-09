@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useProducts, useCategories } from '@/hooks/useSupabaseData';
+import { useProductsRealtime } from '@/hooks/useProductsRealtime';
+import { useCategories } from '@/hooks/useSupabaseData';
 import { useLanguage } from '@/utils/languageContextUtils';
 import Header from '@/components/Header';
 import ProductCard from '@/components/ProductCard';
@@ -22,10 +23,10 @@ const Products: React.FC = () => {
   const location = useLocation();
 
   const { data: categoriesData, loading: categoriesLoading, error: categoriesError } = useCategories();
-  const { data: productsData, loading: productsLoading, error: productsError } = useProducts(selectedCategory === 'all' ? undefined : selectedCategory);
+  const { products, loading: productsLoading, error: productsError, refetch: refetchProducts } = useProductsRealtime();
 
   const categories = categoriesData?.data ?? [];
-  const products = productsData?.data ?? [];
+  const productsList = products;
 
   useEffect(() => {
     console.log('[Products] mounted at', new Date().toISOString());
@@ -43,7 +44,7 @@ const Products: React.FC = () => {
   }, [location.search, selectedCategory]);
 
   // Filter and sort products
-  const filteredProducts = products
+  const filteredProducts = productsList
     .filter(product => {
       const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                            product.description.toLowerCase().includes(searchQuery.toLowerCase());

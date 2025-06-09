@@ -5,21 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Calendar, CheckCircle, XCircle, Mail, Phone, User, Shield } from 'lucide-react';
 import { format } from 'date-fns';
 import { useLanguage } from '@/utils/languageContextUtils';
-
-interface UserProfile {
-  updated_at: string | number | Date;
-  id: string;
-  full_name: string;
-  phone: string | null;
-  user_type: 'admin' | 'wholesale' | 'retail';
-  created_at: string;
-  email?: string;
-  email_confirmed_at?:  string | number | Date;
-  last_sign_in_at?:  string | number | Date;
-  last_order_date?:  string | number | Date;
-  highest_order_value?:  string | number;
-  disabled?: boolean;
-}
+import type { UserProfile } from '@/types/profile';
 
 interface UserDetailsDialogProps {
   user: UserProfile;

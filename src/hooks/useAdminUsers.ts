@@ -2,20 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/useAuth';
 import type { Json } from '@/integrations/supabase/types';
-
-// تعريف الواجهة التي تمثل مستخدم النظام
-interface UserProfile {
-  id: string;
-  full_name: string;
-  phone: string | null;
-  user_type: 'admin' | 'wholesale' | 'retail';
-  created_at: string;
-  email?: string;
-  email_confirmed_at?: string;
-  last_sign_in_at?: string;
-  last_order_date?: string | null;
-  highest_order_value?: number | null;
-}
+import type { UserProfile } from '@/types/profile';
 
 // Supabase type for deleted_users (مؤقت حتى تحديث الأنواع)
 type DeletedUserInsert = {
@@ -90,6 +77,8 @@ export const useAdminUsers = () => {
           last_sign_in_at: profile.last_sign_in_at,
           last_order_date: profile.last_order_date,
           highest_order_value: profile.highest_order_value,
+          disabled: profile.disabled ?? false,
+          updated_at: profile.updated_at
         });
       });
 
@@ -142,6 +131,9 @@ export const useAdminUsers = () => {
 
       // التعامل مع التواريخ
       if (sortBy === 'created_at' || sortBy === 'last_sign_in_at' || sortBy === 'last_order_date') {
+        // إذا كانت القيمة منطقية (boolean)، حوّلها إلى رقم للمقارنة
+        if (typeof aValue === 'boolean') aValue = aValue ? 1 : 0;
+        if (typeof bValue === 'boolean') bValue = bValue ? 1 : 0;
         aValue = new Date(aValue || 0).getTime();
         bValue = new Date(bValue || 0).getTime();
       } else if (typeof aValue === 'string' && typeof bValue === 'string') {
@@ -161,14 +153,17 @@ export const useAdminUsers = () => {
   // دالة تسجيل النشاط
   const logUserActivity = async (userId: string, action: string, details: Record<string, unknown> = {}) => {
     if (!profile?.id) return;
-    await supabase.from('user_activity_log').insert([
+    const { error } = await supabase.from('user_activity_log').insert([
       {
         admin_id: profile.id,
         user_id: userId,
         action,
         details: details as Json,
+        created_at: new Date().toISOString(),
       }
     ]);
+    // لا alert، فقط إرجاع النتيجة
+    return error;
   };
 
   // دالة تعطيل مستخدم
@@ -178,7 +173,12 @@ export const useAdminUsers = () => {
       .update({ disabled })
       .eq('id', userId);
     if (error) throw error;
-    await logUserActivity(userId, disabled ? 'disable' : 'enable');
+    const logError = await logUserActivity(userId, disabled ? 'disable' : 'enable', { disabled });
+    if (logError) {
+      window.alert('فشل تسجيل النشاط في سجل الأدمن!');
+    } else {
+      window.alert(disabled ? 'تم تعطيل المستخدم بنجاح' : 'تم تفعيل المستخدم بنجاح');
+    }
     await fetchUsers();
   };
 

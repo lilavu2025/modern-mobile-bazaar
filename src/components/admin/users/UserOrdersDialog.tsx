@@ -9,17 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Package, Eye, Calendar, CreditCard, ShoppingBag } from 'lucide-react';
 import { format } from 'date-fns';
 import { useLanguage } from '../../../utils/languageContextUtils';
-
-interface UserProfile {
-  id: string;
-  full_name: string;
-  phone: string | null;
-  user_type: 'admin' | 'wholesale' | 'retail';
-  created_at: string;
-  email?: string;
-  email_confirmed_at?: string;
-  last_sign_in_at?: string;
-}
+import type { UserProfile } from '@/types/profile';
 
 interface ShippingAddress {
   full_name: string;

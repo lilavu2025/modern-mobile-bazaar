@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useLanguage } from '../../utils/languageContextUtils';
-import { useCategories } from '@/hooks/useSupabaseData';
+import { useCategoriesRealtime } from '@/hooks/useCategoriesRealtime';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -44,8 +44,7 @@ const AdminCategories: React.FC = () => {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showViewDialog, setShowViewDialog] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
-  const { data: categoriesData, loading: isLoading, refetch } = useCategories();
-  const categories = categoriesData && Array.isArray(categoriesData.data) ? categoriesData.data : [];
+  const { categories, loading, error, refetch } = useCategoriesRealtime();
 
   const handleDeleteCategory = async (categoryId: string, categoryName: string) => {
     try {
@@ -83,7 +82,7 @@ const AdminCategories: React.FC = () => {
     setShowEditDialog(true);
   };
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -127,13 +126,13 @@ const AdminCategories: React.FC = () => {
           </CardHeader>
           <CardContent>
             <Table>
-              <TableHeader>
+              <TableHeader className="text-center">
                 <TableRow>
-                  <TableHead>{t('categoryImage')}</TableHead>
-                  <TableHead>{t('categoryName')}</TableHead>
+                  <TableHead className="text-center">{t('categoryImage')}</TableHead>
+                  <TableHead className="text-center">{t('categoryName')}</TableHead>
       
-                  <TableHead>{t('productCount')}</TableHead>
-                  <TableHead className="text-right">{t('actions')}</TableHead>
+                  <TableHead className="text-center">{t('productCount')}</TableHead>
+                  <TableHead className="text-center">{t('actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useLanguage } from '@/utils/languageContextUtils';
 import UserDetailsDialog from './UserDetailsDialog';
+import type { UserProfile } from '@/types/profile';
 
 const ACTION_LABELS: Record<string, string> = {
   disable: 'تعطيل',
@@ -21,22 +22,6 @@ interface UserActivityLog {
   action: string;
   details: Json | null;
   created_at: string;
-}
-
-// تعريف UserProfile محلي لاستخدامه في تفاصيل المستخدم
-interface UserProfile {
-  id: string;
-  full_name: string;
-  phone: string | null;
-  user_type: 'admin' | 'wholesale' | 'retail';
-  created_at: string;
-  updated_at: string; // <-- add this line to match required type
-  email?: string;
-  email_confirmed_at?: string;
-  last_sign_in_at?: string;
-  last_order_date?: string;
-  highest_order_value?: number;
-  disabled?: boolean | null;
 }
 
 const UserActivityLogTable: React.FC = () => {
@@ -131,103 +116,105 @@ const UserActivityLogTable: React.FC = () => {
           <div className="text-center py-8 text-lg text-gray-500">{t('noResults') || 'لا يوجد نشاط'}</div>
         ) : (
           <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t('admin')}</TableHead>
-                  <TableHead>{t('user')}</TableHead>
-                  <TableHead>{t('action')}</TableHead>
-                  <TableHead>{t('date')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {logs.map((log) => {
-                  // استخراج بيانات المستخدم (الاسم والبريد) من profileMap أو details أو fallback
-                  const userProfile = profileMap[log.user_id];
-                  let displayName = userProfile?.full_name;
-                  let displayEmail = userProfile?.email;
-                  let displayPhone = userProfile?.phone;
-                  // إذا لم يوجد في profileMap، جرب details
-                  if ((!displayName || !displayEmail) && log.details && typeof log.details === 'object') {
-                    const detailsObj = log.details as { full_name?: string; email?: string; phone?: string};
-                    displayName = displayName || detailsObj.full_name;
-                    displayEmail = displayEmail || detailsObj.email;
-                    displayPhone = displayPhone || detailsObj.phone;
-                  }
-                  // fallback نهائي
-                  if (!displayName) displayName = 'مستخدم غير متوفر';
-                  if (!displayEmail) displayEmail = '';
-                  if (!displayPhone) displayPhone = null;
-                  // زر التفاصيل فقط إذا كان هناك اسم
-                  const canShowDetails = !!displayName && displayName !== 'مستخدم غير متوفر';
-                  return (
-                    <TableRow key={log.id}>
-                      {/* عمود الأدمن */}
-                      <TableCell className="font-mono text-xs">
-                        <span className="font-bold text-blue-700">{profileMap[log.admin_id]?.full_name || log.admin_id}</span>
-                        {profileMap[log.admin_id]?.email && (
-                          <div className="text-gray-400 text-[10px]">{profileMap[log.admin_id]?.email}</div>
-                        )}
-                        {profileMap[log.admin_id]?.phone && (
-                          <div className="text-gray-400 text-[10px]">{profileMap[log.admin_id]?.phone}</div>
-                        )}
-                      </TableCell>
-                      {/* عمود المستخدم */}
-                      <TableCell className="font-mono text-xs">
-                        {canShowDetails ? (
-                          <button
-                            className="text-blue-700 underline hover:text-blue-900 font-bold"
-                            onClick={async () => {
-                              if (userProfile) {
-                                await handleUserDetails(log.user_id);
-                              } else {
-                                setUserDetails({
-                                  id: log.user_id,
-                                  full_name: displayName,
-                                  phone: null,
-                                  user_type: 'retail',
-                                  created_at: '',
-                                  updated_at: '', // إضافة الحقل المطلوب
-                                  email: displayEmail,
-                                  disabled: true,
-                                });
-                                setSelectedUser(log.user_id);
-                              }
-                            }}
-                          >
-                            {displayName}
-                          </button>
-                        ) : (
-                          <span className="text-gray-400 italic">{displayName}</span>
-                        )}
-                        {displayEmail && (
-                          <div className="text-gray-400 text-[10px]">{displayEmail}</div>
-                        )}
-                        {displayPhone && (
-                          <div className="text-gray-400 text-[10px]">{displayPhone}</div>
-                        )}
-                      </TableCell>
-                      {/* عمود الإجراء */}
-                      <TableCell>
-                        <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                          log.action === 'delete' ? 'bg-red-100 text-red-700' :
-                          log.action === 'disable' ? 'bg-yellow-100 text-yellow-700' :
-                          log.action === 'enable' ? 'bg-green-100 text-green-700' :
-                          'bg-gray-100 text-gray-700'
-                        }`}>
-                          {ACTION_LABELS[log.action] || log.action}
-                        </span>
-                      </TableCell>
-                      
-                      {/* عمود التاريخ */}
-                      <TableCell className="text-right text-xs">
-                        {new Date(log.created_at).toLocaleString()}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+            <div className="max-h-[268px] overflow-y-auto">
+              <Table>
+                <TableHeader className="text-center">
+                  <TableRow>
+                    <TableHead className="text-center">{t('admin')}</TableHead>
+                    <TableHead className="text-center">{t('user')}</TableHead>
+                    <TableHead className="text-center">{t('action')}</TableHead>
+                    <TableHead className="text-center">{t('date')}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {logs.map((log) => {
+                    // استخراج بيانات المستخدم (الاسم والبريد) من profileMap أو details أو fallback
+                    const userProfile = profileMap[log.user_id];
+                    let displayName = userProfile?.full_name;
+                    let displayEmail = userProfile?.email;
+                    let displayPhone = userProfile?.phone;
+                    // إذا لم يوجد في profileMap، جرب details
+                    if ((!displayName || !displayEmail) && log.details && typeof log.details === 'object') {
+                      const detailsObj = log.details as { full_name?: string; email?: string; phone?: string};
+                      displayName = displayName || detailsObj.full_name;
+                      displayEmail = displayEmail || detailsObj.email;
+                      displayPhone = displayPhone || detailsObj.phone;
+                    }
+                    // fallback نهائي
+                    if (!displayName) displayName = 'مستخدم غير متوفر';
+                    if (!displayEmail) displayEmail = '';
+                    if (!displayPhone) displayPhone = null;
+                    // زر التفاصيل فقط إذا كان هناك اسم
+                    const canShowDetails = !!displayName && displayName !== 'مستخدم غير متوفر';
+                    return (
+                      <TableRow key={log.id}>
+                        {/* عمود الأدمن */}
+                        <TableCell className="font-mono text-xs">
+                          <span className="font-bold text-blue-700">{profileMap[log.admin_id]?.full_name || log.admin_id}</span>
+                          {profileMap[log.admin_id]?.email && (
+                            <div className="text-gray-400 text-[10px]">{profileMap[log.admin_id]?.email}</div>
+                          )}
+                          {profileMap[log.admin_id]?.phone && (
+                            <div className="text-gray-400 text-[10px]">{profileMap[log.admin_id]?.phone}</div>
+                          )}
+                        </TableCell>
+                        {/* عمود المستخدم */}
+                        <TableCell className="font-mono text-xs">
+                          {canShowDetails ? (
+                            <button
+                              className="text-blue-700 underline hover:text-blue-900 font-bold"
+                              onClick={async () => {
+                                if (userProfile) {
+                                  await handleUserDetails(log.user_id);
+                                } else {
+                                  setUserDetails({
+                                    id: log.user_id,
+                                    full_name: displayName,
+                                    phone: null,
+                                    user_type: 'retail',
+                                    created_at: '',
+                                    updated_at: '', // إضافة الحقل المطلوب
+                                    email: displayEmail,
+                                    disabled: true,
+                                  });
+                                  setSelectedUser(log.user_id);
+                                }
+                              }}
+                            >
+                              {displayName}
+                            </button>
+                          ) : (
+                            <span className="text-gray-400 italic">{displayName}</span>
+                          )}
+                          {displayEmail && (
+                            <div className="text-gray-400 text-[10px]">{displayEmail}</div>
+                          )}
+                          {displayPhone && (
+                            <div className="text-gray-400 text-[10px]">{displayPhone}</div>
+                          )}
+                        </TableCell>
+                        {/* عمود الإجراء */}
+                        <TableCell>
+                          <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                            log.action === 'delete' ? 'bg-red-100 text-red-700' :
+                            log.action === 'disable' ? 'bg-yellow-100 text-yellow-700' :
+                            log.action === 'enable' ? 'bg-green-100 text-green-700' :
+                            'bg-gray-100 text-gray-700'
+                          }`}>
+                            {ACTION_LABELS[log.action] || log.action}
+                          </span>
+                        </TableCell>
+                        
+                        {/* عمود التاريخ */}
+                        <TableCell className="text-right text-xs">
+                          {new Date(log.created_at).toLocaleString()}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
           </div>
         )}
         {userDetails && (

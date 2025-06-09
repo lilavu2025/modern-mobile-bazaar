@@ -1,5 +1,4 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,6 +20,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import ImageUpload from '@/components/ImageUpload';
+import { useOffersRealtime } from '@/hooks/useOffersRealtime';
 import type { Database } from '@/integrations/supabase/types';
 
 const AdminOffers: React.FC = () => {
@@ -46,41 +46,14 @@ const AdminOffers: React.FC = () => {
   }), []);
   
   const [form, setForm] = useState(initialForm);
-  const [loading, setLoading] = useState(false);
 
   // جلب العروض من قاعدة البيانات
-  const { data: offers = [], refetch, isLoading: isLoadingOffers } = useQuery<Database['public']['Tables']['offers']['Row'][]>({
-    queryKey: ["admin-offers"],
-    queryFn: async () => {
-      try {
-        const { data, error } = await supabase
-          .from('offers')
-          .select('*')
-          .order('created_at', { ascending: false });
-        
-        if (error) {
-          console.error('خطأ في جلب العروض:', error);
-          toast.error(t('errorLoadingOffers'));
-          throw error;
-        }
-        
-        return data as Database['public']['Tables']['offers']['Row'][];
-      } catch (error) {
-        console.error('خطأ غير متوقع في جلب العروض:', error);
-        toast.error(t('unexpectedError'));
-        throw error;
-      }
-    },
-    staleTime: 0,
-    refetchOnWindowFocus: true,
-    refetchInterval: false,
-  });
+  const { offers, loading, error, refetch } = useOffersRealtime();
 
   // حذف عرض
   const handleDelete = async (id: string) => {
     if (!id) return;
     
-    setLoading(true);
     try {
       const { error } = await supabase
         .from('offers')
@@ -98,7 +71,6 @@ const AdminOffers: React.FC = () => {
       console.error('خطأ غير متوقع في حذف العرض:', error);
       toast.error(t('unexpectedError'));
     } finally {
-      setLoading(false);
       setShowDelete(false);
       setSelectedOffer(null);
     }
@@ -135,7 +107,6 @@ const AdminOffers: React.FC = () => {
       return;
     }
     
-    setLoading(true);
     try {
       const offerData = {
         title_en: form.title_en,
@@ -167,8 +138,6 @@ const AdminOffers: React.FC = () => {
     } catch (error) {
       console.error('خطأ غير متوقع في إضافة العرض:', error);
       toast.error(t('unexpectedError'));
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -197,7 +166,6 @@ const AdminOffers: React.FC = () => {
       return;
     }
     
-    setLoading(true);
     try {
       const updateData = {
         title_en: form.title_en,
@@ -231,8 +199,6 @@ const AdminOffers: React.FC = () => {
     } catch (error) {
       console.error('خطأ غير متوقع في تعديل العرض:', error);
       toast.error(t('unexpectedError'));
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -277,7 +243,7 @@ const AdminOffers: React.FC = () => {
       </div>
 
       {/* حالة التحميل */}
-      {isLoadingOffers && (
+      {loading && (
         <div className="flex justify-center items-center py-12">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           <span className="ml-2 text-gray-600">{t('loading')}...</span>
@@ -285,7 +251,7 @@ const AdminOffers: React.FC = () => {
       )}
 
       {/* عرض العروض */}
-      {!isLoadingOffers && (
+      {!loading && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {offers.map((offer: Database['public']['Tables']['offers']['Row']) => {
             const currentTitle = offer.title_ar || offer.title_en;
@@ -387,7 +353,6 @@ const AdminOffers: React.FC = () => {
                         setSelectedOffer(offer);
                         setShowDelete(true);
                       }}
-                      disabled={loading}
                     >
                       <Trash className="h-4 w-4" />
                     </Button>
@@ -400,7 +365,7 @@ const AdminOffers: React.FC = () => {
       )}
 
       {/* رسالة عدم وجود عروض */}
-      {!isLoadingOffers && offers.length === 0 && (
+      {!loading && offers.length === 0 && (
         <div className="text-center py-12">
           <ImageIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">{t('noOffers')}</h3>
@@ -567,20 +532,10 @@ const AdminOffers: React.FC = () => {
               </DialogClose>
               <Button 
                 type="submit" 
-                disabled={loading}
                 className="bg-primary hover:bg-primary/90"
               >
-                {loading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    {t('adding')}...
-                  </>
-                ) : (
-                  <>
-                    <Plus className="h-4 w-4 mr-2" />
-                    {t('add')}
-                  </>
-                )}
+                <Plus className="h-4 w-4 mr-2" />
+                {t('add')}
               </Button>
             </DialogFooter>
           </form>
@@ -742,20 +697,10 @@ const AdminOffers: React.FC = () => {
               </DialogClose>
               <Button 
                 type="submit" 
-                disabled={loading}
                 className="bg-primary hover:bg-primary/90"
               >
-                {loading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    {t('updating')}...
-                  </>
-                ) : (
-                  <>
-                    <Edit className="h-4 w-4 mr-2" />
-                    {t('save')}
-                  </>
-                )}
+                <Edit className="h-4 w-4 mr-2" />
+                {t('save')}
               </Button>
             </DialogFooter>
           </form>
@@ -783,19 +728,9 @@ const AdminOffers: React.FC = () => {
             <Button 
               variant="destructive" 
               onClick={() => selectedOffer && handleDelete(selectedOffer.id)}
-              disabled={loading}
             >
-              {loading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  {t('deleting')}...
-                </>
-              ) : (
-                <>
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  {t('delete')}
-                </>
-              )}
+              <Trash2 className="h-4 w-4 mr-2" />
+              {t('delete')}
             </Button>
           </DialogFooter>
         </DialogContent>
