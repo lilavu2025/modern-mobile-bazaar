@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/useAuth';
 import type { Json } from '@/integrations/supabase/types';
 import type { UserProfile } from '@/types/profile';
+import { toast } from 'sonner';
 
 // Supabase type for deleted_users (مؤقت حتى تحديث الأنواع)
 type DeletedUserInsert = {
@@ -175,9 +176,9 @@ export const useAdminUsers = () => {
     if (error) throw error;
     const logError = await logUserActivity(userId, disabled ? 'disable' : 'enable', { disabled });
     if (logError) {
-      window.alert('فشل تسجيل النشاط في سجل الأدمن!');
+      toast('فشل تسجيل النشاط في سجل الأدمن!');
     } else {
-      window.alert(disabled ? 'تم تعطيل المستخدم بنجاح' : 'تم تفعيل المستخدم بنجاح');
+      toast(disabled ? 'تم تعطيل المستخدم بنجاح' : 'تم تفعيل المستخدم بنجاح');
     }
     await fetchUsers();
   };

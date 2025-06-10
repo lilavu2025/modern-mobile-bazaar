@@ -11,7 +11,7 @@ export function useOrdersRealtime() {
     setLoading(true);
     const { data, error } = await supabase
       .from('orders')
-      .select('*')
+      .select(`*, profiles:profiles(id, full_name, email, phone), order_items(*, products(name_ar, name_en, image))`)
       .order('created_at', { ascending: false });
     if (error) setError(error as Error);
     setOrders(data || []);

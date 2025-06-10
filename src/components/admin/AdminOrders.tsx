@@ -85,10 +85,32 @@ function mapAddressToDb(address: Address) {
 }
 // Helper: Map order from DB
 function mapOrderFromDb(order: Record<string, unknown>): Order {
+  // جلب عناصر الطلب من order_items إذا توفرت
+  let items: OrderItem[] = [];
+  if (Array.isArray(order['order_items']) && order['order_items'].length > 0) {
+    type OrderItemDB = {
+      id: string;
+      product_id: string;
+      quantity: number;
+      price: number;
+      products?: { name_ar?: string; name_en?: string };
+    };
+    items = (order['order_items'] as OrderItemDB[]).map((item) => ({
+      id: item.id,
+      product_id: item.product_id,
+      quantity: item.quantity,
+      price: item.price,
+      product_name: item.products?.name_ar || item.products?.name_en || '',
+    }));
+  } else if (typeof order['items'] === 'string') {
+    items = JSON.parse(order['items'] as string);
+  } else if (Array.isArray(order['items'])) {
+    items = order['items'] as OrderItem[];
+  }
   return {
     id: order['id'] as string,
     user_id: order['user_id'] as string,
-    items: typeof order['items'] === 'string' ? JSON.parse(order['items'] as string) : (order['items'] as OrderItem[]),
+    items,
     total: order['total'] as number,
     status: order['status'] as Order['status'],
     created_at: order['created_at'] as string,
@@ -131,6 +153,7 @@ const AdminOrders: React.FC = () => {
   const [showAddOrder, setShowAddOrder] = useState(false);
   const [isAddingOrder, setIsAddingOrder] = useState(false);
   const [orderForm, setOrderForm] = useState<NewOrderForm>(initialOrderForm);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const { data: productsData } = useProducts();
   const products = productsData && Array.isArray(productsData.data) ? productsData.data : [];
   const { users, isLoading: usersLoading } = useAdminUsers();
@@ -641,12 +664,14 @@ const AdminOrders: React.FC = () => {
               <CardHeader>
                 <div className="flex justify-between items-start">
                   <div>
-                    <CardTitle className="text-lg">طلب #{order.id.slice(0, 8)}</CardTitle>
+                    <CardTitle className="text-lg">
+                      {t('order')} {order.profiles?.full_name ? `- ${order.profiles.full_name}` : ''}
+                    </CardTitle>
                     <p className="text-sm text-gray-600 mt-1">
                       العميل: {order.profiles?.full_name || 'غير محدد'}
                     </p>
                     <p className="text-sm text-gray-600">
-                      التاريخ: {new Date(order.created_at).toLocaleDateString('en-GB')}
+                      التاريخ: {new Date(order.created_at).toLocaleDateString('en-GB')} - {new Date(order.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -664,22 +689,14 @@ const AdminOrders: React.FC = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <h4 className="font-medium mb-2">تفاصيل الطلب:</h4>
-                    <p className="text-sm text-gray-600">المجموع: {order.total} ₪</p>
-                    <p className="text-sm text-gray-600">طريقة الدفع: {order.payment_method}</p>
-                    {order.notes && (
-                      <p className="text-sm text-gray-600">ملاحظات: {order.notes}</p>
-                    )}
-                  </div>
-                  <div>
-                    <h4 className="font-medium mb-2">معلومات الاتصال:</h4>
-                    <p className="text-sm text-gray-600">الهاتف: {order.profiles?.phone || 'غير محدد'}</p>
-                    <p className="text-sm text-gray-600">الإيميل: {order.profiles?.email || 'غير محدد'}</p>
-                  </div>
+                
+                <div className="flex gap-2 items-center">
+                  <Button size="sm" variant="outline" onClick={() => setSelectedOrder(mapOrderFromDb(order as unknown as Record<string, unknown>))}>
+                    <Eye className="h-4 w-4 mr-1" /> عرض التفاصيل
+                  </Button>
                 </div>
                 
+                {/* أزرار تغيير الحالة */}
                 <div className="flex gap-2 mt-4">
                   <Button 
                     size="sm" 
@@ -727,6 +744,42 @@ const AdminOrders: React.FC = () => {
           ))}
         </div>
       )}
+      
+      {/* Dialog لعرض تفاصيل الطلب */}
+      <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>تفاصيل الطلب</DialogTitle>
+          </DialogHeader>
+          {selectedOrder && (
+            <div className="space-y-4">
+              <div>
+                <h3 className="font-semibold mb-2">معلومات الطلب</h3>
+                <p className="text-sm text-gray-600">رقم الطلب: {selectedOrder.id}</p>
+                <p className="text-sm text-gray-600">التاريخ: {new Date(selectedOrder.created_at).toLocaleDateString('en-GB')} - {new Date(selectedOrder.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</p>
+                <p className="text-sm text-gray-600">الحالة: {selectedOrder.status}</p>
+                <p className="text-sm text-gray-600">المجموع: {selectedOrder.total} ₪</p>
+                <p className="text-sm text-gray-600">طريقة الدفع: {selectedOrder.payment_method}</p>
+                {selectedOrder.notes && <p className="text-sm text-gray-600">ملاحظات: {selectedOrder.notes}</p>}
+              </div>
+              <div>
+                <h3 className="font-semibold mb-2">المنتجات المطلوبة</h3>
+                <ul className="list-disc pl-5">
+                  {selectedOrder.items && selectedOrder.items.length > 0 ? (
+                    selectedOrder.items.map((item, idx) => (
+                      <li key={item.id} className="mb-1">
+                        {item.product_name} - الكمية: {item.quantity} - السعر: {item.price} ₪
+                      </li>
+                    ))
+                  ) : (
+                    <li>لا توجد منتجات</li>
+                  )}
+                </ul>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

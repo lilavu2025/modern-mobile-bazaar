@@ -15,7 +15,7 @@ interface ProductsByCategoryStats { total: number; inStock: number; outOfStock: 
 interface AdminDashboardStatsProps {
   onFilterUsers?: (userType: string) => void;
   onFilterOrders?: (status: string) => void;
-  pendingOrders?: { id: string; created_at: string }[];
+  pendingOrders?: { id: string; created_at: string; profiles?: { full_name: string; email?: string; phone?: string } }[];
   lowStockProductsData?: { id: string; name: string; stock_quantity: number }[];
 }
 
@@ -492,7 +492,7 @@ const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
               <div className="flex flex-wrap gap-2 mt-2">
                 {pendingOrders.slice(0, 3).map(order => (
                   <button key={order.id} className="underline text-yellow-700 hover:text-yellow-900 text-xs" onClick={e => { e.stopPropagation(); navigate(`/admin/orders?orderId=${order.id}`); }}>
-                    تفاصيل الطلب {order.id}
+                    تفاصيل الطلب {order.profiles?.full_name ? order.profiles.full_name : 'عميل غير محدد'}
                   </button>
                 ))}
                 {pendingOrders.length > 3 && <span className="text-xs text-yellow-700">والمزيد...</span>}

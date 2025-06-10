@@ -29,7 +29,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 
 // تعريف أنواع الطلب والمنتج بشكل مبسط
-interface PendingOrder { id: string; created_at: string; }
+interface PendingOrder {
+  id: string;
+  created_at: string;
+  profiles?: {
+    full_name: string;
+    email?: string;
+    phone?: string;
+  };
+}
 interface LowStockProduct { id: string; name: string; stock_quantity: number; }
 
 const AdminDashboard: React.FC = () => {
@@ -81,10 +89,17 @@ const AdminDashboard: React.FC = () => {
     const fetchPendingOrders = async () => {
       const { data } = await supabase
         .from('orders')
-        .select('id,created_at')
+        .select('id,created_at,profiles(full_name,email,phone)')
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
-      setPendingOrders(data || []);
+      // profiles تأتي كمصفوفة من Supabase، نأخذ أول عنصر فقط
+      setPendingOrders(
+        (data || []).map((order) => ({
+          id: order.id,
+          created_at: order.created_at,
+          profiles: Array.isArray(order.profiles) ? order.profiles[0] : order.profiles
+        }))
+      );
     };
     fetchPendingOrders();
   }, []);
