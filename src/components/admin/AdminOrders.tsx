@@ -337,10 +337,13 @@ const AdminOrders: React.FC = () => {
   
   // Filter orders based on status - moved before early returns to maintain hook order
   const filteredOrders: Order[] = useMemo(() => {
+    const mappedOrders = Array.isArray(orders)
+      ? orders.map(order => mapOrderFromDb(order as Record<string, unknown>))
+      : [];
     if (statusFilter === 'all') {
-      return orders as Order[];
+      return mappedOrders;
     }
-    return (orders as Order[]).filter(order => order.status === statusFilter);
+    return mappedOrders.filter(order => order.status === statusFilter);
   }, [orders, statusFilter]);
 
   if (ordersLoading) {
