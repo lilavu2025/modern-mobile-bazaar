@@ -15,17 +15,23 @@ interface ProductsByCategoryStats { total: number; inStock: number; outOfStock: 
 interface AdminDashboardStatsProps {
   onFilterUsers?: (userType: string) => void;
   onFilterOrders?: (status: string) => void;
+  pendingOrders?: { id: string; created_at: string }[];
+  lowStockProductsData?: { id: string; name: string; stock_quantity: number }[];
 }
 
 const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({ 
   onFilterUsers, 
-  onFilterOrders 
+  onFilterOrders,
+  pendingOrders = [],
+  lowStockProductsData = []
 }) => {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [isUsersExpanded, setIsUsersExpanded] = useState(false);
   const [isOrdersExpanded, setIsOrdersExpanded] = useState(false);
   const [isRevenueExpanded, setIsRevenueExpanded] = useState(false);
+  const [showPendingOrdersDetails, setShowPendingOrdersDetails] = useState(false);
+  const [showLowStockDetails, setShowLowStockDetails] = useState(false);
 
   // Fetch users statistics
   const { data: usersStats = [], isLoading: usersLoading, error: usersError } = useQuery({
@@ -466,6 +472,50 @@ const AdminDashboardStats: React.FC<AdminDashboardStatsProps> = ({
                     </div>
                   </div>
                 )) || []}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* إشعارات الطلبات الجديدة والمنتجات منخفضة المخزون */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-8 mt-2">
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer border-yellow-300 bg-yellow-50" onClick={() => setShowPendingOrdersDetails((v) => !v)}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-yellow-900">طلبات جديدة</CardTitle>
+            <ShoppingCart className="h-4 w-4 text-yellow-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-yellow-900">{pendingOrders.length}</div>
+            <p className="text-xs text-yellow-800">طلبات بانتظار المعالجة</p>
+            {showPendingOrdersDetails && pendingOrders.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {pendingOrders.slice(0, 3).map(order => (
+                  <button key={order.id} className="underline text-yellow-700 hover:text-yellow-900 text-xs" onClick={e => { e.stopPropagation(); navigate(`/admin/orders?orderId=${order.id}`); }}>
+                    تفاصيل الطلب {order.id}
+                  </button>
+                ))}
+                {pendingOrders.length > 3 && <span className="text-xs text-yellow-700">والمزيد...</span>}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer border-red-300 bg-red-50" onClick={() => setShowLowStockDetails((v) => !v)}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-red-900">منتجات منخفضة المخزون</CardTitle>
+            <Package className="h-4 w-4 text-red-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-900">{lowStockProductsData.length}</div>
+            <p className="text-xs text-red-800">منتجات بحاجة لإعادة التوريد</p>
+            {showLowStockDetails && lowStockProductsData.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {lowStockProductsData.slice(0, 3).map(product => (
+                  <button key={product.id} className="underline text-red-700 hover:text-red-900 text-xs" onClick={e => { e.stopPropagation(); navigate(`/admin/products?productId=${product.id}`); }}>
+                    {product.name} ({product.stock_quantity})
+                  </button>
+                ))}
+                {lowStockProductsData.length > 3 && <span className="text-xs text-red-700">والمزيد...</span>}
               </div>
             )}
           </CardContent>

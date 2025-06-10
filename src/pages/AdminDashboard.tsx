@@ -25,6 +25,12 @@ import AdminDashboardStats from '@/components/admin/AdminDashboardStats';
 import AdminOffers from '@/components/admin/AdminOffers';
 import AdminBanners from '@/components/admin/AdminBanners';
 import AdminContactInfo from '@/components/admin/AdminContactInfo';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { supabase } from '@/integrations/supabase/client';
+
+// تعريف أنواع الطلب والمنتج بشكل مبسط
+interface PendingOrder { id: string; created_at: string; }
+interface LowStockProduct { id: string; name: string; stock_quantity: number; }
 
 const AdminDashboard: React.FC = () => {
   const { profile, signOut, loading, user } = useAuth();
@@ -33,6 +39,8 @@ const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [pendingOrders, setPendingOrders] = useState<PendingOrder[]>([]);
+  const [lowStockProductsData, setLowStockProductsData] = useState<LowStockProduct[]>([]);
 
   const sidebarItems = [
     { path: '/admin', label: t('dashboard'), icon: LayoutDashboard },
@@ -67,6 +75,32 @@ const AdminDashboard: React.FC = () => {
     }
     // إذا كان أدمن، لا تفعل شيء
   }, [profile, loading, user, navigate]);
+
+  // جلب الطلبات الجديدة (pending)
+  useEffect(() => {
+    const fetchPendingOrders = async () => {
+      const { data } = await supabase
+        .from('orders')
+        .select('id,created_at')
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false });
+      setPendingOrders(data || []);
+    };
+    fetchPendingOrders();
+  }, []);
+
+  // جلب المنتجات منخفضة المخزون
+  useEffect(() => {
+    const fetchLowStockProducts = async () => {      const { data } = await supabase
+        .from('products')
+        .select('id,name_ar,stock_quantity')
+        .lt('stock_quantity', 5);
+      setLowStockProductsData((data || []).map((p: { id: string; name_ar: string; stock_quantity: number }) => ({ id: p.id, name: p.name_ar, stock_quantity: p.stock_quantity })));
+
+
+    };
+    fetchLowStockProducts();
+  }, []);
 
   return (
     <div className={`min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 ${isRTL ? 'rtl' : 'ltr'}`} dir={isRTL ? 'rtl' : 'ltr'}>
@@ -216,8 +250,16 @@ const AdminDashboard: React.FC = () => {
           {/* Content */}
           <div className="p-4 lg:p-8 overflow-hidden">
             <div className="max-w-7xl mx-auto">
+              {location.pathname === "/admin" && (
+                <>
+                  <AdminDashboardStats 
+                    pendingOrders={pendingOrders}
+                    lowStockProductsData={lowStockProductsData}
+                  />
+                </>
+              )}
               <Routes>
-                <Route path="/" element={<AdminDashboardStats />} />
+                <Route path="/" element={null} />
                 <Route path="/products" element={<AdminProducts />} />
                 <Route path="/categories" element={<AdminCategories />} />
                 <Route path="/orders" element={<AdminOrders />} />
