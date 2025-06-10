@@ -185,6 +185,32 @@ export type Database = {
         Update: Partial<Database['public']['Tables']['categories']['Row']>;
         Relationships: [];
       };
+      orders: {
+        Row: {
+          id: string;
+          user_id: string;
+          total: number;
+          status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+          payment_method: string;
+          shipping_address: string;
+          notes?: string;
+          created_at: string;
+          updated_at: string;
+          items?: string; // JSON string of items (legacy)
+          profiles?: Database['public']['Tables']['profiles']['Row'];
+          order_items?: Array<{
+            id: string;
+            order_id: string;
+            product_id: string;
+            quantity: number;
+            price: number;
+            products?: Database['public']['Tables']['products']['Row'];
+          }>;
+        };
+        Insert: Partial<Omit<Database['public']['Tables']['orders']['Row'], 'id' | 'created_at' | 'updated_at'>> & { id?: string; created_at?: string; updated_at?: string };
+        Update: Partial<Database['public']['Tables']['orders']['Row']>;
+        Relationships: [];
+      };
     };
   };
 };
